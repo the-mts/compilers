@@ -56,3 +56,4 @@ lex.yy.c
 
 #binaries
 bin/*
+!bin/.gitkeep
