@@ -50,3 +50,9 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+#lexer c file
+lex.yy.c
+
+#binaries
+bin/*
