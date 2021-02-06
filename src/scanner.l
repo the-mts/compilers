@@ -73,7 +73,7 @@ int check_type();
 
 %%
 "/*"			{ comment(); }
-
+"//".*			{ comment_(); }
 "auto"			{ return(AUTO); }
 "break"			{ return(BREAK); }
 "case"			{ return(CASE); }
@@ -171,8 +171,11 @@ L?\"(\\.|[^\\"])*\"	{ return(STRING_LITERAL); }
 
 %%
 
-void comment_(){
+int column = 1;
+int line  = 1;
 
+void comment_(){
+	return;
 }
 
 void comment()
@@ -180,22 +183,38 @@ void comment()
 	char c, c1;
 
 loop:
-	while ((c = input()) != '*' && c != 0)
-		putchar(c);
+	while ((c = input()) != '*' && c != 0){
+		if(c=='\n'){
+			line++;
+			column = 1;
+		}
+		else if (c == '\t')
+			column += 4 - ((column-1) % 4);
+		else column++;
+	}
+
+	if (c=='*') column++;
+		
 
 	if ((c1 = input()) != '/' && c != 0)
 	{
 		unput(c1);
+		// column--;
 		goto loop;
 	}
+	else{
+		column++;
+	}
 
-	if (c != 0)
-		putchar(c1);
+
+
+	if (c != 0){
+		// putchar(c1);
+		// column++;
+	}
 }
 
 
-int column = 1;
-int line  = 1;
 
 void count()
 {
