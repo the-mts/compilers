@@ -2,4 +2,4 @@
 
 make
 
-./bin/scanner ./tests/<testfile>
+./bin/scanner ./tests/\<testfile\>
