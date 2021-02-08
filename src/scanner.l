@@ -209,10 +209,6 @@ loop:
 	else{
 		column++;
 	}
-
-	if(c!=0){
-		//Might need to check
-	}
 }
 
 
