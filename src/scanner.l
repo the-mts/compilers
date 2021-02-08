@@ -201,22 +201,17 @@ loop:
 
 	if (c=='*') column++;
 		
-
 	if ((c1 = input()) != '/' && c != 0)
 	{
 		unput(c1);
-		// column--;
 		goto loop;
 	}
 	else{
 		column++;
 	}
 
-
-
-	if (c != 0){
-		// putchar(c1);
-		// column++;
+	if(c!=0){
+		//Might need to check
 	}
 }
 

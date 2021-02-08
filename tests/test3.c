@@ -3,7 +3,7 @@
 void main()
 {
 	long long int a_12 = 1;
-	nene:
+	jump:
 	a_12<<=a_12;
 	a_12 = a_12>>2 ;
 	if(a_12>=4)
@@ -11,6 +11,6 @@ void main()
 		printf("Hello\n");
 		exit(0);
 	}
-	goto nene;
+	goto jump;
 	return;
 }
