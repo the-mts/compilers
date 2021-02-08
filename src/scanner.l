@@ -68,6 +68,7 @@ IS			(u|U|l|L)*
 void count();
 void comment();
 void comment_();
+void yyerror();
 int check_type();
 %}
 
@@ -167,12 +168,17 @@ L?\"(\\.|[^\\"])*\"	{ return(STRING_LITERAL); }
 "?"			{ return('?'); }
 
 [ \t\v\n\f]		{ count(); }
-.			{ /* ignore bad characters */ }
+.			{ yyerror(yytext); }
 
 %%
 
 int column = 1;
 int line  = 1;
+
+void yyerror(char* yytext){
+	printf("ERROR at line %d column %d: %c is invalid.\n", line, column, yytext[0]);
+	column++;
+}
 
 void comment_(){
 	return;
