@@ -57,6 +57,7 @@ lex.yy.c
 #parser c and h files
 y.tab.c
 y.tab.h
+y.output
 
 #binaries
 bin/*
