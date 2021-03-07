@@ -62,3 +62,6 @@ y.output
 #binaries
 bin/*
 !bin/.gitkeep
+
+*.dot
+*.ps

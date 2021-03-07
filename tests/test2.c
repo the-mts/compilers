@@ -1,8 +1,9 @@
 int main()
 {
-	for(int i=0; i<=5;i++ )
+	int i;
+	for(i=0; i<=5;i++ )
 	{
-		int j = 5;
+		int j = 5, x = 2;
 		while( j<10)
 		{
 			j*=2 ;
@@ -11,7 +12,6 @@ int main()
 			j++ ;
 			j-- ;
 		}
-		int x = 2;
 		   switch(x)
 		{
 			case 1:		x*=2;

@@ -10,8 +10,9 @@ node* node_(int x, char * s, int token){
 		tmp->v = NULL;
 	tmp->token = token;
 	tmp->sz = x;
-	tmp->name = (char*)malloc((strlen(s)+20)*sizeof(char));
-	strcpy(tmp->name,s);
+	// tmp->name = (char*)malloc((strlen(s)+20)*sizeof(char));
+	tmp->name = strdup(s);
+	// strcpy(tmp->name,s);
 	return tmp;
 }
 

@@ -12,7 +12,17 @@ int dfs(node* u, int num){
 		printf("\t%d -> %d\n",x,num+1);
 		num = dfs(u->v[i],num+1);
 	}
-	printf("\t%d [label=\"%s\"]\n",x,u->name);
+	// if (u->name[0]!='\"')
+	printf("\t%d [label=\"",x);
+
+	int i = 0;
+	while(u->name[i] != '\0'){
+		if(u->name[i]=='\"' || u->name[i]=='\\') putchar('\\');
+		putchar(u->name[i]);
+		i++;
+	}
+
+	printf("\"]\n");
 	return num;
 }
 
