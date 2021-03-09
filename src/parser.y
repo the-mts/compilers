@@ -306,19 +306,20 @@ type_qualifier
 	;
 
 declarator
-	: pointer direct_declarator						{$$ = $2; char *ch = (char*)malloc(sizeof(char)*(strlen($1)+strlen($2->name)+2));
+	: pointer direct_declarator						{/*$$ = $2; char *ch = (char*)malloc(sizeof(char)*(strlen($1)+strlen($2->name)+2));
 													strcpy(ch,$1); strcat(ch, $$->name);
-													char* tmp = $$->name; $$->name = ch; free(tmp);}
+													char* tmp = $$->name; $$->name = ch; free(tmp);*/
+													$$ = $2;}
 	| direct_declarator								{$$ = $1;}
 	;
 
 direct_declarator
 	: IDENTIFIER										{$$ = node_(0,$1,IDENTIFIER);}
 	| '(' declarator ')'								{$$ = $2;}
-	| direct_declarator '[' constant_expression ']'		{$$ = $1;}
+	| direct_declarator '[' constant_expression ']'		{$$ = node_(2,"[]",-1); $$->v[0] = $1; $$->v[1] = $3;}
 	| direct_declarator '[' ']'							{$$ = $1;}
-	| direct_declarator '(' parameter_type_list ')'		{$$ = $1;}
-	| direct_declarator '(' identifier_list ')'			{$$ = $1;}
+	| direct_declarator '(' parameter_type_list ')'		{$$ = node_(2,"()",-1); $$->v[0] = $1, $$->v[1] = $3;}
+	| direct_declarator '(' identifier_list ')'			{$$ = node_(2,"()",-1); $$->v[0] = $1, $$->v[1] = $3;}
 	| direct_declarator '(' ')'							{$$ = $1;}
 	;
 
@@ -336,24 +337,24 @@ type_qualifier_list
 
 
 parameter_type_list
-	: parameter_list								{}
-	| parameter_list ',' ELLIPSIS					{}
+	: parameter_list								{$$ = $1;}
+	| parameter_list ',' ELLIPSIS					{$$ = $1; add_node($$,node_(0,$3,ELLIPSIS));}
 	;
 
 parameter_list
-	: parameter_declaration							{}
-	| parameter_list ',' parameter_declaration		{}
+	: parameter_declaration							{$$ = node_(1,"param_list",-1); $$->v[0] = $1;}
+	| parameter_list ',' parameter_declaration		{$$ = $1; add_node($$,$3);}
 	;
 
 parameter_declaration
-	: declaration_specifiers declarator				{}
-	| declaration_specifiers abstract_declarator	{}
-	| declaration_specifiers						{}
+	: declaration_specifiers declarator				{$$ = $2;}
+	| declaration_specifiers abstract_declarator	{$$ = NULL;}
+	| declaration_specifiers						{$$ = NULL;}
 	;
 
 identifier_list
-	: IDENTIFIER									{}
-	| identifier_list ',' IDENTIFIER				{}
+	: IDENTIFIER									{$$ = node_(1,"id_list",-1); $$->v[0] = node_(0,$1,IDENTIFIER);}
+	| identifier_list ',' IDENTIFIER				{add_node($1,node_(0,$3,IDENTIFIER)); $$ = $1;}
 	;
 
 type_name
@@ -493,7 +494,7 @@ external_declaration
 
 function_definition
 	: declaration_specifiers declarator declaration_list compound_statement		{$$ = node_(1,$2->name,-1); $$->v[0] = $4;}
-	| declaration_specifiers declarator compound_statement						{$$ = node_(1,$2->name,-1); $$->v[0] = $3;}
+	| declaration_specifiers declarator compound_statement						{$$ = node_(2,"fun_def",-1); $$->v[0] = $2; $$->v[1] = $3;}
 	| declarator declaration_list compound_statement							{$$ = node_(1,$1->name,-1); $$->v[0] = $3;}
-	| declarator compound_statement												{$$ = node_(1,$1->name,-1); $$->v[0] = $2;}
+	| declarator compound_statement												{$$ = node_(2,"fun_def",-1); $$->v[0] = $1; $$->v[1] = $2;}
 	;
