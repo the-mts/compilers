@@ -1,27 +1,26 @@
 int main()
 {
-	int _abc_123=0, x = _abc_123;
-	//Comment Test
-	/*MultiLine 
-	Comment 
-	Test*/
-	if(x>=_abc_123)
-	{
-		if(x<_abc_123)
-		{
-			printf("Nested If\n");
-		}
-		else
-		{
-			printf("Success\n");
-		}
-	}
+	int x = 1, y = 0, z;
+	int x1, x2;
+	x = x & y;
+	x = !x;
+	z = 15, x = 2;
+	z >>= 2;
+	z = z<<3;
+	if(x)
+		z = 12;
 	else
+		z = z*(!y);
+	x = x?x:y;
 	{
-		printf("Failure\n");
+		int i=0, j;
+		for(i=1;i<=5;i++)
+		{
+			x*=1;
+		}
+		while((i=5) && j==6)
+		{
+			x/=2;
+		}
 	}
-	x*=_abc_123;
-	x+=_abc_123;
-	x = x + _abc_123;
-	printf("%d\n", _abc_123);
 }

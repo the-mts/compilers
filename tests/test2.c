@@ -1,26 +1,30 @@
+int zz=0, z;
+enum week {Sun, Mon, Tue, Wed, Thurs, Fri, Sat, Sun}; 
+
+void fun1(int x, int y)
+{
+	while(x<2)
+		y++;
+	return x;
+}
+
 int main()
 {
-	int i;
-	for(i=0; i<=5;i++ )
+	int *ptr;
+	int i=5;
+	const volatile enum a {hello}typedef int;
+	ptr = &i;
+	while(i==55 || (!j)==5)
 	{
-		int j = 5, x = 2;
-		while( j<10)
+		*ptr = 2;
+		continue;
+	}
+	for(i=0;i<=5;i^=20)
+	{
+		if(j==0)
 		{
-			j*=2 ;
-			j/= 2;
-			j += 1;
-			j++ ;
-			j-- ;
-		}
-		   switch(x)
-		{
-			case 1:		x*=2;
-						break;
-			case 2:		x/=2;
-			case 3:		x==0;
-						break;
-			default:	x=0;
+			**ptr = 2;
+			break;
 		}
 	}
-	printf("Success\n");
 }
