@@ -23,8 +23,8 @@
 %token <id> CASE DEFAULT IF ELSE SWITCH WHILE DO FOR GOTO CONTINUE BREAK RETURN
 %token <id> ',' '^' '|' ';' '{' '}' '[' ']' '(' ')' '+' '-' '%' '/' '*' '.' '>' '<' '&' '=' '!' '~' ':' '?'
 
-%type <id> unary_operator assignment_operator storage_class_specifier type_specifier struct_or_union
-%type <nodes> primary_expression postfix_expression argument_expression_list unary_expression 
+%type <id> unary_operator assignment_operator storage_class_specifier struct_or_union pointer
+%type <nodes> primary_expression postfix_expression argument_expression_list unary_expression type_specifier 
 %type <nodes> cast_expression multiplicative_expression additive_expression shift_expression relational_expression 
 %type <nodes> equality_expression and_expression exclusive_or_expression inclusive_or_expression logical_and_expression 
 %type <nodes> logical_or_expression conditional_expression assignment_expression expression 
@@ -32,7 +32,7 @@
 %type <nodes> struct_or_union_specifier struct_declaration_list 
 %type <nodes> struct_declaration specifier_qualifier_list struct_declarator_list struct_declarator enum_specifier 
 %type <nodes> enumerator_list enumerator type_qualifier declarator direct_declarator 
-%type <nodes> pointer type_qualifier_list parameter_type_list parameter_list parameter_declaration 
+%type <nodes> type_qualifier_list parameter_type_list parameter_list parameter_declaration 
 %type <nodes> identifier_list type_name abstract_declarator direct_abstract_declarator initializer 
 %type <nodes> initializer_list statement labeled_statement compound_statement declaration_list 
 %type <nodes> statement_list expression_statement selection_statement iteration_statement jump_statement 
@@ -220,62 +220,74 @@ storage_class_specifier
 	;
 
 type_specifier
-	: VOID														{}
-	| CHAR														{}
-	| SHORT														{}
-	| INT														{}
-	| LONG														{}
-	| FLOAT														{}
-	| DOUBLE													{}
-	| SIGNED													{}
-	| UNSIGNED													{}
-	| struct_or_union_specifier									{}
-	| enum_specifier											{}
+	: VOID														{$$ = node_(0,$1,-1);}
+	| CHAR														{$$ = node_(0,$1,-1);}
+	| SHORT														{$$ = node_(0,$1,-1);}
+	| INT														{$$ = node_(0,$1,-1);}
+	| LONG														{$$ = node_(0,$1,-1);}
+	| FLOAT														{$$ = node_(0,$1,-1);}
+	| DOUBLE													{$$ = node_(0,$1,-1);}
+	| SIGNED													{$$ = node_(0,$1,-1);}
+	| UNSIGNED													{$$ = node_(0,$1,-1);}
+	| struct_or_union_specifier									{$$ = $1;}
+	| enum_specifier											{$$ = $1;}
 	| TYPE_NAME													{}
 	;
 
 struct_or_union_specifier
-	: struct_or_union IDENTIFIER '{' struct_declaration_list '}'	{}	
-	| struct_or_union '{' struct_declaration_list '}'				{}
-	| struct_or_union IDENTIFIER									{}
+	: struct_or_union IDENTIFIER '{' struct_declaration_list '}'	{char* ch = (char*)malloc(sizeof(char)*(strlen($1)+strlen($2)+2)); 
+																	strcpy(ch,$1); strcat(ch," "); strcat(ch,$2);
+																	$$ = node_(1,ch,-1); free(ch);
+																	$$->v[0] = $4;}	
+	| struct_or_union '{' struct_declaration_list '}'				{$$ = node_(1,$1,-1); $$->v[0]=$3;}
+	| struct_or_union IDENTIFIER									{char* ch = (char*)malloc(sizeof(char)*(strlen($1)+strlen($2)+2)); 
+																	strcpy(ch,$1); strcat(ch," "); strcat(ch,$2);
+																	$$ = node_(0,ch,-1); free(ch);}
 	;
 
 struct_or_union
-	: STRUCT													{}
-	| UNION														{}
+	: STRUCT													{$$ = $1;}
+	| UNION														{$$ = $1;}
 	;
 
 struct_declaration_list
-	: struct_declaration										{}
-	| struct_declaration_list struct_declaration				{}
+	: struct_declaration										{$$ = node_(1,"struct_members",-1); $$->v[0] = $1;}
+	| struct_declaration_list struct_declaration				{add_node($1, $2); $$ = $1;}
 	;
 
 struct_declaration
-	: specifier_qualifier_list struct_declarator_list ';'		{}
+	: specifier_qualifier_list struct_declarator_list ';'		{$$ = node_(2,"struct_decl",-1); $$->v[0] = $1; $$->v[1] = $2;}
 	;
 
 specifier_qualifier_list
-	: type_specifier specifier_qualifier_list		{}
-	| type_specifier								{}
-	| type_qualifier specifier_qualifier_list		{}
-	| type_qualifier								{}
+	: type_specifier specifier_qualifier_list		{if($2 == NULL)	{$$ = node_(1,"type_list",-1); $$->v[0] = $1;}
+													else{
+														$$ = $2; push_front($$,$1);
+													}}
+	| type_specifier								{$$ = node_(1,"type_list",-1); $$->v[0] = $1;}
+	| type_qualifier specifier_qualifier_list		{$$ = $2;}
+	| type_qualifier								{$$ = NULL;}
 	;
 
 struct_declarator_list
-	: struct_declarator								{}
-	| struct_declarator_list ',' struct_declarator	{}
+	: struct_declarator								{$$ = node_(1,"struct_decl_list",-1); $$->v[0]=$1;}
+	| struct_declarator_list ',' struct_declarator	{add_node($1,$3); $$ = $1;}
 	;
 
 struct_declarator
-	: declarator
-	| ':' constant_expression						{}
-	| declarator ':' constant_expression
+	: declarator 									{$$ = $1;}
+	| ':' constant_expression						{$$ = node_(2,"bit_field",-1); $$->v[0]=node_(0,$1,-1); $$->v[1]=$2;}
+	| declarator ':' constant_expression			{$$ = node_(3,"bit_field",-1); $$->v[0]=$1; $$->v[1]=node_(0,$2,-1); $$->v[2]=$3;}
 	;
 
 enum_specifier
-	: ENUM '{' enumerator_list '}'					{/*Enumerators in AST?*/}
-	| ENUM IDENTIFIER '{' enumerator_list '}'		{}
-	| ENUM IDENTIFIER								{}
+	: ENUM '{' enumerator_list '}'					{$$ = node_(0,"enum",-1);}
+	| ENUM IDENTIFIER '{' enumerator_list '}'		{char * ch = (char*)malloc((strlen($1)+strlen($2)+2)*sizeof(char));
+													strcpy(ch,$1), strcat(ch," "), strcat(ch,$2);
+													$$ = node_(0,ch,-1);}
+	| ENUM IDENTIFIER								{char * ch = (char*)malloc((strlen($1)+strlen($2)+2)*sizeof(char));
+													strcpy(ch,$1), strcat(ch," "), strcat(ch,$2);
+													$$ = node_(0,ch,-1);}
 	;
 
 enumerator_list
@@ -294,7 +306,9 @@ type_qualifier
 	;
 
 declarator
-	: pointer direct_declarator						{$$ = $2;}
+	: pointer direct_declarator						{$$ = $2; char *ch = (char*)malloc(sizeof(char)*(strlen($1)+strlen($2->name)+2));
+													strcpy(ch,$1); strcat(ch, $$->name);
+													char* tmp = $$->name; $$->name = ch; free(tmp);}
 	| direct_declarator								{$$ = $1;}
 	;
 
@@ -309,10 +323,10 @@ direct_declarator
 	;
 
 pointer
-	: '*'											{}
-	| '*' type_qualifier_list						{}
-	| '*' pointer									{}
-	| '*' type_qualifier_list pointer				{}
+	: '*'											{$$ = (char*)malloc(2*sizeof(char)); strcpy($$,"*");}
+	| '*' type_qualifier_list						{$$ = (char*)malloc(2*sizeof(char)); strcpy($$,"*");}
+	| '*' pointer									{$$ = (char*)realloc((void*)$2,(strlen($2)+1)*sizeof(char)); strcat($$,"*");}
+	| '*' type_qualifier_list pointer				{$$ = (char*)realloc((void*)$3,(strlen($3)+1)*sizeof(char)); strcat($$,"*");}
 	;
 
 type_qualifier_list
@@ -343,26 +357,26 @@ identifier_list
 	;
 
 type_name
-	: specifier_qualifier_list						{}
-	| specifier_qualifier_list abstract_declarator	{}
+	: specifier_qualifier_list						{$$ = $1;}
+	| specifier_qualifier_list abstract_declarator	{$$ = $1; add_node($$,$2);}
 	;
 
 abstract_declarator
-	: pointer										{}
-	| direct_abstract_declarator					{}
-	| pointer direct_abstract_declarator			{}
+	: pointer										{$$ = node_(0,$1,-1);}
+	| direct_abstract_declarator					{$$ = $1;}
+	| pointer direct_abstract_declarator			{$$ = node_(2,"abs_decl",-1); $$->v[0] = node_(0,$1,-1); $$->v[1] = $2;}
 	;
 
 direct_abstract_declarator
-	: '(' abstract_declarator ')'								{}
-	| '[' ']'													{}
-	| '[' constant_expression ']'								{}
-	| direct_abstract_declarator '[' ']'						{}
-	| direct_abstract_declarator '[' constant_expression ']'	{}
-	| '(' ')'													{}
-	| '(' parameter_type_list ')'								{}
-	| direct_abstract_declarator '(' ')'						{}
-	| direct_abstract_declarator '(' parameter_type_list ')'	{}
+	: '(' abstract_declarator ')'								{$$ = node_(1,"()",-1); $$->v[0]=$2;}
+	| '[' ']'													{$$ = node_(0,"[]",-1);}
+	| '[' constant_expression ']'								{$$ = node_(1,"[]",-1); $$->v[0]=$2;}
+	| direct_abstract_declarator '[' ']'						{$$ = $1; add_node($$, node_(0,"[]",-1));}
+	| direct_abstract_declarator '[' constant_expression ']'	{$$ = $1; node* x = node_(1,"[]",-1); x->v[0]=$3; add_node($$,x);}
+	| '(' ')'													{$$ = node_(0,"()",-1);}
+	| '(' parameter_type_list ')'								{$$ = node_(0,"()",-1);}
+	| direct_abstract_declarator '(' ')'						{$$ = $1; add_node($$, node_(0,"()",-1));}
+	| direct_abstract_declarator '(' parameter_type_list ')'	{$$ = $1; add_node($$, node_(0,"()",-1));}
 	;
 
 initializer
@@ -397,8 +411,8 @@ compound_statement
 	| '{' declaration_list '}'									{if($2 == NULL)
 																	$$ = node_(0,"{}",-1);
 																else{
-																	$$ = node_(1,"{}",-1);
-																	$$->v[0] = $2;
+																	//$$ = node_(1,"{}",-1);
+																	$$ = $2;
 																}}
 	| '{' declaration_list statement_list '}'					{if($2 == NULL)
 																	$$ = $3;
@@ -478,8 +492,8 @@ external_declaration
 	;
 
 function_definition
-	: declaration_specifiers declarator declaration_list compound_statement		{$$ = $4;}
-	| declaration_specifiers declarator compound_statement						{$$ = $3;}
-	| declarator declaration_list compound_statement							{$$ = $3;}
-	| declarator compound_statement												{$$ = $2;}
+	: declaration_specifiers declarator declaration_list compound_statement		{$$ = node_(1,$2->name,-1); $$->v[0] = $4;}
+	| declaration_specifiers declarator compound_statement						{$$ = node_(1,$2->name,-1); $$->v[0] = $3;}
+	| declarator declaration_list compound_statement							{$$ = node_(1,$1->name,-1); $$->v[0] = $3;}
+	| declarator compound_statement												{$$ = node_(1,$1->name,-1); $$->v[0] = $2;}
 	;

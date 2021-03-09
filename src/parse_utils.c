@@ -19,4 +19,16 @@ node* node_(int x, char * s, int token){
 void add_node(node* par, node* add){
 	par->v = (node**)realloc((void*)par->v,(par->sz+1)*sizeof(node*));
 	par->v[par->sz++] = add;
+	return;
+}
+
+void push_front(node* par, node* add){
+	par->v = (node**)realloc((void*)par->v,(par->sz+1)*sizeof(node*));
+	par->sz++;
+	for(int i=par->sz-1;i>0;i--)
+	{
+		par->v[i] = par->v[i-1];
+	}
+	par->v[0] = add;
+	return;
 }
