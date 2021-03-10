@@ -118,7 +118,7 @@ int column = 1;
 int line  = 1;
 
 void yyerror(char* yytext){
-	printf("ERROR at line %d column %d: %s is invalid.\n", line, column, yytext);
+	printf("ERROR at line %d: %s\n", line, yytext);
 	column++;
 }
 
