@@ -7,6 +7,7 @@ int main()
 	z = 15, x = 2;
 	z >>= 2;
 	z = z<<3;
+	++x++;
 	if(x)
 		z = 12;
 	else

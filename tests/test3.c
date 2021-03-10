@@ -38,7 +38,7 @@ int main(){
     printf("Memory occupied by union : %d\n", sizeof(node));
     printf("Memory occupied by struct : %d\n", sizeof(t1));
     printf("Memory occupied by long long int :%d\n", sizeof(long long int));
-    printf("Memory occupied by long long int* :%d\n", sizeof(long long int*));
+    printf("Memory occupied by long long int* :%d\n", sizeof(long long int* const * * volatile const));
 
     return 0;
 }
