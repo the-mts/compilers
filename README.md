@@ -31,5 +31,5 @@ $ ./bin/parser ./tests/testfile.c -o dotname.dot -g
 To visualize the AST graph, use the `dot` package and give the generated `DOT` file as input. This will generate a PostScript file of the graph.
 
 ```console
-$ dot -Tps graph1.dot -o graph1.ps
+$ dot -Tps dotname.dot -o graph.ps
 ```
