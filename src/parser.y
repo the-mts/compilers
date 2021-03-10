@@ -23,13 +23,13 @@
 %token <id> CASE DEFAULT IF ELSE SWITCH WHILE DO FOR GOTO CONTINUE BREAK RETURN
 %token <id> ',' '^' '|' ';' '{' '}' '[' ']' '(' ')' '+' '-' '%' '/' '*' '.' '>' '<' '&' '=' '!' '~' ':' '?'
 
-%type <id> unary_operator assignment_operator storage_class_specifier struct_or_union pointer
+%type <id> unary_operator assignment_operator storage_class_specifier struct_or_union
 %type <nodes> primary_expression postfix_expression argument_expression_list unary_expression type_specifier 
 %type <nodes> cast_expression multiplicative_expression additive_expression shift_expression relational_expression 
 %type <nodes> equality_expression and_expression exclusive_or_expression inclusive_or_expression logical_and_expression 
 %type <nodes> logical_or_expression conditional_expression assignment_expression expression 
 %type <nodes> constant_expression declaration declaration_specifiers init_declarator_list init_declarator 
-%type <nodes> struct_or_union_specifier struct_declaration_list 
+%type <nodes> struct_or_union_specifier struct_declaration_list pointer	
 %type <nodes> struct_declaration specifier_qualifier_list struct_declarator_list struct_declarator enum_specifier 
 %type <nodes> enumerator_list enumerator type_qualifier declarator direct_declarator 
 %type <nodes> type_qualifier_list parameter_type_list parameter_list parameter_declaration 
@@ -265,8 +265,8 @@ specifier_qualifier_list
 														$$ = $2; push_front($$,$1);
 													}}
 	| type_specifier								{$$ = node_(1,"type_list",-1); $$->v[0] = $1;}
-	| type_qualifier specifier_qualifier_list		{$$ = $2;}
-	| type_qualifier								{$$ = NULL;}
+	| type_qualifier specifier_qualifier_list		{$$ = $2; push_front($$, $1);}
+	| type_qualifier								{$$ = node_(1,"type_list",-1); $$->v[0] = $1;}
 	;
 
 struct_declarator_list
@@ -301,8 +301,8 @@ enumerator
 	;
 
 type_qualifier
-	: CONST											{}
-	| VOLATILE										{}
+	: CONST											{$$ = node_(0,$1,CONST);}
+	| VOLATILE										{$$ = node_(0,$1,VOLATILE);}
 	;
 
 declarator
@@ -324,15 +324,15 @@ direct_declarator
 	;
 
 pointer
-	: '*'											{$$ = (char*)malloc(2*sizeof(char)); strcpy($$,"*");}
-	| '*' type_qualifier_list						{$$ = (char*)malloc(2*sizeof(char)); strcpy($$,"*");}
-	| '*' pointer									{$$ = (char*)realloc((void*)$2,(strlen($2)+1)*sizeof(char)); strcat($$,"*");}
-	| '*' type_qualifier_list pointer				{$$ = (char*)realloc((void*)$3,(strlen($3)+1)*sizeof(char)); strcat($$,"*");}
+	: '*'											{$$ = node_(1,"pointer",-1); $$->v[0] = node_(0,"*",-1);}
+	| '*' type_qualifier_list						{$$ = node_(2,"pointer",-1); $$->v[0] = node_(0,"*",-1); $$->v[1] = $2;}
+	| '*' pointer									{node* x = node_(0,"*",-1); $$ = $2; push_front($$, x);}
+	| '*' type_qualifier_list pointer				{$$ = $3; node* x = node_(0,"*",-1); push_front($$, $2); push_front($$, x);}
 	;
 
 type_qualifier_list
-	: type_qualifier								{}
-	| type_qualifier_list type_qualifier			{}
+	: type_qualifier								{$$ = node_(1, "type_qual",-1); $$->v[0] = $1;}
+	| type_qualifier_list type_qualifier			{$$ = $1; add_node($$, $2);}
 	;
 
 
@@ -363,9 +363,9 @@ type_name
 	;
 
 abstract_declarator
-	: pointer										{$$ = node_(0,$1,-1);}
+	: pointer										{$$ = $1;}
 	| direct_abstract_declarator					{$$ = $1;}
-	| pointer direct_abstract_declarator			{$$ = node_(2,"abs_decl",-1); $$->v[0] = node_(0,$1,-1); $$->v[1] = $2;}
+	| pointer direct_abstract_declarator			{$$ = node_(2,"abs_decl",-1); $$->v[0] = $1; $$->v[1] = $2;}
 	;
 
 direct_abstract_declarator
@@ -375,9 +375,9 @@ direct_abstract_declarator
 	| direct_abstract_declarator '[' ']'						{$$ = $1; add_node($$, node_(0,"[]",-1));}
 	| direct_abstract_declarator '[' constant_expression ']'	{$$ = $1; node* x = node_(1,"[]",-1); x->v[0]=$3; add_node($$,x);}
 	| '(' ')'													{$$ = node_(0,"()",-1);}
-	| '(' parameter_type_list ')'								{$$ = node_(0,"()",-1);}
+	| '(' parameter_type_list ')'								{$$ = node_(0,"()",-1); /*$$->v[0] = $2;*/}
 	| direct_abstract_declarator '(' ')'						{$$ = $1; add_node($$, node_(0,"()",-1));}
-	| direct_abstract_declarator '(' parameter_type_list ')'	{$$ = $1; add_node($$, node_(0,"()",-1));}
+	| direct_abstract_declarator '(' parameter_type_list ')'	{$$ = $1; add_node($$, node_(0,"()",-1));/* $$->v[$$->sz-1]->v[0] = $3;*/}
 	;
 
 initializer

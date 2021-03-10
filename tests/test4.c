@@ -1,12 +1,9 @@
+int fun(const int* a, const long long int* b)
+{
+	scanf("%d %d \n", &a, &b);
+}
+
 void main()
 {
-	<%
-	int x = 8, a[x];
-	a[0] = 2;
-	a[0] |= 1;
-	a[0] ^= 1;
-	a[1] = a[0]&2;
-	a[2] = 2341.019E-9;
-	%>
-	printf("%d\n", .2e+23);
+	printf("%d\n", sizeof(int const * const * const volatile const const *));	
 }
