@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "parse_utils.h"
+using namespace std;
 
 node* node_(int x, char * s, int token){
 	node * tmp = (node*)malloc(sizeof(node));

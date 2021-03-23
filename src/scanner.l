@@ -126,12 +126,16 @@ void comment_(){
 	return;
 }
 
+int yywrap(){
+	return 1;
+}
+
 void comment()
 {
 	char c, c1;
 
 loop:
-	while ((c = input()) != '*' && c != 0){
+	while ((c = yyinput()) != '*' && c != 0){
 		if(c=='\n'){
 			line++;
 			column = 1;
@@ -143,7 +147,7 @@ loop:
 
 	if (c=='*') column++;
 		
-	if ((c1 = input()) != '/' && c != 0)
+	if ((c1 = yyinput()) != '/' && c != 0)
 	{
 		unput(c1);
 		goto loop;

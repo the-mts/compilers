@@ -1,5 +1,8 @@
-
-int main(int argc){
-	int abc;
-	printf("%d ", sizeof(long long int));
+int fun()
+{
+	return 0;
+}
+int main(){
+	printf("%d\n", 0);
+	return 0;
 }

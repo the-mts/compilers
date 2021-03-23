@@ -3,10 +3,14 @@
 	#include<stdlib.h>
 	#include "parse_utils.h"
 	#include "symtab.h"
+	using namespace std;
 	struct node* root;
 	void yyerror(char*s);
 	extern int yylex();
 	extern int yyparse();
+	string data_type = "";
+	string params = "";
+	vector<pair<string, string>> func_params;
 %}
 %union {
 	struct node* nodes;
@@ -38,6 +42,9 @@
 %type <nodes> initializer_list statement labeled_statement compound_statement declaration_list 
 %type <nodes> statement_list expression_statement selection_statement iteration_statement jump_statement 
 %type <nodes> translation_unit external_declaration function_definition augment_state
+
+
+%type <nodes> M1
 
 %start augment_state
 %%
@@ -315,11 +322,20 @@ declarator
 	;
 
 direct_declarator
-	: IDENTIFIER										{$$ = node_(0,$1,IDENTIFIER);}
+	: IDENTIFIER										{$$ = node_(0,$1,IDENTIFIER); $$->node_name = $1;}
 	| '(' declarator ')'								{$$ = $2;}
 	| direct_declarator '[' constant_expression ']'		{$$ = node_(2,"[]",-1); $$->v[0] = $1; $$->v[1] = $3;}
 	| direct_declarator '[' ']'							{$$ = $1;}
-	| direct_declarator '(' parameter_type_list ')'		{$$ = node_(2,"()",-1); $$->v[0] = $1, $$->v[1] = $3;}
+	| direct_declarator '(' {func_params.clear()}
+	parameter_type_list ')'								{
+															if($$->node_type == 1){
+																printf("Wrong declaration of function %s \n", ($1->node_name).c_str());
+																exit(-1);
+															}
+															$$ = node_(2,"()",-1); 
+															$$->v[0] = $1, $$->v[1] = $4;
+															$$->node_type = 1;
+														}
 	| direct_declarator '(' identifier_list ')'			{$$ = node_(2,"()",-1); $$->v[0] = $1, $$->v[1] = $3;}
 	| direct_declarator '(' ')'							{$$ = $1;}
 	;
@@ -408,21 +424,37 @@ labeled_statement
 	;
 
 compound_statement
-	: '{' '}'													{$$ = node_(0,"{}",-1);}
-	| '{' statement_list '}'									{$$ = $2;}
-	| '{' declaration_list '}'									{if($2 == NULL)
+	: M1 '{' '}' M2												{$$ = node_(0,"{}",-1);}
+	| M1 '{' statement_list '}' M2								{$$ = $3;}
+	| M1 '{' declaration_list '}' M2							{if($3 == NULL)
 																	$$ = node_(0,"{}",-1);
 																else{
 																	//$$ = node_(1,"{}",-1);
-																	$$ = $2;
-																}}
-	| '{' declaration_list statement_list '}'					{if($2 == NULL)
 																	$$ = $3;
+																}}
+	| M1 '{' declaration_list statement_list '}' M2				{if($3 == NULL)
+																	$$ = $4;
 																else{
 																	$$ = node_(2,"{}",-1);
-																	$$->v[0] = $2;
-																	$$->v[1] = $3;
+																	$$->v[0] = $3;
+																	$$->v[1] = $4;
 																}}
+	;
+
+M1
+	: 	/* empty */	 											{	
+																	new_scope();
+																	for(auto p: func_params){
+																		st_entry* tmp = add_entry(p.second, p.first, 0, 0, IS_VAR);    //IS_VAR to be changed
+																	}
+																	func_params.clear();
+																}
+	;
+
+M2
+	: 	/* empty */												{
+																	scope_cleanup();
+																}
 	;
 
 declaration_list
@@ -494,8 +526,82 @@ external_declaration
 	;
 
 function_definition
-	: declaration_specifiers declarator compound_statement						{$$ = node_(2,"fun_def",-1); $$->v[0] = $2; $$->v[1] = $3;}
-	| declarator compound_statement												{$$ = node_(2,"fun_def",-1); $$->v[0] = $1; $$->v[1] = $2;}
+	: declaration_specifiers declarator {	
+											st_entry* tmp = lookup($2->node_name); 
+											if(tmp!=NULL && tmp->type_name != IS_FUNC){
+												printf("Conflicting declarations of %s\n",($2->node_name).c_str());
+												exit(-1);
+											}
+											if(tmp!=NULL && tmp->type_name == IS_FUNC && tmp->is_init==1){
+												printf("Conflicting definitions of %s\n",($2->node_name).c_str());
+												exit(-1);
+											}
+											if(tmp!=NULL && tmp->type != $1->node_data){
+												printf("Conflicting definitions of %s\n",($2->node_name).c_str());
+												exit(-1);
+											}
+											if(tmp!=NULL){
+												if(func_params.size()!=tmp->arg_list->size()){
+													printf("Conflicting number of parameters in declaration and definition of %s\n",($2->node_name).c_str());
+													exit(-1);
+												}
+												for(int i = 0; i < func_params.size(); i++){
+													if(func_params[i].first != (*(tmp->arg_list))[i].first){
+														printf("Conflicting parameter types in declaration and definition of %s\n",($2->node_name).c_str());	
+														exit(-1);
+													}
+													(*(tmp->arg_list))[i].second = func_params[i].second;
+												}
+											}
+											else{
+												st_entry* func_entry = add_entry($2->node_name, $1->node_data, 0, 0);
+												func_entry->type_name = IS_FUNC;
+												func_entry->is_init = 1;
+											}
+										} 
+
+	compound_statement					{
+											$$ = node_(2,"fun_def",-1); $$->v[0] = $2; $$->v[1] = $4;
+											st_entry* tmp = lookup($2->node_name); 
+											tmp->sym_table = curr->v.back()->val;
+										}
+
+	| declarator 						{
+											st_entry* tmp = lookup($1->node_name); 
+											if(tmp != NULL && tmp->type_name != IS_FUNC){
+												printf("Conflicting declarations of %s\n",($1->node_name).c_str());
+												exit(-1);
+											}
+											if(tmp != NULL && tmp->type_name == IS_FUNC && tmp->is_init==1){
+												printf("Conflicting definitions of %s\n",($1->node_name).c_str());
+												exit(-1);
+											}
+											if(tmp!=NULL){
+												if(func_params.size()!=tmp->arg_list->size()){
+													printf("Conflicting number of parameters in declaration and definition of %s\n",($1->node_name).c_str());
+													exit(-1);
+												}
+												for(int i = 0; i < func_params.size(); i++){
+													if(func_params[i].first != (*(tmp->arg_list))[i].first){
+														printf("Conflicting parameter types in declaration and definition of %s\n",($1->node_name).c_str());	
+														exit(-1);
+													}
+													(*(tmp->arg_list))[i].second = func_params[i].second;
+												}
+											}
+											else{
+												st_entry* func_entry = add_entry($1->node_name, "int", 0, 0);
+												func_entry->type_name = IS_FUNC;
+												func_entry->is_init = 1;
+											}
+										}
+
+	compound_statement					{
+											$$ = node_(2,"fun_def",-1); $$->v[0] = $1; $$->v[1] = $3; 
+											st_entry* tmp = lookup($1->node_name); 
+											tmp->sym_table = curr->v.back()->val;
+										}
 	| declaration_specifiers declarator declaration_list compound_statement		{$$ = node_(1,$2->name,-1); $$->v[0] = $4;/*not used*/}
 	| declarator declaration_list compound_statement							{$$ = node_(1,$1->name,-1); $$->v[0] = $3;/*not used*/}
 	;
+
