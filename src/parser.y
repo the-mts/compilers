@@ -67,8 +67,8 @@ argument_expression_list
 
 unary_expression
 	: postfix_expression										{$$ = $1;}
-	| INC_OP unary_expression									{$$ = node_(1,"++arg",-1); $$->v[0] = $2;}
-	| DEC_OP unary_expression									{$$ = node_(1,"--arg",-1); $$->v[0] = $2;}
+	| INC_OP unary_expression									{$$ = node_(1,"++exp",-1); $$->v[0] = $2;}
+	| DEC_OP unary_expression									{$$ = node_(1,"--exp",-1); $$->v[0] = $2;}
 	| unary_operator cast_expression							{$$ = node_(1,$1,-1); $$->v[0] = $2;}
 	| SIZEOF unary_expression									{$$ = node_(1,"SIZEOF_unary",-1); $$->v[0] = $2;}
 	| SIZEOF '(' type_name ')'									{$$ = node_(1,"SIZEOF_type",-1); $$->v[0] = $3;}

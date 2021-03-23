@@ -33,3 +33,9 @@ To visualize the AST graph, use the `dot` package and give the generated `DOT` f
 ```console
 $ dot -Tps dotname.dot -o graph.ps
 ```
+
+To view the generated PostScript file of the graph, use any PS viewer such as Evince.
+
+```console
+$ evince a.ps 
+```
