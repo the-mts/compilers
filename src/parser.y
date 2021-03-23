@@ -2,6 +2,7 @@
 	#include<string.h>
 	#include<stdlib.h>
 	#include "parse_utils.h"
+	#include "symtab.h"
 	struct node* root;
 	void yyerror(char*s);
 	extern int yylex();
@@ -493,8 +494,8 @@ external_declaration
 	;
 
 function_definition
-	: declaration_specifiers declarator declaration_list compound_statement		{$$ = node_(1,$2->name,-1); $$->v[0] = $4;}
-	| declaration_specifiers declarator compound_statement						{$$ = node_(2,"fun_def",-1); $$->v[0] = $2; $$->v[1] = $3;}
-	| declarator declaration_list compound_statement							{$$ = node_(1,$1->name,-1); $$->v[0] = $3;}
+	: declaration_specifiers declarator compound_statement						{$$ = node_(2,"fun_def",-1); $$->v[0] = $2; $$->v[1] = $3;}
 	| declarator compound_statement												{$$ = node_(2,"fun_def",-1); $$->v[0] = $1; $$->v[1] = $2;}
+	| declaration_specifiers declarator declaration_list compound_statement		{$$ = node_(1,$2->name,-1); $$->v[0] = $4;/*not used*/}
+	| declarator declaration_list compound_statement							{$$ = node_(1,$1->name,-1); $$->v[0] = $3;/*not used*/}
 	;

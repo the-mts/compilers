@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "y.tab.h"
 #include "parse_utils.h"
+#include "symtab.h"
 extern FILE* yyin;
 extern char yytext[];
 extern node* root;
@@ -71,6 +72,7 @@ int main(int argc, char const* argv[]){
 			j++;
 		}
 	}
+	init_symtab();
 	int x = yyparse();
 	if(x != 0){
 		return -1;
