@@ -188,14 +188,24 @@ constant_expression
 
 declaration
 	: declaration_specifiers ';'								{$$ = NULL;}
-	| declaration_specifiers init_declarator_list ';'			{$$ = $2;}
+	| declaration_specifiers M3 init_declarator_list ';'		{$$ = $3; data_type = "";}
 	;
 
 declaration_specifiers
 	: storage_class_specifier									{}
 	| storage_class_specifier declaration_specifiers			{}
-	| type_specifier											{}
-	| type_specifier declaration_specifiers						{}
+	| type_specifier											{
+																	$$ = node_(1,"type_name",-1);
+																	$$->v[0] = $1;
+																	$$->node_data+=" ";
+																	$$->node_data+=$1->node_data;
+																}
+	| type_specifier declaration_specifiers						{
+																	add_node($2,$1);
+																	$$ = $2;
+																	$$->node_data+=" ";
+																	$$->node_data+=$1->node_data;
+																}
 	| type_qualifier											{}
 	| type_qualifier declaration_specifiers						{}
 	;
@@ -215,8 +225,26 @@ init_declarator_list
 	;
 
 init_declarator
-	: declarator												{$$ = NULL; free($1);}
-	| declarator '=' initializer								{$$ = node_(2,"=",-1); $$->v[0] = $1; $$->v[1] = $3;}
+	: declarator												{
+																	if($1->node_type == 1){
+																		st_entry* tmp = add_entry($1->name, data_type, 0, 0, IS_FUNC);
+																		vector<pair<string,string>> temp = func_params;
+																		tmp->arg_list = &temp;//func_params clear
+																	}
+																	else{
+																		st_entry* tmp = add_entry($1->name, data_type, 0, 0, IS_VAR);
+																	}
+																	$$ = NULL; free($1);}
+	| declarator '=' initializer								{
+																	$$ = node_(2,"=",-1); $$->v[0] = $1; $$->v[1] = $3;
+																	if($1->node_type == 1){
+																		printf("Funtion pointers not supported\n");
+																		exit(-1);
+																	}
+																	else{
+																		st_entry* tmp = add_entry($1->name, data_type, 0, 0, IS_VAR);
+																	}
+																}
 	;
 
 storage_class_specifier
@@ -228,15 +256,15 @@ storage_class_specifier
 	;
 
 type_specifier
-	: VOID														{$$ = node_(0,$1,-1);}
-	| CHAR														{$$ = node_(0,$1,-1);}
-	| SHORT														{$$ = node_(0,$1,-1);}
-	| INT														{$$ = node_(0,$1,-1);}
-	| LONG														{$$ = node_(0,$1,-1);}
-	| FLOAT														{$$ = node_(0,$1,-1);}
-	| DOUBLE													{$$ = node_(0,$1,-1);}
-	| SIGNED													{$$ = node_(0,$1,-1);}
-	| UNSIGNED													{$$ = node_(0,$1,-1);}
+	: VOID														{$$ = node_(0,$1,-1); $$->node_data = string($1);}
+	| CHAR														{$$ = node_(0,$1,-1); $$->node_data = string($1);}
+	| SHORT														{$$ = node_(0,$1,-1); $$->node_data = string($1);}
+	| INT														{$$ = node_(0,$1,-1); $$->node_data = string($1);}
+	| LONG														{$$ = node_(0,$1,-1); $$->node_data = string($1);}
+	| FLOAT														{$$ = node_(0,$1,-1); $$->node_data = string($1);}
+	| DOUBLE													{$$ = node_(0,$1,-1); $$->node_data = string($1);}
+	| SIGNED													{$$ = node_(0,$1,-1); $$->node_data = string($1);}
+	| UNSIGNED													{$$ = node_(0,$1,-1); $$->node_data = string($1);}
 	| struct_or_union_specifier									{$$ = $1;}
 	| enum_specifier											{$$ = $1;}
 	| TYPE_NAME													{}
@@ -313,38 +341,45 @@ type_qualifier
 	| VOLATILE										{$$ = node_(0,$1,VOLATILE);}
 	;
 
-declarator
-	: pointer direct_declarator						{/*$$ = $2; char *ch = (char*)malloc(sizeof(char)*(strlen($1)+strlen($2->name)+2));
-													strcpy(ch,$1); strcat(ch, $$->name);
-													char* tmp = $$->name; $$->name = ch; free(tmp);*/
-													$$ = $2;}
+declarator /**/
+	: pointer direct_declarator						{$$ = $2; add_node($$,$1);}
 	| direct_declarator								{$$ = $1;}
 	;
 
 direct_declarator
 	: IDENTIFIER										{$$ = node_(0,$1,IDENTIFIER); $$->node_name = $1;}
-	| '(' declarator ')'								{$$ = $2;}
+	| '(' declarator ')'								{$$ = $2;/**/printf("Error direct_declarator -> ( declarator ) reduce.\n"); exit(-1);}
 	| direct_declarator '[' constant_expression ']'		{$$ = node_(2,"[]",-1); $$->v[0] = $1; $$->v[1] = $3;}
 	| direct_declarator '[' ']'							{$$ = $1;}
-	| direct_declarator '(' {func_params.clear()}
+	| direct_declarator '(' {func_params.clear();}
 	parameter_type_list ')'								{
-															if($$->node_type == 1){
+															if($1->node_type == 1){
 																printf("Wrong declaration of function %s \n", ($1->node_name).c_str());
 																exit(-1);
 															}
 															$$ = node_(2,"()",-1); 
 															$$->v[0] = $1, $$->v[1] = $4;
 															$$->node_type = 1;
+															$$->node_name = $1->node_name;
 														}
-	| direct_declarator '(' identifier_list ')'			{$$ = node_(2,"()",-1); $$->v[0] = $1, $$->v[1] = $3;}
-	| direct_declarator '(' ')'							{$$ = $1;}
+	| direct_declarator '(' identifier_list ')'			{$$ = node_(2,"()",-1); $$->v[0] = $1, $$->v[1] = $3; $$->node_name = $1->node_name;}
+	| direct_declarator '(' {func_params.clear();} ')'							{
+															if($1->node_type == 1){
+																printf("Wrong declaration of function %s \n", ($1->node_name).c_str());
+																exit(-1);
+															}
+															$$ = node_(1,"()",-1);
+															$$->v[0] = $1; 
+															$$->node_type = 1;
+															$$->node_name = $1->node_name;
+														}
 	;
 
 pointer
-	: '*'											{$$ = node_(1,"pointer",-1); $$->v[0] = node_(0,"*",-1);}
-	| '*' type_qualifier_list						{$$ = node_(2,"pointer",-1); $$->v[0] = node_(0,"*",-1); $$->v[1] = $2;}
-	| '*' pointer									{node* x = node_(0,"*",-1); $$ = $2; push_front($$, x);}
-	| '*' type_qualifier_list pointer				{$$ = $3; node* x = node_(0,"*",-1); push_front($$, $2); push_front($$, x);}
+	: '*'											{$$ = node_(1,"pointer",-1); $$->v[0] = node_(0,"*",-1); $$->node_type = 1;}
+	| '*' type_qualifier_list						{$$ = node_(2,"pointer",-1); $$->v[0] = node_(0,"*",-1); $$->v[1] = $2;$$->node_type++;}
+	| '*' pointer									{node* x = node_(0,"*",-1); $$ = $2; push_front($$, x); $$->node_type++;}
+	| '*' type_qualifier_list pointer				{$$ = $3; node* x = node_(0,"*",-1); push_front($$, $2); push_front($$, x);$$->node_type++;}
 	;
 
 type_qualifier_list
@@ -526,35 +561,36 @@ external_declaration
 	;
 
 function_definition
-	: declaration_specifiers declarator {	
-											st_entry* tmp = lookup($2->node_name); 
+	: declaration_specifiers M3 declarator {	
+											st_entry* tmp = lookup($3->node_name); 
 											if(tmp!=NULL && tmp->type_name != IS_FUNC){
-												printf("Conflicting declarations of %s\n",($2->node_name).c_str());
+												printf("Conflicting declarations of %s\n",($3->node_name).c_str());
 												exit(-1);
 											}
 											if(tmp!=NULL && tmp->type_name == IS_FUNC && tmp->is_init==1){
-												printf("Conflicting definitions of %s\n",($2->node_name).c_str());
+												printf("Conflicting definitions of %s\n",($3->node_name).c_str());
 												exit(-1);
 											}
 											if(tmp!=NULL && tmp->type != $1->node_data){
-												printf("Conflicting definitions of %s\n",($2->node_name).c_str());
+												printf("Conflicting definitions of %s\n",($3->node_name).c_str());
 												exit(-1);
 											}
 											if(tmp!=NULL){
 												if(func_params.size()!=tmp->arg_list->size()){
-													printf("Conflicting number of parameters in declaration and definition of %s\n",($2->node_name).c_str());
+													printf("Conflicting number of parameters in declaration and definition of %s\n",($3->node_name).c_str());
 													exit(-1);
 												}
 												for(int i = 0; i < func_params.size(); i++){
 													if(func_params[i].first != (*(tmp->arg_list))[i].first){
-														printf("Conflicting parameter types in declaration and definition of %s\n",($2->node_name).c_str());	
+														printf("Conflicting parameter types in declaration and definition of %s\n",($3->node_name).c_str());	
 														exit(-1);
 													}
 													(*(tmp->arg_list))[i].second = func_params[i].second;
 												}
 											}
 											else{
-												st_entry* func_entry = add_entry($2->node_name, $1->node_data, 0, 0);
+												st_entry* func_entry = add_entry($3->node_name, $1->node_data, 0, 0);
+												data_type = "";
 												func_entry->type_name = IS_FUNC;
 												func_entry->is_init = 1;										//added func_params
 												vector<pair<string, string>> tmp = func_params;
@@ -563,8 +599,8 @@ function_definition
 										} 
 
 	compound_statement					{
-											$$ = node_(2,"fun_def",-1); $$->v[0] = $2; $$->v[1] = $4;
-											st_entry* tmp = lookup($2->node_name); 
+											$$ = node_(2,"fun_def",-1); $$->v[0] = $3; $$->v[1] = $5;
+											st_entry* tmp = lookup($3->node_name); 
 											tmp->sym_table = curr->v.back()->val;
 										}
 
@@ -605,7 +641,9 @@ function_definition
 											st_entry* tmp = lookup($1->node_name); 
 											tmp->sym_table = curr->v.back()->val;
 										}
-	| declaration_specifiers declarator declaration_list compound_statement		{$$ = node_(1,$2->name,-1); $$->v[0] = $4;/*not used*/}
+	| declaration_specifiers M3 declarator declaration_list compound_statement		{$$ = node_(1,$3->name,-1); $$->v[0] = $5;/*not used*/}
 	| declarator declaration_list compound_statement							{$$ = node_(1,$1->name,-1); $$->v[0] = $3;/*not used*/}
 	;
 
+M3
+	: /*empty*/										{data_type = $<nodes>0->node_data;}

@@ -2,7 +2,7 @@
 #include <unordered_map>
 #include <vector>
 using namespace std;
-enum sym_type {UNDEFINED, IS_FUNC, IS_STRUCT, IS_VAR, TYPE__NAME};
+enum sym_type {UNDEFINED, IS_FUNC, IS_STRUCT, IS_VAR, IS_TYPE};
 
 typedef unordered_map<string, struct st_entry*> symtab;
 
