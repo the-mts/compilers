@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <iostream>
 #include "y.tab.h"
 #include "parse_utils.h"
 #include "symtab.h"
@@ -9,6 +10,39 @@ extern node* root;
 extern int column;
 extern int yydebug;
 FILE* out_file;
+
+/*  
+	string type;
+	unsigned long size;
+	long offset;
+	int is_init;
+	enum sym_type type_name;
+	symtab* sym_table;
+	vector<pair<string, string>> *arg_list;
+*/
+
+void print_table(symtab* table){
+	for(auto i = table->begin(); i != table->end(); i++){
+		st_entry* temp = i->second;
+		cout << i->first << "\t\t\t" << temp->type << "\t\t\t" << temp->size << "\t\n";
+		if(temp->type_name == IS_FUNC){
+			cout<< "\t\tFunction Symbol Table Pointer: " << temp->sym_table<<endl;
+			cout<< "\t\tArguments:\n";
+			for(auto i : *(temp->arg_list)){
+				cout<< "\t\t\t" << i.second << " (" << i.first << ")\n";
+			}
+		}
+	}
+}
+
+void dfs2(table_tree* u){
+	cout<< "Symbol Table Pointer: "<< u->val<<endl;
+	print_table(u->val);
+	cout<<endl;
+	for(auto i : u->v){
+		dfs2(i);
+	}
+}
 
 int dfs(node* u, int num){
 	int x = num;
@@ -81,5 +115,8 @@ int main(int argc, char const* argv[]){
 	fprintf(out_file,"digraph G {\n");
 	dfs(root,0);
 	fprintf(out_file,"}");
+
+	freopen("symtab.out", "w", stdout);
+	dfs2(st_root);
 	return 0;
 }

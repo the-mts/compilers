@@ -256,15 +256,15 @@ storage_class_specifier
 	;
 
 type_specifier
-	: VOID														{$$ = node_(0,$1,-1); $$->node_data = string($1);}
-	| CHAR														{$$ = node_(0,$1,-1); $$->node_data = string($1);}
-	| SHORT														{$$ = node_(0,$1,-1); $$->node_data = string($1);}
-	| INT														{$$ = node_(0,$1,-1); $$->node_data = string($1);}
-	| LONG														{$$ = node_(0,$1,-1); $$->node_data = string($1);}
-	| FLOAT														{$$ = node_(0,$1,-1); $$->node_data = string($1);}
-	| DOUBLE													{$$ = node_(0,$1,-1); $$->node_data = string($1);}
-	| SIGNED													{$$ = node_(0,$1,-1); $$->node_data = string($1);}
-	| UNSIGNED													{$$ = node_(0,$1,-1); $$->node_data = string($1);}
+	: VOID														{$$ = node_(0,$1,-1); $$->node_data = $1;}
+	| CHAR														{$$ = node_(0,$1,-1); $$->node_data = $1;}
+	| SHORT														{$$ = node_(0,$1,-1); $$->node_data = $1;}
+	| INT														{$$ = node_(0,$1,-1); $$->node_data = $1;}
+	| LONG														{$$ = node_(0,$1,-1); $$->node_data = $1;}
+	| FLOAT														{$$ = node_(0,$1,-1); $$->node_data = $1;}
+	| DOUBLE													{$$ = node_(0,$1,-1); $$->node_data = $1;}
+	| SIGNED													{$$ = node_(0,$1,-1); $$->node_data = $1;}
+	| UNSIGNED													{$$ = node_(0,$1,-1); $$->node_data = $1;}
 	| struct_or_union_specifier									{$$ = $1;}
 	| enum_specifier											{$$ = $1;}
 	| TYPE_NAME													{}
