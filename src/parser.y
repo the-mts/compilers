@@ -556,7 +556,9 @@ function_definition
 											else{
 												st_entry* func_entry = add_entry($2->node_name, $1->node_data, 0, 0);
 												func_entry->type_name = IS_FUNC;
-												func_entry->is_init = 1;
+												func_entry->is_init = 1;										//added func_params
+												vector<pair<string, string>> tmp = func_params;
+												func_entry->arg_list = &tmp;
 											}
 										} 
 
@@ -592,7 +594,9 @@ function_definition
 											else{
 												st_entry* func_entry = add_entry($1->node_name, "int", 0, 0);
 												func_entry->type_name = IS_FUNC;
-												func_entry->is_init = 1;
+												func_entry->is_init = 1;										//added func_params
+												vector<pair<string, string>> tmp = func_params;
+												func_entry->arg_list = &tmp;
 											}
 										}
 
