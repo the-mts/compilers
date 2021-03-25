@@ -29,7 +29,7 @@ void print_table(symtab* table){
 			cout<< "\t\tFunction Symbol Table Pointer: " << temp->sym_table<<endl;
 			cout<< "\t\tArguments:\n";
 			for(auto i : *(temp->arg_list)){
-				cout<< "\t\t\t" << i.second << " (" << i.first << ")\n";
+				cout<< "\t\t\t" << i.second << " (" << i.first << ")\n";/*arg_list not implemented yet*/
 			}
 		}
 	}
