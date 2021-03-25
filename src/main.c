@@ -27,7 +27,7 @@ void print_table(symtab* table){
 		cout << i->first << "\t\t\t" << temp->type << "\t\t\t" << temp->size << "\t\n";
 		if(temp->type_name == IS_FUNC){
 			cout<< "\t\tFunction Symbol Table Pointer: " << temp->sym_table<<endl;
-			cout<< "\t\tArguments:\n";
+			cout<< "\t\tArguments: " << temp->arg_list << " " << temp->arg_list->size() << endl;
 			for(auto i : *(temp->arg_list)){
 				cout<< "\t\t\t" << i.second << " (" << i.first << ")\n";/*arg_list not implemented yet*/
 			}

@@ -226,15 +226,44 @@ init_declarator_list
 
 init_declarator
 	: declarator												{
+																	string data_type_ = data_type;
+																	string cmp;
+																	if($1->sz)
+																		cmp = $1->v[$1->sz-1]->name;
+																	else
+																		cmp = "";
+																	if( cmp == "pointer"){
+																		data_type_+=" ";
+																		for(int i = 0; i < $1->v[$1->sz-1]->node_type; i++)
+																			data_type_+="*";
+																	}
+																	st_entry* tmp = add_entry($1->node_name, data_type_,0,0);
 																	if($1->node_type == 1){
-																		st_entry* tmp = add_entry($1->name, data_type, 0, 0, IS_FUNC);
+																		tmp->type_name = IS_FUNC;
+																		vector<pair<string, string>> *temp = new vector<pair<string, string>>(func_params);
+																		tmp->arg_list = temp;
+																	}
+																	else
+																		tmp->type_name = IS_VAR;
+/*																	if($1->node_type == 1){
+																		st_entry* tmp;
+																		if($1->sz == 2){
+																			string data_type_ = data_type+" ";
+																			for(int i = 0; i < $1->v[0]->node_type; i++)
+																				data_type_+="*";
+																			tmp = add_entry($1->name, data_type_, 0, 0, IS_FUNC);
+																		}
+																		else{
+																			tmp = add_entry($1->name, data_type, 0, 0, IS_FUNC);
+																		}
 																		vector<pair<string,string>> temp = func_params;
 																		tmp->arg_list = &temp;//func_params clear
 																	}
 																	else{
+																		data_type 
 																		st_entry* tmp = add_entry($1->name, data_type, 0, 0, IS_VAR);
 																	}
-																	$$ = NULL; free($1);}
+*/																	$$ = NULL; free($1);}
 	| declarator '=' initializer								{
 																	$$ = node_(2,"=",-1); $$->v[0] = $1; $$->v[1] = $3;
 																	if($1->node_type == 1){
@@ -399,9 +428,27 @@ parameter_list
 	;
 
 parameter_declaration
-	: declaration_specifiers declarator				{$$ = $2;}
-	| declaration_specifiers abstract_declarator	{$$ = NULL;}
-	| declaration_specifiers						{$$ = NULL;}
+	: declaration_specifiers declarator				{
+														$$ = $2;
+														string data_type_ = $1->node_data;
+														string cmp;
+														if($2->sz)
+															cmp = $2->v[$2->sz-1]->name;
+														else
+															cmp = "";
+														if(cmp == "pointer"){
+															data_type_+=" ";
+															for(int i = 0; i < $2->v[$2->sz-1]->node_type; i++)
+																data_type_+="*";
+														}
+														func_params.push_back({data_type_,$2->node_name});
+													}
+	| declaration_specifiers abstract_declarator	{$$ = NULL; /*not handled*/}
+	| declaration_specifiers						{
+														$$ = NULL;
+														string data_type_ = $1->node_data;
+														func_params.push_back({data_type_,""});
+													}
 	;
 
 identifier_list
@@ -593,8 +640,8 @@ function_definition
 												data_type = "";
 												func_entry->type_name = IS_FUNC;
 												func_entry->is_init = 1;										//added func_params
-												vector<pair<string, string>> tmp = func_params;
-												func_entry->arg_list = &tmp;
+												vector<pair<string, string>> *tmp = new vector<pair<string, string>>(func_params);
+												func_entry->arg_list = tmp;
 											}
 										} 
 
@@ -631,8 +678,8 @@ function_definition
 												st_entry* func_entry = add_entry($1->node_name, "int", 0, 0);
 												func_entry->type_name = IS_FUNC;
 												func_entry->is_init = 1;										//added func_params
-												vector<pair<string, string>> tmp = func_params;
-												func_entry->arg_list = &tmp;
+												vector<pair<string, string>> *tmp = new vector<pair<string, string>>(func_params);
+												func_entry->arg_list = tmp;
 											}
 										}
 
