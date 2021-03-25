@@ -8,6 +8,7 @@
 	void yyerror(char*s);
 	extern int yylex();
 	extern int yyparse();
+	extern int line;
 	string data_type = "";
 	string params = "";
 	vector<pair<string, string>> func_params;
@@ -245,25 +246,8 @@ init_declarator
 																	}
 																	else
 																		tmp->type_name = IS_VAR;
-/*																	if($1->node_type == 1){
-																		st_entry* tmp;
-																		if($1->sz == 2){
-																			string data_type_ = data_type+" ";
-																			for(int i = 0; i < $1->v[0]->node_type; i++)
-																				data_type_+="*";
-																			tmp = add_entry($1->name, data_type_, 0, 0, IS_FUNC);
-																		}
-																		else{
-																			tmp = add_entry($1->name, data_type, 0, 0, IS_FUNC);
-																		}
-																		vector<pair<string,string>> temp = func_params;
-																		tmp->arg_list = &temp;//func_params clear
-																	}
-																	else{
-																		data_type 
-																		st_entry* tmp = add_entry($1->name, data_type, 0, 0, IS_VAR);
-																	}
-*/																	$$ = NULL; free($1);}
+																	$$ = NULL; free($1);
+																}
 	| declarator '=' initializer								{
 																	$$ = node_(2,"=",-1); $$->v[0] = $1; $$->v[1] = $3;
 																	if($1->node_type == 1){
@@ -377,13 +361,13 @@ declarator /**/
 
 direct_declarator
 	: IDENTIFIER										{$$ = node_(0,$1,IDENTIFIER); $$->node_name = $1;}
-	| '(' declarator ')'								{$$ = $2;/**/printf("Error direct_declarator -> ( declarator ) reduce.\n"); exit(-1);}
+	| '(' declarator ')'								{$$ = $2;/**/printf("\e[1;31mError [line %d]:\e[0m Direct_declarator -> ( declarator ) reduce.\n", line ); exit(-1);}
 	| direct_declarator '[' constant_expression ']'		{$$ = node_(2,"[]",-1); $$->v[0] = $1; $$->v[1] = $3;}
 	| direct_declarator '[' ']'							{$$ = $1;}
 	| direct_declarator '(' {func_params.clear();}
 	parameter_type_list ')'								{
 															if($1->node_type == 1){
-																printf("Wrong declaration of function %s \n", ($1->node_name).c_str());
+																printf("\e[1;31mError [line %d]:\e[0m Wrong declaration of function %s \n", line , ($1->node_name).c_str());
 																exit(-1);
 															}
 															$$ = node_(2,"()",-1); 
@@ -391,10 +375,20 @@ direct_declarator
 															$$->node_type = 1;
 															$$->node_name = $1->node_name;
 														}
-	| direct_declarator '(' identifier_list ')'			{$$ = node_(2,"()",-1); $$->v[0] = $1, $$->v[1] = $3; $$->node_name = $1->node_name;}
-	| direct_declarator '(' {func_params.clear();} ')'							{
+	| direct_declarator '(' {func_params.clear();} identifier_list ')'			
+														{
 															if($1->node_type == 1){
-																printf("Wrong declaration of function %s \n", ($1->node_name).c_str());
+																printf("\e[1;31mError [line %d]:\e[0m Wrong declaration of function %s \n", line , ($1->node_name).c_str());
+																exit(-1);
+															}
+															$$ = node_(2,"()",-1); 
+															$$->v[0] = $1, $$->v[1] = $4; 
+															$$->node_type = 1;
+															$$->node_name = $1->node_name;
+														}
+	| direct_declarator '(' {func_params.clear();} ')'	{
+															if($1->node_type == 1){
+																printf("\e[1;31mError [line %d]:\e[0m Wrong declaration of function %s %s\n", line , ($1->node_name).c_str(), ($1->name));
 																exit(-1);
 															}
 															$$ = node_(1,"()",-1);
@@ -429,6 +423,10 @@ parameter_list
 
 parameter_declaration
 	: declaration_specifiers declarator				{
+														if($2->node_type == 1){
+															printf("\e[1;31mError [line %d]:\e[0m Functions as parameters are not supported.\n", line );
+															exit(-1);
+														}
 														$$ = $2;
 														string data_type_ = $1->node_data;
 														string cmp;
@@ -452,8 +450,16 @@ parameter_declaration
 	;
 
 identifier_list
-	: IDENTIFIER									{$$ = node_(1,"id_list",-1); $$->v[0] = node_(0,$1,IDENTIFIER);}
-	| identifier_list ',' IDENTIFIER				{add_node($1,node_(0,$3,IDENTIFIER)); $$ = $1;}
+	: IDENTIFIER									{
+														$$ = node_(1,"id_list",-1); 
+														$$->v[0] = node_(0,$1,IDENTIFIER);
+														func_params.push_back({"", $1});
+													}
+	| identifier_list ',' IDENTIFIER				{
+														add_node($1,node_(0,$3,IDENTIFIER)); 
+														$$ = $1;
+														func_params.push_back({"", $3});
+													}
 	;
 
 type_name
@@ -611,25 +617,28 @@ function_definition
 	: declaration_specifiers M3 declarator {	
 											st_entry* tmp = lookup($3->node_name); 
 											if(tmp!=NULL && tmp->type_name != IS_FUNC){
-												printf("Conflicting declarations of %s\n",($3->node_name).c_str());
+												printf("\e[1;31mError [line %d]:\e[0m Conflicting declarations of %s\n", line ,($3->node_name).c_str());
 												exit(-1);
 											}
 											if(tmp!=NULL && tmp->type_name == IS_FUNC && tmp->is_init==1){
-												printf("Conflicting definitions of %s\n",($3->node_name).c_str());
+												printf("\e[1;31mError [line %d]:\e[0m Conflicting definitions of %s\n", line ,($3->node_name).c_str());
 												exit(-1);
 											}
 											if(tmp!=NULL && tmp->type != $1->node_data){
-												printf("Conflicting definitions of %s\n",($3->node_name).c_str());
+												printf("\e[1;31mError [line %d]:\e[0m Conflicting definitions of %s\n", line ,($3->node_name).c_str());
 												exit(-1);
 											}
 											if(tmp!=NULL){
 												if(func_params.size()!=tmp->arg_list->size()){
-													printf("Conflicting number of parameters in declaration and definition of %s\n",($3->node_name).c_str());
+													printf("\e[1;31mError [line %d]:\e[0m Conflicting number of parameters in declaration and definition of %s\n", line ,($3->node_name).c_str());
 													exit(-1);
 												}
 												for(int i = 0; i < func_params.size(); i++){
-													if(func_params[i].first != (*(tmp->arg_list))[i].first){
-														printf("Conflicting parameter types in declaration and definition of %s\n",($3->node_name).c_str());	
+													if(func_params[i].first == ""){
+														func_params[i].first = (*(tmp->arg_list))[i].first; 
+													}
+													else if(func_params[i].first != (*(tmp->arg_list))[i].first){
+														printf("\e[1;31mError [line %d]:\e[0m Conflicting parameter types in declaration and definition of %s\n", line ,($3->node_name).c_str());	
 														exit(-1);
 													}
 													(*(tmp->arg_list))[i].second = func_params[i].second;
@@ -637,6 +646,14 @@ function_definition
 											}
 											else{
 												st_entry* func_entry = add_entry($3->node_name, $1->node_data, 0, 0);
+												if(!func_params.empty() && func_params[0].first == ""){
+													printf("\e[1;35mWarning [line %d]:\e[0m Function parameter type defaults to \"int\"\n", line);
+												}
+												for(int i = 0; i < func_params.size(); i++){
+													if(func_params[i].first == ""){
+														func_params[i].first = "int";
+													}
+												}
 												data_type = "";
 												func_entry->type_name = IS_FUNC;
 												func_entry->is_init = 1;										//added func_params
@@ -654,21 +671,24 @@ function_definition
 	| declarator 						{
 											st_entry* tmp = lookup($1->node_name); 
 											if(tmp != NULL && tmp->type_name != IS_FUNC){
-												printf("Conflicting declarations of %s\n",($1->node_name).c_str());
+												printf("\e[1;31mError [line %d]:\e[0m Conflicting declarations of %s\n", line ,($1->node_name).c_str());
 												exit(-1);
 											}
 											if(tmp != NULL && tmp->type_name == IS_FUNC && tmp->is_init==1){
-												printf("Conflicting definitions of %s\n",($1->node_name).c_str());
+												printf("\e[1;31mError [line %d]:\e[0m Conflicting definitions of %s\n", line ,($1->node_name).c_str());
 												exit(-1);
 											}
 											if(tmp!=NULL){
 												if(func_params.size()!=tmp->arg_list->size()){
-													printf("Conflicting number of parameters in declaration and definition of %s\n",($1->node_name).c_str());
+													printf("\e[1;31mError [line %d]:\e[0m Conflicting number of parameters in declaration and definition of %s\n", line ,($1->node_name).c_str());
 													exit(-1);
 												}
 												for(int i = 0; i < func_params.size(); i++){
-													if(func_params[i].first != (*(tmp->arg_list))[i].first){
-														printf("Conflicting parameter types in declaration and definition of %s\n",($1->node_name).c_str());	
+													if(func_params[i].first == ""){
+														func_params[i].first = (*(tmp->arg_list))[i].first; 
+													}
+													else if(func_params[i].first != (*(tmp->arg_list))[i].first){
+														printf("\e[1;31mError [line %d]:\e[0m Conflicting parameter types in declaration and definition of %s\n", line ,($1->node_name).c_str());	
 														exit(-1);
 													}
 													(*(tmp->arg_list))[i].second = func_params[i].second;
@@ -676,6 +696,15 @@ function_definition
 											}
 											else{
 												st_entry* func_entry = add_entry($1->node_name, "int", 0, 0);
+												printf("\e[1;35mWarning [line %d]:\e[0m Function return type defaults to \"int\"\n", line);
+												if(!func_params.empty() && func_params[0].first == ""){
+													printf("\e[1;35mWarning [line %d]:\e[0m Function parameter type defaults to \"int\"\n", line);
+												}
+												for(int i = 0; i < func_params.size(); i++){
+													if(func_params[i].first == ""){
+														func_params[i].first = "int";
+													}
+												}
 												func_entry->type_name = IS_FUNC;
 												func_entry->is_init = 1;										//added func_params
 												vector<pair<string, string>> *tmp = new vector<pair<string, string>>(func_params);
