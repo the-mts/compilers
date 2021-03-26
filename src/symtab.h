@@ -26,18 +26,21 @@ struct st_entry{
 };
 struct tt_entry{
 	string type;
-	vector<pair<string, string>> * arg_list = NULL;
+	vector<pair<string, string>> * mem_list = NULL;
 	int is_init = 0;
 	int is_typedef = 0;
 	typtab* typ_table = NULL;
 };
 struct table_tree{
 	symtab * val;
+	typtab* types;
 	vector<table_tree*> v;
 	table_tree * par;
-	table_tree(symtab* val, table_tree* par = NULL){
+	table_tree(symtab* val, typtab* types, table_tree* par = NULL){
 		this->val = val;
+		this->types = types;
 		this->par = par;
+
 	}
 };
 
@@ -50,6 +53,7 @@ extern typtab types_table;
 void init_symtab();
 extern st_entry* add_entry(string key, string type, unsigned long size, long offset, enum sym_type type_name = UNDEFINED);
 extern tt_entry* add_type_entry(string key, string type);
-st_entry* lookup(string key);
+extern st_entry* lookup(string key);
+extern tt_entry* type_lookup(string key);
 void new_scope();
 void scope_cleanup();

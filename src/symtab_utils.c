@@ -10,7 +10,7 @@ table_tree* curr;
 void init_symtab(){
 	table_scope.push_back(&global);
 	type_scope.push_back(&types_table);
-	st_root = new table_tree(&global);
+	st_root = new table_tree(&global, &types_table);
 	curr = st_root;
 
 }
@@ -51,7 +51,7 @@ tt_entry* type_lookup(string key){
 void new_scope(){
 	symtab * new_table= new symtab;
 	typtab * new_type_table = new typtab;
-	table_tree * temp = new table_tree(new_table,curr);
+	table_tree * temp = new table_tree(new_table, new_type_table, curr);
 	curr->v.push_back(temp);
 	curr = temp;
 	table_scope.push_back(new_table);

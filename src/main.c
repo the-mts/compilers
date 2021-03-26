@@ -21,6 +21,20 @@ FILE* out_file;
 	vector<pair<string, string>> *arg_list;
 */
 
+void print_table(typtab* table){
+	for(auto i = table->begin(); i != table->end(); i++){
+		tt_entry* temp = i->second;
+		cout << i->first << "\t\t\t" << temp->type << "\n";
+		if(temp->mem_list!=NULL){
+			// cout<< "\t\tFunction Symbol Table Pointer: " << temp->sym_table<<endl;
+			cout<< "\t\tMembers: " << temp->mem_list << " " << temp->mem_list->size() << endl;
+			for(auto i : *(temp->mem_list)){
+				cout<< "\t\t\t" << i.second << " (" << i.first << ")\n";/*arg_list not implemented yet*/
+			}
+		}
+	}
+}
+
 void print_table(symtab* table){
 	for(auto i = table->begin(); i != table->end(); i++){
 		st_entry* temp = i->second;
@@ -32,6 +46,15 @@ void print_table(symtab* table){
 				cout<< "\t\t\t" << i.second << " (" << i.first << ")\n";/*arg_list not implemented yet*/
 			}
 		}
+	}
+}
+
+void dfs3(table_tree* u){
+	cout<< "Scope Type Pointer: "<< u->types<<endl;
+	print_table(u->types);
+	cout<<endl;
+	for(auto i : u->v){
+		dfs3(i);
 	}
 }
 
@@ -118,5 +141,9 @@ int main(int argc, char const* argv[]){
 
 	freopen("symtab.out", "w", stdout);
 	dfs2(st_root);
+
+	freopen("typtab.out", "w", stdout);
+	dfs3(st_root);
+	
 	return 0;
 }

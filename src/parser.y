@@ -9,6 +9,7 @@
 	extern int yylex();
 	extern int yyparse();
 	extern int line;
+	int unnamed_var = 0;
 	string data_type = "";
 	string params = "";
 	vector<pair<string, string>> func_params;
@@ -29,7 +30,7 @@
 %token <id> CASE DEFAULT IF ELSE SWITCH WHILE DO FOR GOTO CONTINUE BREAK RETURN
 %token <id> ',' '^' '|' ';' '{' '}' '[' ']' '(' ')' '+' '-' '%' '/' '*' '.' '>' '<' '&' '=' '!' '~' ':' '?'
 
-%type <id> unary_operator assignment_operator storage_class_specifier struct_or_union
+%type <id> unary_operator assignment_operator storage_class_specifier struct_or_union 
 %type <nodes> primary_expression postfix_expression argument_expression_list unary_expression type_specifier 
 %type <nodes> cast_expression multiplicative_expression additive_expression shift_expression relational_expression 
 %type <nodes> equality_expression and_expression exclusive_or_expression inclusive_or_expression logical_and_expression 
@@ -44,7 +45,7 @@
 %type <nodes> statement_list expression_statement selection_statement iteration_statement jump_statement 
 %type <nodes> translation_unit external_declaration function_definition augment_state
 
-
+%type<id> M6
 %type <nodes> M1
 
 %start augment_state
@@ -284,32 +285,66 @@ type_specifier
 	;
 
 struct_or_union_specifier
-	: struct_or_union IDENTIFIER M4 '{' struct_declaration_list M5 '}'	{	
+	: struct_or_union IDENTIFIER M4 '{' struct_declaration_list M5 '}'
+																	{	
 																		char* ch = (char*)malloc(sizeof(char)*(strlen($1)+strlen($2)+2)); 
 																		strcpy(ch,$1); strcat(ch," "); strcat(ch,$2);
 																		$$ = node_(1,ch,-1); free(ch);
 																		$$->v[0] = $5;
+																		$$->node_data = string((const char*)$1) + " " + string((const char*)$2);
 																	}	
-	| struct_or_union '{' struct_declaration_list '}'				{$$ = node_(1,$1,-1); $$->v[0]=$3;}
+
+	| struct_or_union M6 M4 '{' struct_declaration_list M5 '}'		{
+																		$$ = node_(1,$1,-1); $$->v[0]=$5;
+																		$$->node_data = string((const char*)$1) + " " + string((const char*)$2);
+																	}
+
 	| struct_or_union IDENTIFIER									{char* ch = (char*)malloc(sizeof(char)*(strlen($1)+strlen($2)+2)); 
 																	strcpy(ch,$1); strcat(ch," "); strcat(ch,$2);
-																	$$ = node_(0,ch,-1); free(ch);}
+																	$$ = node_(0,ch,-1); free(ch);
+																	$$->node_data = string((const char*)$1)+" "+string((const char*)$2);
+																	}
 	;
 
 M4
-	: 																{
+	:	/* empty */													{
 																		string temp1((const char*)$<id>0);
 																		string temp2((const char*)$<id>-1);
-																		tt_entry* tmp = add_type_entry(temp1, temp2);
+																		tt_entry* tmp = add_type_entry(temp2+" "+temp1, temp2);
 																	}
 	;
 
 M5
-	:																{
-																		
-
+	:	/* empty */													{
+																		node* temp = $<nodes>0;
+																		tt_entry* struct_entry = type_lookup(string($<id>-4)+" "+string($<id>-3));
+																		for(auto i : temp->v){
+																			string type = i->v[0]->node_data;
+																			for(auto j : i->v[1]->v){
+																				string name = j->node_name;
+																				if(struct_entry->mem_list == NULL){
+																					vector<pair<string, string>> *tmp =  new vector<pair<string, string>>;
+																					struct_entry->mem_list = tmp;
+																				}
+																				
+																				struct_entry->mem_list->push_back({type, name});
+																			}
+																		}
 																	}			
 	;
+
+M6
+	:	/* empty */													{
+																		string tmp = to_string(unnamed_var++);
+																		$$ = (char*) malloc(sizeof(char) * (tmp.length()+1));
+																		for(int i=0; i<tmp.length(); i++){
+																			$$[i] = tmp[i];
+																		}
+																		$$[tmp.length()]='\0';
+																	}
+	;
+																
+
 struct_or_union
 	: STRUCT													{$$ = $1;}
 	| UNION														{$$ = $1;}
@@ -321,17 +356,26 @@ struct_declaration_list
 	;
 
 struct_declaration
-	: specifier_qualifier_list struct_declarator_list ';'		{$$ = node_(2,"struct_decl",-1); $$->v[0] = $1; $$->v[1] = $2;}
+	: specifier_qualifier_list struct_declarator_list ';'		{
+																	$$ = node_(2,"struct_decl",-1); $$->v[0] = $1; $$->v[1] = $2;
+																}
 	;
 
 specifier_qualifier_list
-	: type_specifier specifier_qualifier_list		{if($2 == NULL)	{$$ = node_(1,"type_list",-1); $$->v[0] = $1;}
-													else{
+	: type_specifier specifier_qualifier_list		{
 														$$ = $2; push_front($$,$1);
-													}}
-	| type_specifier								{$$ = node_(1,"type_list",-1); $$->v[0] = $1;}
-	| type_qualifier specifier_qualifier_list		{$$ = $2; push_front($$, $1);}
-	| type_qualifier								{$$ = node_(1,"type_list",-1); $$->v[0] = $1;}
+														if($$->node_data != "")
+															$$->node_data += " ";
+														$$->node_data += $1->node_data;
+													}
+
+	| type_specifier								{
+														$$ = node_(1,"type_list",-1); $$->v[0] = $1;
+														$$->node_data = $1->node_data;
+													}
+
+	| type_qualifier specifier_qualifier_list		{$$ = $2; push_front($$, $1); /* Not propagating in node_data */}
+	| type_qualifier								{$$ = node_(1,"type_list",-1); $$->v[0] = $1; /* Not propagating in node_data */}
 	;
 
 struct_declarator_list

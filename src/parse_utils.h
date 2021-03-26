@@ -1,7 +1,9 @@
 #include<string>
+#include<vector>
+
 using namespace std;
 typedef struct node{
-	struct node ** v;
+	vector<node*> v;
 	char * name;
 	int token;
 	int sz;
