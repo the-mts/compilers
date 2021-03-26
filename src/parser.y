@@ -284,16 +284,32 @@ type_specifier
 	;
 
 struct_or_union_specifier
-	: struct_or_union IDENTIFIER '{' struct_declaration_list '}'	{char* ch = (char*)malloc(sizeof(char)*(strlen($1)+strlen($2)+2)); 
-																	strcpy(ch,$1); strcat(ch," "); strcat(ch,$2);
-																	$$ = node_(1,ch,-1); free(ch);
-																	$$->v[0] = $4;}	
+	: struct_or_union IDENTIFIER M4 '{' struct_declaration_list M5 '}'	{	
+																		char* ch = (char*)malloc(sizeof(char)*(strlen($1)+strlen($2)+2)); 
+																		strcpy(ch,$1); strcat(ch," "); strcat(ch,$2);
+																		$$ = node_(1,ch,-1); free(ch);
+																		$$->v[0] = $5;
+																	}	
 	| struct_or_union '{' struct_declaration_list '}'				{$$ = node_(1,$1,-1); $$->v[0]=$3;}
 	| struct_or_union IDENTIFIER									{char* ch = (char*)malloc(sizeof(char)*(strlen($1)+strlen($2)+2)); 
 																	strcpy(ch,$1); strcat(ch," "); strcat(ch,$2);
 																	$$ = node_(0,ch,-1); free(ch);}
 	;
 
+M4
+	: 																{
+																		string temp1((const char*)$<id>0);
+																		string temp2((const char*)$<id>-1);
+																		tt_entry* tmp = add_type_entry(temp1, temp2);
+																	}
+	;
+
+M5
+	:																{
+																		
+
+																	}			
+	;
 struct_or_union
 	: STRUCT													{$$ = $1;}
 	| UNION														{$$ = $1;}

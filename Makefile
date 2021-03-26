@@ -12,7 +12,7 @@ $(BIN)/parser: $(SRC)/lex.yy.c $(SRC)/y.tab.c $(BIN)/main.o $(BIN)/parse_utils.o
 $(SRC)/lex.yy.c: $(SRC)/scanner.l $(SRC)/y.tab.h $(SRC)/y.tab.c $(SRC)/symtab.h $(SRC)/parse_utils.h
 	$(LEX) -o $@ $<
 
-$(SRC)/y.tab.c $(SRC)/y.tab.h: $(SRC)/parser.y
+$(SRC)/y.tab.c $(SRC)/y.tab.h: $(SRC)/parser.y $(SRC)/parse_utils.h $(SRC)/symtab.h
 	$(YACC) -dvt -o $(SRC)/y.tab.c $<
 
 $(BIN)/main.o: $(SRC)/main.c $(SRC)/parse_utils.h $(SRC)/symtab.h
