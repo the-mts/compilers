@@ -4,7 +4,7 @@
 using namespace std;
 
 node* node_(int x, char * s, int token){
-	node * tmp = (node*)malloc(sizeof(node));
+	node * tmp = new node;
 	if(x)
 		tmp->v = (node**)malloc(x*sizeof(node*));
 	else

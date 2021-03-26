@@ -1,8 +1,13 @@
-int fun()
-{
+#include<stdio.h>
+int fun(int []);
+int fun(int *a){
+	printf("%d\n", sizeof(a));
 	return 0;
 }
+
 int main(){
-	printf("%d\n", 0);
+	int a[5];
+	printf("%d\n", sizeof(a));
+	fun(a);
 	return 0;
 }
