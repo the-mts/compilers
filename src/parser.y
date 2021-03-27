@@ -5,7 +5,7 @@
 	#include "symtab.h"
 	using namespace std;
 	struct node* root;
-	void yyerror(char*s);
+	void yyerror(const char*s);
 	extern int yylex();
 	extern int yyparse();
 	extern int line;
@@ -13,6 +13,13 @@
 	string data_type = "";
 	string params = "";
 	vector<pair<string, string>> func_params;
+	union constant{
+		int int_const;
+		long long_const;
+		float float_const;
+		double double_const;
+		long double long_double_const;
+	};
 %}
 %union {
 	struct node* nodes;
@@ -49,22 +56,143 @@
 %type <nodes> M1
 
 %start augment_state
+%define parse.error verbose
 %%
 
 primary_expression
-	: IDENTIFIER 												{$$ = node_(0,$1,IDENTIFIER);}
-	| CONSTANT 													{$$ = node_(0,$1,CONSTANT);}
-	| STRING_LITERAL											{$$ = node_(0,$1,STRING_LITERAL);}
+	: IDENTIFIER 												{
+																	$$ = node_(0,$1,IDENTIFIER);
+																	st_entry * entry = lookup(string((const char *)$1));
+																	if(entry == NULL){
+																		printf("\e[1;31mError [line %d]:\e[0m undeclared identifier %s\n", $1);
+																		exit(-1);
+																	}
+																	$$->node_name = $1;
+																	$$->node_data = entry->type;
+																}
+	| CONSTANT 													{
+																	$$ = node_(0,$1,CONSTANT);
+																	pair<constant, constant_type> parsed = parse_constant(string((const char*)$1));
+																	switch(parsed.second){
+																		case IS_INT:
+																			$$->node_data = "int";
+																		break;
+																		case IS_LONG:
+																			$$->node_data = "long int";
+																		break;
+																		case IS_FLOAT:
+																			$$->node_data = "float";
+																		break;
+																		case IS_DOUBLE:
+																			$$->node_data = "double";
+																		break;
+																		case IS_LONG_DOUBLE:
+																			$$->node_data = "long double";
+																		break;
+																	}
+																	$$->val = parsed.first;
+																}
+	| STRING_LITERAL											{$$ = node_(0,$1,STRING_LITERAL); $$->node_data = "char ["+to_string(strlen($1)+1)"]";}
 	| '(' expression ')'										{$$ = $2;}
 	;
 
 postfix_expression
 	: primary_expression										{$$ = $1;}
 	| postfix_expression '[' expression ']'						{$$ = node_(2, "[]", -1); $$->v[0] = $1; $$->v[1] = $3;}
-	| postfix_expression '(' ')'								{$$ = node_(1, "()", -1); $$->v[0] = $1;}
+	| postfix_expression '(' ')'								{
+																	$$ = node_(1, "()", -1);
+																	$$->v[0] = $1;
+																	if($$->token != IDENTIFIER){
+																		printf("\e[1;31mError [line %d]:\e[0m Invalid function call\n");
+																		exit(-1);
+																	}
+																	st_entry * entry = lookup(string((const char *)$1->name));
+																	if(entry == NULL){
+																		printf("\e[1;31mError [line %d]:\e[0m Invalid function name '%s'.\n",$1->name);
+																		exit(-1);
+																	}
+																	if(entry->type_name != IS_FUNC){
+																		printf("\e[1;31mError [line %d]:\e[0m Called object '%s' is not a function.\n",$1->name);
+																		exit(-1);
+																	}
+																	if(entry->is_init != 1){
+																		printf("\e[1;31mError [line %d]:\e[0m Function '%s' declared but not defined.\n",$1->name);
+																		exit(-1);
+																	}
+																	if((int)entry->arg_list->size() != 0){
+																		printf("\e[1;31mError [line %d]:\e[0m Function '%s' needs %d arguments but 0 provided.\n",$1->name,(int)entry->arg_list->size());
+																		exit(-1);
+																	}
+																	$$->node_data = entry->type;
+																}
 	| postfix_expression '(' argument_expression_list ')'		{$$ = node_(2, "(args)", -1); $$->v[0] = $1; $$->v[1] = $3;}
-	| postfix_expression '.' IDENTIFIER							{$$ = node_(2,".",-1); $$->v[0] = $1; $$->v[1] = node_(0,$3,IDENTIFIER);}
-	| postfix_expression PTR_OP IDENTIFIER 						{$$ = node_(2,"->",-1); $$->v[0] = $1; $$->v[1] = node_(0,$3,IDENTIFIER);}
+	| postfix_expression '.' IDENTIFIER							{
+																	$$ = node_(2,".",'.');
+																	$$->v[0] = $1;
+																	$$->v[1] = node_(0,$3,IDENTIFIER);
+																	tt_entry * type_entry = type_lookup($1->node_data);
+																	if(type_entry == NULL){
+																		printf("\e[1;31mError [line %d]:\e[0m '.' operator applied on non-struct or non-union type.\n");
+																		exit(-1);
+																	}
+																	/*while(type_entry->is_typedef){
+																		type_entry = type_lookup(type_entry->type);
+																	}*/
+																	int flag = 0;
+																	string name = string((const char*)$3);
+																	string type;
+																	for(auto it : type_entry->arg_list)
+																		if(it.second == name){
+																			type = it.first;
+																			flag = 1;
+																			break;
+																		}
+																	if(!flag){
+																		printf("\e[1;31mError [line %d]:\e[0m (%s) has no member named (%s).\n", $1->node_data.c_str(),$3);/*typedef changes*/
+																		exit(-1);
+																	}
+																	$$->node_data = type;
+																}
+	| postfix_expression PTR_OP IDENTIFIER 						{
+																	$$ = node_(2,"->",PTR_OP);
+																	$$->v[0] = $1;
+																	$$->v[1] = node_(0,$3,IDENTIFIER);
+																	string type = $1->node_data;
+																	int p_level = 0;
+																	for(auto it = type.rbegin(); it!=type.rend(); it++){
+																		if((*it) == '*')
+																			p_level++;
+																		else
+																			break;
+																	}
+																	if(p_level != 1){
+																		printf("\e[1;31mError [line %d]:\e[0m '->' operator applied on non-pointer or multileve-pointer type.\n");
+																		exit(-1);
+																	}
+																	type = type.substr(0,type.length() - 2);
+																	tt_entry * type_entry = type_lookup(type);
+																	if(type_entry == NULL){
+																		printf("\e[1;31mError [line %d]:\e[0m '->' operator applied on non-struct or non-union pointer type.\n");
+																		exit(-1);
+																	}
+																	/*while(type_entry->is_typedef){
+																		type_entry = type_lookup(type_entry->type);
+																	}*/
+																	int flag = 0;
+																	string type1 = type;
+																	string name = string((const char*)$3);
+																	for(auto it : type_entry->arg_list)
+																		if(it.second == name){
+																			type = it.first;
+																			flag = 1;
+																			break;
+																		}
+																	if(!flag){
+																		printf("\e[1;31mError [line %d]:\e[0m (%s) has no member named (%s).\n", type1.c_str(),$3);/*typedef changes*/
+																		exit(-1);
+																	}
+																	$$->node_data = type;
+																}
 	| postfix_expression INC_OP									{$$ = node_(1, "exp++", -1); $$->v[0] = $1;}
 	| postfix_expression DEC_OP									{$$ = node_(1, "exp--", -1); $$->v[0] = $1;}
 	;
@@ -185,7 +313,7 @@ expression
 	;
 
 constant_expression
-	: conditional_expression									{$$ = $1;}
+	: conditional_expression									{$$ = $1;/*check if constant*/}
 	;
 
 declaration
@@ -256,7 +384,7 @@ init_declarator
 																		exit(-1);
 																	}
 																	else{
-																		st_entry* tmp = add_entry($1->name, data_type, 0, 0, IS_VAR);
+																		st_entry* tmp = add_entry($1->name, data_type, 0, 0, IS_VAR);/*change IS_VAR*/
 																	}
 																}
 	;
@@ -422,7 +550,7 @@ declarator /**/
 direct_declarator
 	: IDENTIFIER										{$$ = node_(0,$1,IDENTIFIER); $$->node_name = $1;}
 	| '(' declarator ')'								{$$ = $2;/**/printf("\e[1;31mError [line %d]:\e[0m Direct_declarator -> ( declarator ) reduce.\n", line ); exit(-1);}
-	| direct_declarator '[' constant_expression ']'		{$$ = node_(2,"[]",-1); $$->v[0] = $1; $$->v[1] = $3;}
+	| direct_declarator '[' constant_expression ']'		{$$ = node_(2,"[]",-1); $$->v[0] = $1; $$->v[1] = $3; $$->node_name = $1->node_name;}
 	| direct_declarator '[' ']'							{$$ = $1;}
 	| direct_declarator '(' {func_params.clear();}
 	parameter_type_list ')'								{
@@ -593,7 +721,7 @@ M1
 	: 	/* empty */	 											{	
 																	new_scope();
 																	for(auto p: func_params){
-																		st_entry* tmp = add_entry(p.second, p.first, 0, 0, IS_VAR);    //IS_VAR to be changed
+																		add_entry(p.second, p.first, 0, 0, IS_VAR);    //IS_VAR to be changed
 																	}
 																	func_params.clear();
 																}

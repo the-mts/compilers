@@ -1,5 +1,6 @@
 #include<string>
 #include<vector>
+#include "symtab.h"
 
 using namespace std;
 typedef struct node{
@@ -8,6 +9,7 @@ typedef struct node{
 	int token;
 	int sz;
 	int node_type = 0;
+	constant val;
 	string node_name = "";
 	string node_data = "";
 }node;

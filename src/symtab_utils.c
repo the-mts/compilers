@@ -62,3 +62,12 @@ void scope_cleanup(){
 	curr = curr->par;
 	table_scope.pop_back();
 }
+
+void simplify_type(string &s){
+	string x = s;
+	vector<string> tokens;
+	string y;
+	// stringstream tokenize(x);
+	// while(getline(tokenize,y,' '))
+	// 	tokens.push_back(y);
+}

@@ -6,35 +6,22 @@ using namespace std;
 node* node_(int x, char * s, int token){
 	node * tmp = new node;
 	if(x)
-		// tmp->v = (node**)malloc(x*sizeof(node*));
 		tmp->v = vector<node*>(x);
 	else
-		// tmp->v = NULL;
 		tmp->v = vector<node*>();
 	tmp->token = token;
 	tmp->sz = x;
-	// tmp->name = (char*)malloc((strlen(s)+20)*sizeof(char));
 	tmp->name = strdup(s);
-	// strcpy(tmp->name,s);
 	return tmp;
 }
 
 void add_node(node* par, node* add){
-	// par->v = (node**)realloc((void*)par->v,(par->sz+1)*sizeof(node*));
-	// par->v[par->sz++] = add;
 	par->v.push_back(add);
 	par->sz++;
 	return;
 }
 
 void push_front(node* par, node* add){
-	// par->v = (node**)realloc((void*)par->v,(par->sz+1)*sizeof(node*));
-	// par->sz++;
-	// for(int i=par->sz-1;i>0;i--)
-	// {
-	// 	par->v[i] = par->v[i-1];
-	// }
-	// par->v[0] = add;
 	par->v.insert(par->v.begin(), 1, add);
 	par->sz++;
 	return;
