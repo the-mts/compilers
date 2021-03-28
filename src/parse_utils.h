@@ -9,6 +9,7 @@ typedef struct node{
 	int sz;
 	int node_type = 0;
 	constant val;
+	enum const_type val_dt;
 	enum val_type value_type;
 	string node_name = "";
 	string node_data = "";

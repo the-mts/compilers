@@ -7,16 +7,11 @@ IS			(u|U|l|L)*
 
 %{
 #include <stdio.h>
-#include <string>
-#include <string.h>
 #include "y.tab.h"
-using namespace std;
 void count();
 void comment();
 void comment_();
-void yyerror(const char*s);
-int check_type(char*);
-//YYSTYPE yylval;
+void yyerror(char*s);
 %}
 
 %%
@@ -55,7 +50,7 @@ int check_type(char*);
 "volatile"		{ yylval.id = strdup(yytext);return(VOLATILE); }
 "while"			{ yylval.id = strdup(yytext);return(WHILE); }
 
-{L}({L}|{D})*		{ yylval.id = strdup(yytext);return(check_type(yytext)); }
+{L}({L}|{D})*		{ yylval.id = strdup(yytext);return(IDENTIFIER); }
 
 0[xX]{H}+{IS}?		{ yylval.id = strdup(yytext);return(CONSTANT); }
 0{D}+{IS}?		{ yylval.id = strdup(yytext);return(CONSTANT); }
@@ -115,36 +110,15 @@ L?\"(\\.|[^\\"])*\"	{ yylval.id = strdup(yytext);return(STRING_LITERAL); }
 "?"			{ yylval.id = strdup(yytext);return('?'); }
 
 [ \t\v\n\f]		{ count(); }
-.			{ yyerror((const char *)yytext); }
+.			{ yyerror(yytext); }
 
 %%
 
 int column = 1;
 int line  = 1;
-static int type_flag = 0;
-int check_type(char * x){
-	/*if(type_flag == 1){
-		type_flag = 0;
-		return IDENTIFIER;
-	}
-	type_flag = 1;
-	string s = "";
-	int l = strlen(x);
-	for(int i = 0; i < l; i++)
-		s+=x[i];
-	int y = yylex();
-	l = strlen(yytext);
-	for(int i = 0; i < l; i++)
-		unput(yytext[i]);
-	if(y == IDENTIFIER){
-		return TYPE_NAME;
-	}
-	type_flag = 0;*/
-	return IDENTIFIER;
-}
 
-void yyerror(const char* yytext){
-	printf("\e[1;31mError [line %d]:\e[0m %s\n", line, yytext);
+void yyerror(char* yytext){
+	printf("ERROR at line %d: %s\n", line, yytext);
 	column++;
 }
 
@@ -201,10 +175,3 @@ void count()
 
 	//ECHO;
 }
-/* int main(){
- int x;
- while((x = yylex()) > 0){
- 	printf("%s %d\n", yylval.id, x);
- }
- return 0;
- }*/
