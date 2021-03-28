@@ -1,13 +1,11 @@
-#include<stdio.h>
-int fun(int []);
-int fun(int *a){
-	printf("%d\n", sizeof(a));
-	return 0;
-}
+struct x{
+	int * a[20], **b[12];
+} sds[5];
+
 
 int main(){
-	int a[5];
-	printf("%d\n", sizeof(a));
-	fun(a);
+	int* a[232], ***b[10];
+	int * c;
+	short signed int volatile ** d[4];
 	return 0;
 }

@@ -454,14 +454,16 @@ declaration_specifiers
 	| type_specifier											{
 																	$$ = node_(1,"type_name",-1);
 																	$$->v[0] = $1;
-																	$$->node_data+=" ";
+																	// $$->node_data+=" ";
 																	$$->node_data+=$1->node_data;
 																}
 	| type_specifier declaration_specifiers						{
-																	add_node($2,$1);
+																	push_front($2,$1);
 																	$$ = $2;
-																	$$->node_data+=" ";
-																	$$->node_data+=$1->node_data;
+																	// $$->node_data+=" ";
+																	if($$->node_data!="") $1->node_data += ' ';
+																	$1->node_data += $$->node_data;
+																	$$->node_data = $1->node_data;
 																}
 	| type_qualifier											{}
 	| type_qualifier declaration_specifiers						{}
@@ -484,15 +486,19 @@ init_declarator_list
 init_declarator
 	: declarator												{
 																	string data_type_ = data_type;
-																	string cmp;
-																	if($1->sz)
-																		cmp = $1->v[$1->sz-1]->name;
-																	else
-																		cmp = "";
-																	if( cmp == "pointer"){
-																		data_type_+=" ";
-																		for(int i = 0; i < $1->v[$1->sz-1]->node_type; i++)
-																			data_type_+="*";
+																	// string cmp;
+																	// if($1->sz)
+																	// 	cmp = $1->v[$1->sz-1]->name;
+																	// else
+																	// 	cmp = "";
+																	// if( cmp == "pointer"){
+																	// 	data_type_+=" ";
+																	// 	for(int i = 0; i < $1->v[$1->sz-1]->node_type; i++)
+																	// 		data_type_+="*";
+																	// }
+																	if($1->node_data!=""){
+																		data_type_ += " ";
+																		data_type_ += $1->node_data;
 																	}
 																	st_entry* tmp = add_entry($1->node_name, data_type_,0,0);
 																	if($1->node_type == 1){
@@ -574,8 +580,10 @@ M5
 																		node* temp = $<nodes>0;
 																		tt_entry* struct_entry = type_lookup(string($<id>-4)+" "+string($<id>-3));
 																		for(auto i : temp->v){
-																			string type = i->v[0]->node_data;
 																			for(auto j : i->v[1]->v){
+																				string type = i->v[0]->node_data;
+																				if(type!="" && j->node_data!="") type+= ' ';
+																				type += j->node_data;
 																				string name = j->node_name;
 																				if(struct_entry->mem_list == NULL){
 																					vector<pair<string, string>> *tmp =  new vector<pair<string, string>>;
@@ -670,15 +678,55 @@ type_qualifier
 	;
 
 declarator /**/
-	: pointer direct_declarator						{$$ = $2; add_node($$,$1);}
-	| direct_declarator								{$$ = $1;}
+	: pointer direct_declarator						{
+														$$ = $2; add_node($$,$1);
+														// string data_type_ = data_type;
+														// data_type_+=" ";
+														string data_type_ = "";
+														for(int i = 0; i < $$->v[$$->sz-1]->node_type; i++)
+															data_type_+="*";
+														if(data_type_!="" && $2->node_data!="") data_type_+= " ";
+														data_type_ += $2->node_data;
+														$$->node_data = data_type_;
+														
+													}
+
+	| direct_declarator								{
+														$$ = $1;
+													}
 	;
 
 direct_declarator
 	: IDENTIFIER										{$$ = node_(0,$1,IDENTIFIER); $$->node_name = $1;}
 	| '(' declarator ')'								{$$ = $2;/**/printf("\e[1;31mError [line %d]:\e[0m Direct_declarator -> ( declarator ) reduce.\n", line ); exit(-1);}
-	| direct_declarator '[' constant_expression ']'		{$$ = node_(2,"[]",-1); $$->v[0] = $1; $$->v[1] = $3; $$->node_name = $1->node_name;}
-	| direct_declarator '[' ']'							{$$ = $1;}
+	| direct_declarator '[' constant_expression ']'		{
+															$$ = node_(2,"[]",-1); $$->v[0] = $1; $$->v[1] = $3; $$->node_name = $1->node_name;
+															$$->node_type = 2;
+															long long tmp;
+															switch($3->val_dt){
+																case IS_INT: tmp = $3->val.int_const; break;
+																case IS_LONG: tmp = $3->val.long_const; break;
+																case IS_SHORT: tmp = $3->val.short_const; break;
+																case IS_U_INT: tmp = $3->val.u_int_const; break;
+																case IS_U_LONG: tmp = $3->val.u_long_const; break;
+																case IS_U_SHORT: tmp = $3->val.u_short_const; break;
+																default:
+																	printf("\e[1;31mError [line %d]:\e[0m Incompatible data type for size in array declaration.\n", line);
+																	exit(-1);
+															}
+															if(tmp<=0){
+																printf("\e[1;31mError [line %d]:\e[0m Array size cannot be zero or negative.\n", line);
+																exit(-1);
+															}
+															// printf("abc %s\n", $$->node_data.c_str());
+															$$->node_data = $1->node_data;
+															$$->node_data += "[";
+															$$->node_data += to_string(tmp);
+															$$->node_data += "]";
+															// printf("abc %s\n", $$->node_data.c_str());
+
+														}
+	| direct_declarator '[' ']'							{$$ = $1; $$->node_type = 2; $$->node_data += "[]"; }
 	| direct_declarator '(' {func_params.clear();}
 	parameter_type_list ')'								{
 															if($1->node_type == 1){
