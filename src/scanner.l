@@ -11,7 +11,7 @@ IS			(u|U|l|L)*
 void count();
 void comment();
 void comment_();
-void yyerror(char*s);
+void yyerror(const char*s);
 %}
 
 %%
@@ -117,7 +117,7 @@ L?\"(\\.|[^\\"])*\"	{ yylval.id = strdup(yytext);return(STRING_LITERAL); }
 int column = 1;
 int line  = 1;
 
-void yyerror(char* yytext){
+void yyerror(const char* yytext){
 	printf("ERROR at line %d: %s\n", line, yytext);
 	column++;
 }
