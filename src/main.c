@@ -130,6 +130,7 @@ int main(int argc, char const* argv[]){
 		}
 	}
 	init_symtab();
+	init_equiv_types();
 	int x = yyparse();
 	if(x != 0){
 		return -1;
