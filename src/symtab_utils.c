@@ -6,6 +6,82 @@ symtab global;
 typtab types_table;
 table_tree* st_root;
 table_tree* curr;
+unordered_map<string, string> equiv_types;
+
+void init_equiv_types(){
+	equiv_types.insert({"int","int"});
+    equiv_types.insert({"char", "char"});
+    equiv_types.insert({"float", "float"});
+    equiv_types.insert({"void", "void"});
+    equiv_types.insert({"double", "double"});
+
+    equiv_types.insert({"signed", "int"});
+    equiv_types.insert({"unsigned", "unsigned int"});
+
+    equiv_types.insert({"long", "long int"});
+    equiv_types.insert({"short", "short int"});
+
+    equiv_types.insert({"long int", "long int"});
+    equiv_types.insert({"short int", "short int"});
+
+    equiv_types.insert({"signed long", "long int"});
+    equiv_types.insert({"signed short", "short int"});
+    equiv_types.insert({"signed long int", "long int"});
+    equiv_types.insert({"signed short int", "short int"});
+
+    equiv_types.insert({"signed int", "int"});
+    equiv_types.insert({"unsigned int", "unsigned int"});
+
+    equiv_types.insert({"unsigned long", "unsigned long int"});
+    equiv_types.insert({"unsigned short", "unsigned short int"});
+    equiv_types.insert({"unsigned long int", "unsigned long int"});
+    equiv_types.insert({"unsigned short int", "unsigned short int"});
+
+    equiv_types.insert({"long double", "long double"});
+    equiv_types.insert({"unsigned char", "char"});
+}
+
+string get_eqtype(string type){
+    vector<pair<int, string>> a;
+    unordered_map<string, int> m;
+    m["struct"] = 0;
+    m["enum"] = 0;
+    m["signed"] = 1;
+    m["unsigned"] = 1;
+    m["short"] = 2;
+    m["long"] = 2;
+    m["int"] = 3;
+    m["double"] = 4;
+    m["char"] = 5;
+    m["float"] = 6;
+    m["void"] = 7;
+
+    string tmp ="";
+    for(auto i : type){
+        if(i==' '){
+            a.push_back({(m.find(tmp)!=m.end() ? m[tmp] : 10)  , tmp});
+            tmp = "";
+        }
+        else tmp += i;
+    }
+    a.push_back({(m.find(tmp)!=m.end() ? m[tmp] : 10)  , tmp});
+
+    sort(a.begin(), a.end());
+    
+    if(a[0].first==0){
+        if(a.size()!=2) return "";
+        else return type;
+    }
+
+    string new_type="";
+    for(auto i:a){
+        if(new_type!="") new_type += " ";
+        new_type += i.second;
+    }
+
+    if(equiv_types.find(new_type)==equiv_types.end()) return "";
+    return equiv_types[new_type];
+}
 
 void init_symtab(){
 	table_scope.push_back(&global);
@@ -65,13 +141,4 @@ void scope_cleanup(){
 
 pair<constant, enum const_type> parse_constant(string s){
 	return pair<constant, enum const_type>();
-}
-
-void simplify_type(string &s){
-	string x = s;
-	vector<string> tokens;
-	string y;
-	// stringstream tokenize(x);
-	// while(getline(tokenize,y,' '))
-	// 	tokens.push_back(y);
 }
