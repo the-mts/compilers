@@ -3,7 +3,8 @@
 #include <vector>
 using namespace std;
 enum sym_type {UNDEFINED, IS_FUNC, IS_STRUCT, IS_VAR, IS_TYPE};
-enum const_type {IS_INT, IS_LONG, IS_FLOAT, IS_DOUBLE, IS_LONG_DOUBLE};
+enum const_type {IS_INT, IS_LONG, IS_U_INT, IS_U_LONG, IS_FLOAT, IS_DOUBLE, IS_LONG_DOUBLE};
+enum val_type {LVALUE, RVALUE};
 
 typedef unordered_map<string, struct st_entry*> symtab;
 typedef unordered_map<string, struct tt_entry*> typtab;
@@ -11,6 +12,8 @@ typedef unordered_map<string, struct tt_entry*> typtab;
 union constant{
 	int int_const;
 	long long_const;
+	unsigned int u_int_const;
+	unsigned long u_long_const;
 	float float_const;
 	double double_const;
 	long double long_double_const;
@@ -67,6 +70,6 @@ extern tt_entry* add_type_entry(string key, string type);
 extern st_entry* lookup(string key);
 extern tt_entry* type_lookup(string key);
 extern void simplify_type(string &s);
-extern pair<constant, const_type> parse_constant(string s);
+extern pair<constant, enum const_type> parse_constant(string s);
 extern void new_scope();
 extern void scope_cleanup();

@@ -2,7 +2,6 @@
 #include <iostream>
 #include "y.tab.h"
 #include "parse_utils.h"
-#include "symtab.h"
 using namespace std;
 extern FILE* yyin;
 extern char yytext[];

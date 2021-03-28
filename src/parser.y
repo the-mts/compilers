@@ -2,7 +2,6 @@
 	#include<string.h>
 	#include<stdlib.h>
 	#include "parse_utils.h"
-	#include "symtab.h"
 	using namespace std;
 	struct node* root;
 	void yyerror(const char*s);
@@ -13,13 +12,6 @@
 	string data_type = "";
 	string params = "";
 	vector<pair<string, string>> func_params;
-	union constant{
-		int int_const;
-		long long_const;
-		float float_const;
-		double double_const;
-		long double long_double_const;
-	};
 %}
 %union {
 	struct node* nodes;
@@ -64,15 +56,16 @@ primary_expression
 																	$$ = node_(0,$1,IDENTIFIER);
 																	st_entry * entry = lookup(string((const char *)$1));
 																	if(entry == NULL){
-																		printf("\e[1;31mError [line %d]:\e[0m undeclared identifier %s\n", $1);
+																		printf("\e[1;31mError [line %d]:\e[0m Undeclared identifier %s\n",line, $1);
 																		exit(-1);
 																	}
 																	$$->node_name = $1;
 																	$$->node_data = entry->type;
+																	$$->value_type = LVALUE;
 																}
 	| CONSTANT 													{
 																	$$ = node_(0,$1,CONSTANT);
-																	pair<constant, constant_type> parsed = parse_constant(string((const char*)$1));
+																	pair<constant, enum const_type> parsed = parse_constant(string((const char*)$1));
 																	switch(parsed.second){
 																		case IS_INT:
 																			$$->node_data = "int";
@@ -80,7 +73,12 @@ primary_expression
 																		case IS_LONG:
 																			$$->node_data = "long int";
 																		break;
-																		case IS_FLOAT:
+																		case IS_U_INT:
+																			$$->node_data = "unsigned int";
+																		break;
+																		case IS_U_LONG:
+																			$$->node_data = "unsigned long int";
+																		break;																		case IS_FLOAT:
 																			$$->node_data = "float";
 																		break;
 																		case IS_DOUBLE:
@@ -91,8 +89,9 @@ primary_expression
 																		break;
 																	}
 																	$$->val = parsed.first;
+																	$$->value_type = RVALUE;
 																}
-	| STRING_LITERAL											{$$ = node_(0,$1,STRING_LITERAL); $$->node_data = "char ["+to_string(strlen($1)+1)"]";}
+	| STRING_LITERAL											{$$ = node_(0,$1,STRING_LITERAL); $$->node_data = "char ["+to_string(strlen($1)+1)+"]";}
 	| '(' expression ')'										{$$ = $2;}
 	;
 
@@ -103,27 +102,28 @@ postfix_expression
 																	$$ = node_(1, "()", -1);
 																	$$->v[0] = $1;
 																	if($$->token != IDENTIFIER){
-																		printf("\e[1;31mError [line %d]:\e[0m Invalid function call\n");
+																		printf("\e[1;31mError [line %d]:\e[0m Invalid function call\n",line);
 																		exit(-1);
 																	}
 																	st_entry * entry = lookup(string((const char *)$1->name));
 																	if(entry == NULL){
-																		printf("\e[1;31mError [line %d]:\e[0m Invalid function name '%s'.\n",$1->name);
+																		printf("\e[1;31mError [line %d]:\e[0m Invalid function name '%s'.\n",line,$1->name);
 																		exit(-1);
 																	}
 																	if(entry->type_name != IS_FUNC){
-																		printf("\e[1;31mError [line %d]:\e[0m Called object '%s' is not a function.\n",$1->name);
+																		printf("\e[1;31mError [line %d]:\e[0m Called object '%s' is not a function.\n",line,$1->name);
 																		exit(-1);
 																	}
 																	if(entry->is_init != 1){
-																		printf("\e[1;31mError [line %d]:\e[0m Function '%s' declared but not defined.\n",$1->name);
+																		printf("\e[1;31mError [line %d]:\e[0m Function '%s' declared but not defined.\n",line,$1->name);
 																		exit(-1);
 																	}
 																	if((int)entry->arg_list->size() != 0){
-																		printf("\e[1;31mError [line %d]:\e[0m Function '%s' needs %d arguments but 0 provided.\n",$1->name,(int)entry->arg_list->size());
+																		printf("\e[1;31mError [line %d]:\e[0m Function '%s' needs %d arguments but 0 provided.\n",line,$1->name,(int)entry->arg_list->size());
 																		exit(-1);
 																	}
 																	$$->node_data = entry->type;
+																	$$->value_type = RVALUE;
 																}
 	| postfix_expression '(' argument_expression_list ')'		{$$ = node_(2, "(args)", -1); $$->v[0] = $1; $$->v[1] = $3;}
 	| postfix_expression '.' IDENTIFIER							{
@@ -132,7 +132,7 @@ postfix_expression
 																	$$->v[1] = node_(0,$3,IDENTIFIER);
 																	tt_entry * type_entry = type_lookup($1->node_data);
 																	if(type_entry == NULL){
-																		printf("\e[1;31mError [line %d]:\e[0m '.' operator applied on non-struct or non-union type.\n");
+																		printf("\e[1;31mError [line %d]:\e[0m '.' operator applied on non-struct or non-union type.\n",line);
 																		exit(-1);
 																	}
 																	/*while(type_entry->is_typedef){
@@ -141,17 +141,21 @@ postfix_expression
 																	int flag = 0;
 																	string name = string((const char*)$3);
 																	string type;
-																	for(auto it : type_entry->arg_list)
+																	for(auto it : *(type_entry->mem_list))
 																		if(it.second == name){
 																			type = it.first;
 																			flag = 1;
 																			break;
 																		}
 																	if(!flag){
-																		printf("\e[1;31mError [line %d]:\e[0m (%s) has no member named (%s).\n", $1->node_data.c_str(),$3);/*typedef changes*/
+																		printf("\e[1;31mError [line %d]:\e[0m (%s) has no member named (%s).\n",line, $1->node_data.c_str(),$3);/*typedef changes*/
 																		exit(-1);
 																	}
 																	$$->node_data = type;
+																	if($1->value_type == RVALUE)
+																		$$->value_type = RVALUE;
+																	else
+																		$$->value_type = LVALUE;
 																}
 	| postfix_expression PTR_OP IDENTIFIER 						{
 																	$$ = node_(2,"->",PTR_OP);
@@ -166,13 +170,13 @@ postfix_expression
 																			break;
 																	}
 																	if(p_level != 1){
-																		printf("\e[1;31mError [line %d]:\e[0m '->' operator applied on non-pointer or multileve-pointer type.\n");
+																		printf("\e[1;31mError [line %d]:\e[0m '->' operator applied on non-pointer or multileve-pointer type.\n",line);
 																		exit(-1);
 																	}
 																	type = type.substr(0,type.length() - 2);
 																	tt_entry * type_entry = type_lookup(type);
 																	if(type_entry == NULL){
-																		printf("\e[1;31mError [line %d]:\e[0m '->' operator applied on non-struct or non-union pointer type.\n");
+																		printf("\e[1;31mError [line %d]:\e[0m '->' operator applied on non-struct or non-union pointer type.\n",line);
 																		exit(-1);
 																	}
 																	/*while(type_entry->is_typedef){
@@ -181,20 +185,51 @@ postfix_expression
 																	int flag = 0;
 																	string type1 = type;
 																	string name = string((const char*)$3);
-																	for(auto it : type_entry->arg_list)
+																	for(auto it : *(type_entry->mem_list))
 																		if(it.second == name){
 																			type = it.first;
 																			flag = 1;
 																			break;
 																		}
 																	if(!flag){
-																		printf("\e[1;31mError [line %d]:\e[0m (%s) has no member named (%s).\n", type1.c_str(),$3);/*typedef changes*/
+																		printf("\e[1;31mError [line %d]:\e[0m (%s) has no member named (%s).\n",line, type1.c_str(),$3);/*typedef changes*/
 																		exit(-1);
 																	}
 																	$$->node_data = type;
+																	if($1->value_type == RVALUE)
+																		$$->value_type = RVALUE;
+																	else
+																		$$->value_type = LVALUE;
 																}
-	| postfix_expression INC_OP									{$$ = node_(1, "exp++", -1); $$->v[0] = $1;}
-	| postfix_expression DEC_OP									{$$ = node_(1, "exp--", -1); $$->v[0] = $1;}
+	| postfix_expression INC_OP									{
+																	$$ = node_(1, "exp++", -1);
+																	$$->v[0] = $1;
+																	$$->node_data = $1->node_data;
+																	tt_entry* type_entry = type_lookup($1->node_data);
+																	if(type_entry == NULL){
+																		printf("\e[1;31mError [line %d]:\e[0m Increment operator cannot be apllied on non-integer, non-floating point and non pointer types.\n",line);
+																		exit(-1);
+																	}/*array*/
+																	if($1->value_type == RVALUE){
+																		printf("\e[1;31mError [line %d]:\e[0m Increment operator cannot be apllied on rvalue.\n",line);
+																		exit(-1);
+																	}
+																	$$->value_type = RVALUE;
+																}
+	| postfix_expression DEC_OP									{
+																	$$ = node_(1, "exp--", -1); $$->v[0] = $1;
+																	$$->node_data = $1->node_data;
+																	tt_entry* type_entry = type_lookup($1->node_data);
+																	if(type_entry == NULL){
+																		printf("\e[1;31mError [line %d]:\e[0m Decrement operator cannot be apllied on non-integer, non-floating point and non pointer types.\n",line);
+																		exit(-1);
+																	}/*array*/
+																	if($1->value_type == RVALUE){
+																		printf("\e[1;31mError [line %d]:\e[0m Decrement operator cannot be apllied on rvalue.\n",line);
+																		exit(-1);
+																	}
+																	$$->value_type = RVALUE;
+																}
 	;
 
 argument_expression_list
@@ -204,10 +239,102 @@ argument_expression_list
 
 unary_expression
 	: postfix_expression										{$$ = $1;}
-	| INC_OP unary_expression									{$$ = node_(1,"++exp",-1); $$->v[0] = $2;}
-	| DEC_OP unary_expression									{$$ = node_(1,"--exp",-1); $$->v[0] = $2;}
-	| unary_operator cast_expression							{$$ = node_(1,$1,-1); $$->v[0] = $2;}
-	| SIZEOF unary_expression									{$$ = node_(1,"SIZEOF_unary",-1); $$->v[0] = $2;}
+	| INC_OP unary_expression									{
+																	$$ = node_(1,"++exp",-1);
+																	$$->v[0] = $2;
+																	$$->node_data = $2->node_data;
+																	tt_entry* type_entry = type_lookup($2->node_data);
+																	if(type_entry == NULL){
+																		printf("\e[1;31mError [line %d]:\e[0m Increment operator cannot be apllied on non-integer, non-floating point and non pointer types.\n",line);
+																		exit(-1);
+																	}/*array*/
+																	if($2->value_type == RVALUE){
+																		printf("\e[1;31mError [line %d]:\e[0m Increment operator cannot be apllied on rvalue.\n",line);
+																		exit(-1);
+																	}
+																	$$->value_type = RVALUE;
+																}
+	| DEC_OP unary_expression									{
+																	$$ = node_(1,"++exp",-1);
+																	$$->v[0] = $2;
+																	$$->node_data = $2->node_data;
+																	tt_entry* type_entry = type_lookup($2->node_data);
+																	if(type_entry == NULL){
+																		printf("\e[1;31mError [line %d]:\e[0m Decrement operator cannot be apllied on non-integer, non-floating point and non pointer types.\n",line);
+																		exit(-1);
+																	}/*array*/
+																	if($2->value_type == RVALUE){
+																		printf("\e[1;31mError [line %d]:\e[0m Decrement operator cannot be apllied on rvalue.\n",line);
+																		exit(-1);
+																	}
+																	$$->value_type = RVALUE;
+																}
+	| unary_operator cast_expression							{
+																	$$ = node_(1,$1,*($1));
+																	$$->v[0] = $2;
+																	switch(*($1)){
+																		case '&':{
+																			if($2->value_type == LVALUE){
+																				$$->value_type = RVALUE;
+																				if($2->node_data.back() == '*'){
+																					$$->node_data = $2->node_data+'*';
+																				}
+																				else{
+																					$$->node_data = $2->node_data + " *";
+																				}
+																			}
+																			else{
+																				printf("\e[1;31mError [line %d]:\e[0m Address-of operator cannot be applied on rvalue.\n",line);
+																				exit(-1);
+																			}
+																		}
+																		break;
+																		case '*':{
+																			if($2->node_data.back() != '*'){
+																				printf("\e[1;31mError [line %d]:\e[0m Indirection operator cannot be applied on non-pointer type.\n",line);
+																				exit(-1);
+																			}
+																			else{
+																				$$->node_data = $2->node_data;
+																				$$->node_data.pop_back();
+																				$$->value_type = LVALUE;
+																			}
+																		}
+																		break;
+																		case '!':{
+																			if($2->node_data.back() == '*'){
+																				$$->value_type = RVALUE;
+																				$$->node_data = "int";
+																				break;
+																			}
+																		}
+																		case '-':
+																		case '+':{
+																			if($2->node_data.substr((int)$2->node_data.size() - 3,3) != "int"){
+																				if($2->node_data != "float" && $2->node_data != "double" && $2->node_data != "long double"){
+																					printf("\e[1;31mError [line %d]:\e[0m Incompatible type for %c operator.\n",line,*($1));
+																					exit(-1);
+																				}
+																			}
+																			$$->node_data = $2->node_data;
+																			$$->value_type = RVALUE;
+																		}
+																		break;
+																		case '~':{
+																			if($2->node_data.substr((int)$2->node_data.size() - 3,3) != "int"){
+																				printf("\e[1;31mError [line %d]:\e[0m ~ cannot be applied to non-integer types.\n",line);
+																				exit(-1);
+																			}
+																			$$->node_data = $2->node_data;
+																			$$->value_type = RVALUE;
+																		}
+																	}
+
+																}
+	| SIZEOF unary_expression									{
+																	$$ = node_(1,"SIZEOF_unary",-1);
+																	$$->v[0] = $2;
+																}
 	| SIZEOF '(' type_name ')'									{$$ = node_(1,"SIZEOF_type",-1); $$->v[0] = $3;}
 	;
 

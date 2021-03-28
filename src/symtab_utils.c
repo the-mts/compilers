@@ -63,6 +63,10 @@ void scope_cleanup(){
 	table_scope.pop_back();
 }
 
+pair<constant, enum const_type> parse_constant(string s){
+	return pair<constant, enum const_type>();
+}
+
 void simplify_type(string &s){
 	string x = s;
 	vector<string> tokens;
