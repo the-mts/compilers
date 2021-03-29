@@ -1,8 +1,10 @@
 #include <string>
 #include <unordered_map>
+#include <map>
 #include <vector>
 #include <algorithm>
 using namespace std;
+extern int line;
 enum sym_type {UNDEFINED, IS_FUNC, IS_STRUCT, IS_VAR, IS_TYPE};
 enum const_type {IS_INT, IS_LONG, IS_SHORT, IS_U_INT, IS_U_LONG, IS_U_SHORT, IS_FLOAT, IS_DOUBLE, IS_LONG_DOUBLE, IS_CHAR, IS_NON_CONST};
 enum val_type {LVALUE, RVALUE};
@@ -71,7 +73,7 @@ extern typtab types_table;
 extern void init_equiv_types();
 extern void init_symtab();
 
-extern string get_eqtype(string type);
+extern string get_eqtype(string type, int flag = 1);
 
 extern st_entry* add_entry(string key, string type, unsigned long size, long offset, enum sym_type type_name = UNDEFINED);
 extern st_entry* lookup(string key);
@@ -87,3 +89,8 @@ extern pair<string, int> get_equivalent_pointer(string s);
 extern string reduce_pointer_level(string s);
 extern string arithmetic_type_upgrade(string type1, string type2, string op);
 extern string increase_array_level(string s);
+extern void check_param_list(vector<pair<string, string>> v);
+extern void check_valid_array(string s);
+extern st_entry* current_lookup(string key);
+extern void struct_init_check(string type);
+extern tt_entry* current_type_lookup(string key);

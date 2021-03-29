@@ -10,77 +10,150 @@ unordered_map<string, string> equiv_types;
 
 void init_equiv_types(){
 	equiv_types.insert({"int","int"});
-    equiv_types.insert({"char", "char"});
-    equiv_types.insert({"float", "float"});
-    equiv_types.insert({"void", "void"});
-    equiv_types.insert({"double", "double"});
+	equiv_types.insert({"char", "char"});
+	equiv_types.insert({"float", "float"});
+	equiv_types.insert({"void", "void"});
+	equiv_types.insert({"double", "double"});
 
-    equiv_types.insert({"signed", "int"});
-    equiv_types.insert({"unsigned", "unsigned int"});
+	equiv_types.insert({"signed", "int"});
+	equiv_types.insert({"unsigned", "unsigned int"});
 
-    equiv_types.insert({"long", "long int"});
-    equiv_types.insert({"short", "short int"});
+	equiv_types.insert({"long", "long int"});
+	equiv_types.insert({"short", "short int"});
 
-    equiv_types.insert({"long int", "long int"});
-    equiv_types.insert({"short int", "short int"});
+	equiv_types.insert({"long int", "long int"});
+	equiv_types.insert({"short int", "short int"});
 
-    equiv_types.insert({"signed long", "long int"});
-    equiv_types.insert({"signed short", "short int"});
-    equiv_types.insert({"signed long int", "long int"});
-    equiv_types.insert({"signed short int", "short int"});
+	equiv_types.insert({"signed long", "long int"});
+	equiv_types.insert({"signed short", "short int"});
+	equiv_types.insert({"signed long int", "long int"});
+	equiv_types.insert({"signed short int", "short int"});
 
-    equiv_types.insert({"signed int", "int"});
-    equiv_types.insert({"unsigned int", "unsigned int"});
+	equiv_types.insert({"signed int", "int"});
+	equiv_types.insert({"unsigned int", "unsigned int"});
 
-    equiv_types.insert({"unsigned long", "unsigned long int"});
-    equiv_types.insert({"unsigned short", "unsigned short int"});
-    equiv_types.insert({"unsigned long int", "unsigned long int"});
-    equiv_types.insert({"unsigned short int", "unsigned short int"});
+	equiv_types.insert({"unsigned long", "unsigned long int"});
+	equiv_types.insert({"unsigned short", "unsigned short int"});
+	equiv_types.insert({"unsigned long int", "unsigned long int"});
+	equiv_types.insert({"unsigned short int", "unsigned short int"});
 
-    equiv_types.insert({"long double", "long double"});
-    equiv_types.insert({"unsigned char", "char"});
+	equiv_types.insert({"long double", "long double"});
+	equiv_types.insert({"unsigned char", "char"});
 }
 
-string get_eqtype(string type){
-    vector<pair<int, string>> a;
-    unordered_map<string, int> m;
-    m["struct"] = 0;
-    m["enum"] = 0;
-    m["signed"] = 1;
-    m["unsigned"] = 1;
-    m["short"] = 2;
-    m["long"] = 2;
-    m["int"] = 3;
-    m["double"] = 4;
-    m["char"] = 5;
-    m["float"] = 6;
-    m["void"] = 7;
+string get_eqtype(string type, int is_only_type){
+	vector<pair<int, string>> a;
+	unordered_map<string, int> m;
+	m["struct"] = 0;
+	m["enum"] = 0;
+	m["signed"] = 1;
+	m["unsigned"] = 1;
+	m["short"] = 2;
+	m["long"] = 2;
+	m["int"] = 3;
+	m["double"] = 4;
+	m["char"] = 5;
+	m["float"] = 6;
+	m["void"] = 7;
 
-    string tmp ="";
-    for(auto i : type){
-        if(i==' '){
-            a.push_back({(m.find(tmp)!=m.end() ? m[tmp] : 10)  , tmp});
-            tmp = "";
-        }
-        else tmp += i;
-    }
-    a.push_back({(m.find(tmp)!=m.end() ? m[tmp] : 10)  , tmp});
+	string tmp ="";
+	for(auto i : type){
+		if(i==' '){
+			a.push_back({(m.find(tmp)!=m.end() ? m[tmp] : 10)  , tmp});
+			tmp = "";
+		}
+		else tmp += i;
+	}
+	if(tmp!="")
+		a.push_back({(m.find(tmp)!=m.end() ? m[tmp] : 10)  , tmp});
 
-    sort(a.begin(), a.end());
-    
-    if(a[0].first==0){
-        if(a.size()!=2) return "";
-        else return type;
-    }
+	sort(a.begin(), a.end());
+	
+	if(a[0].first==0){
+		if(a.size()!=2){
+			printf("\e[1;31mError [line %d]:\e[0m Invalid data type\n", line);
+			exit(-1);
+		}
+		if(is_only_type){
+			tt_entry * tmp = type_lookup(type);
+			if(tmp==NULL){
+				printf("\e[1;31mError [line %d]:\e[0m Undeclared type %s\n", line, type.c_str());
+				exit(-1);
+			}
+		}
+		return type;
+	}
 
-    string new_type="";
-    for(auto i:a){
-        if(new_type!="") new_type += " ";
-        new_type += i.second;
-    }
+	string new_type="";
+	for(auto i:a){
+		if(new_type!="") new_type += " ";
+		new_type += i.second;
+	}
 
-    if(equiv_types.find(new_type)==equiv_types.end()) return "";
-    return equiv_types[new_type];
+	if(equiv_types.find(new_type)==equiv_types.end()){
+		printf("\e[1;31mError [line %d]:\e[0m Invalid data type\n", line);
+		exit(-1);
+	}
+	return equiv_types[new_type];
+}
+
+void check_param_list(vector<pair<string, string>> v){
+	map<string, int> m;
+	for(auto p: v){
+		if(p.second=="")
+			continue;
+		if(m.find(p.second)!=m.end()){
+			printf("\e[1;31mError [line %d]:\e[0m Redefinition of parameter %s\n", line, p.second.c_str());
+			exit(-1);
+		}
+		m.insert({p.second,1});
+	}
+	return;
+}
+
+void check_valid_array(string s){
+	int n = s.length();
+	int f=0;
+	for(int i=0;i<n;i++){
+		if(i<n-1 && s[i]=='[' && s[i+1]==']'){
+			printf("\e[1;31mError [line %d]:\e[0m Invalid array declaration\n", line);
+			exit(-1);
+		}
+	}
+	return;
+}
+
+void struct_init_check(string type){
+	vector<string> a;
+	string tmp ="";
+	for(auto i : type){
+		if(i==' '){
+			a.push_back(tmp);
+			tmp = "";
+		}
+		else tmp += i;
+	}
+	if(tmp!="")
+		a.push_back(tmp);
+	if(a[0]!="struct" && a[0]!="enum"){
+		return;
+	}
+	string type1 = a[0] + " " + a[1];
+	tt_entry* entry = type_lookup(type1);
+	if(entry==NULL){
+		printf("\e[1;31mError [line %d]:\e[0m Undeclared type %s\n", line, type1.c_str());
+		exit(-1);
+	}
+	if(entry->is_init==1){
+		return;
+	}
+	if(a.size()>=3){
+		if(a[2][0]=='*'){
+			return;
+		}
+	}
+	printf("\e[1;31mError [line %d]:\e[0m Uninitialized type %s\n", line, type1.c_str());
+	exit(-1);
 }
 
 void init_symtab(){
@@ -115,12 +188,26 @@ st_entry* lookup(string key){
 	return NULL;
 }
 
+st_entry* current_lookup(string key){
+	auto it = table_scope.back()->find(key);
+	if(it != table_scope.back()->end())
+		return it->second;
+	return NULL;
+}
+
 tt_entry* type_lookup(string key){
 	for(int i = (int)(type_scope.size())-1; i >= 0; i--){
 		auto it = type_scope[i]->find(key);
 		if(it != type_scope[i]->end())
 			return it->second;
 	}
+	return NULL;
+}
+
+tt_entry* current_type_lookup(string key){
+	auto it = type_scope.back()->find(key);
+	if(it != type_scope.back()->end())
+		return it->second;
 	return NULL;
 }
 
@@ -230,6 +317,44 @@ string reduce_pointer_level(string s){
 		else{
 			s1+=s[i];
 		}
+	}
+	return s1;
+}
+
+string increase_array_level(string s){
+	int n = s.length();
+	int cnt = 0, cnt1 = 0, start=-1, end=-1, f=-1;
+	for(int i=0;i<n;i++){
+		if(s[i]=='*'){
+			cnt++;
+			f=i;
+		}
+		if(s[i]=='[')
+			cnt1++;
+	}
+	for(int i=0;i<n;i++){
+		if(s[i]=='['){
+			start = i;
+			break;
+		}
+	}
+	for(int i=0;i<n;i++){
+		if(s[i]==']'){
+			end = i;
+			break;
+		}
+	}
+	if(cnt1==0){
+		string s1 = s+" []";
+		return s1;
+	}
+	string s1 = "";
+	for(int i=0;i<start;i++){
+		s1+=s[i];
+	}
+	s1+="[]";
+	for(int i=start;i<n;i++){
+		s1+=s[i];
 	}
 	return s1;
 }

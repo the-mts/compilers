@@ -1,11 +1,13 @@
 struct x{
-	int * a[20], **b[12];
-} sds[5];
-
-
+	int zz;
+};
 int main(){
-	int* a[232], ***b[10];
-	int * c;
-	short signed int volatile ** d[4];
+	struct x{
+		float y;
+	};
+	struct x z;
+	char ch;
+	z.y = 3.4;
+	ch = z.y;
 	return 0;
 }

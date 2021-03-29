@@ -13,7 +13,7 @@ $(SRC)/lex.yy.c: $(SRC)/scanner.l $(SRC)/y.tab.h $(SRC)/y.tab.c $(SRC)/symtab.h 
 	$(LEX) -o $@ $<
 
 $(SRC)/y.tab.c $(SRC)/y.tab.h: $(SRC)/parser.y $(SRC)/parse_utils.h $(SRC)/symtab.h
-	$(YACC) -dvt -Wno-yacc -o $(SRC)/y.tab.c $<
+	$(YACC) -dvt -Wno-yacc -Wno-other -o $(SRC)/y.tab.c $<
 
 $(BIN)/main.o: $(SRC)/main.c $(SRC)/parse_utils.h $(SRC)/symtab.h
 	$(CC) -c $< -o $@
