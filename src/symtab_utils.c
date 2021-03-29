@@ -147,6 +147,271 @@ unsigned long power(int x, int p){
 	return ans;
 }
 
+pair<string, int> get_equivalent_pointer(string s){
+	int n = s.length();
+	int x = n-1;
+	int cnt=0;
+	while(s[x]==' ' || s[x]=='[' || s[x]==']' || (s[x]>='0' && s[x]<='9')){
+		if(s[x]=='['){
+			cnt++;
+		}
+		x--;
+	}
+	string s1="";
+	int flag = 0;
+	int cnt1=0;
+	for(int i=0;i<=x;i++){
+		s1+=s[i];
+		if(s[i]=='*'){
+			flag = 1;
+			cnt1++;
+		}
+	}
+	if(cnt==0){
+		return {s1,cnt1};
+	}
+	if(cnt1==0){
+		s1+=" ";
+	}
+	for(int i=0;i<cnt;i++){
+		s1+="*";
+	}
+	return {s1, cnt+cnt1};
+}
+
+string reduce_pointer_level(string s){
+	int n = s.length();
+	int cnt = 0, cnt1 = 0, start=-1, end=-1, f=-1;
+	for(int i=0;i<n;i++){
+		if(s[i]=='*'){
+			cnt++;
+			f=i;
+		}
+		if(s[i]=='[')
+			cnt1++;
+	}
+	for(int i=0;i<n;i++){
+		if(s[i]=='['){
+			start = i;
+			break;
+		}
+	}
+	for(int i=0;i<n;i++){
+		if(s[i]==']'){
+			end = i;
+			break;
+		}
+	}
+	if(cnt==0 && cnt1==0){
+		printf("\e[1;31mError [line %d]:\e[0m Variable is neither pointer nor array.\n",line);
+		exit(-1);
+	}
+	if(cnt==1 && cnt1==0){
+		f-=2;
+		string s1="";
+		for(int i=0;i<=f;i++){
+			s1+=s[i];
+		}
+		return s1;
+	}
+	if(cnt1==0){
+		f--;
+	}
+	if(cnt1<=1){
+		string s1="";
+		for(int i=0;i<=f;i++){
+			s1+=s[i];
+		}
+		return s1;
+	}
+	string s1="";
+	for(int i=0;i<n;i++){
+		if(i>=start && i<=end);
+		else{
+			s1+=s[i];
+		}
+	}
+	return s1;
+}
+
+string arithmetic_type_upgrade(string type1, string type2, string op){
+	// float double long double int long unsigned int unsigned long int char pointer
+	if(type_lookup(type1) || type_lookup(type2)){
+		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, op.c_str());
+		exit(-1);
+	}
+	unordered_map<string, int> m1;
+	m1["float"] = 1;
+	m1["double"] = 1;
+	m1["long double"] = 1;
+	m1["int"] = 1;
+	m1["long int"] = 1;
+	m1["unsigned int"] = 1;
+	m1["unsigned long int"] = 1;
+	m1["char"] = 1;
+	string ans = "arithmetic_typecast did not work as expected";
+	if(type1 == "long double"){
+		if(m1.count(type2)){
+			ans = "long double";
+			return ans;
+		}
+		else{
+			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, op.c_str());
+			exit(-1);
+		}
+	}
+	if(type2 == "long double"){
+		if(m1.count(type1)){
+			ans = "long double";
+			return ans;
+		}
+		else{
+			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, op.c_str());
+			exit(-1);
+		}
+	}
+	if(type1 == "double"){
+		if(m1.count(type2)){
+			ans = "double";
+			return ans;
+		}
+		else{
+			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, op.c_str());
+			exit(-1);
+		}
+	}
+	if(type2 == "double"){
+		if(m1.count(type1)){
+			ans = "double";
+			return ans;
+		}
+		else{
+			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, op.c_str());
+			exit(-1);
+		}
+	}
+	if(type1 == "float"){
+		if(m1.count(type2)){
+			ans = "float";
+			return ans;
+		}
+		else{
+			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, op.c_str());
+			exit(-1);
+		}
+	}
+	if(type2 == "float"){
+		if(m1.count(type1)){
+			ans = "float";
+			return ans;
+		}
+		else{
+			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, op.c_str());
+			exit(-1);
+		}
+	}
+	if(type1 == "unsigned long int"){
+		if(m1.count(type2)){
+			ans = "unsigned long int";
+			return ans;
+		}
+		else{
+			return type2;
+		}
+	}
+	if(type2 == "unsigned long int"){
+		if(m1.count(type1)){
+			ans = "unsigned long int";
+			return ans;
+		}
+		else{
+			return type1;
+		}
+	}
+	if(type1 == "long int" && type2 == "unsigned int"){
+		ans = "unsigned long int";
+		return ans;
+	}
+	if(type2 == "long int" && type1 == "unsigned int"){
+		ans = "unsigned long int";
+		return ans;
+	}
+	if(type1 == "long int"){
+		if(m1.count(type2)){
+			ans = "long int";
+			return ans;		}
+
+		else{
+			return type2;
+		}
+	}
+	if(type2 == "long int"){
+		if(m1.count(type1)){
+			ans = "long int";
+			return ans;
+		}
+		else{
+			return type1;
+		}
+	}
+	if(type1 == "unsigned int"){
+		if(m1.count(type2)){
+			ans = "unsigned int";
+			return ans;		}
+
+		else{
+			return type2;
+		}
+	}
+	if(type2 == "unsigned int"){
+		if(m1.count(type1)){
+			ans = "unsigned int";
+			return ans;
+		}
+		else{
+			return type1;
+		}
+	}
+	if(type1 == "int"){
+		if(m1.count(type2)){
+			ans = "int";
+			return ans;		}
+
+		else{
+			return type2;
+		}
+	}
+	if(type2 == "int"){
+		if(m1.count(type1)){
+			ans = "int";
+			return ans;
+		}
+		else{
+			return type1;
+		}
+	}
+	if(type1 == "char"){
+		if(m1.count(type2)){
+			ans = "int";
+			return ans;		}
+
+		else{
+			return type2;
+		}
+	}
+	if(type2 == "char"){
+		if(m1.count(type1)){
+			ans = "int";
+			return ans;
+		}
+		else{
+			return type1;
+		}
+	}
+	printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, op.c_str());
+	exit(-1);
+}
+
 pair<constant, enum const_type> parse_constant(string s){
 	unordered_map <char, int> m; 
 	for(int i=0; i<10; i++){

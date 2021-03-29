@@ -83,3 +83,7 @@ extern void new_scope();
 extern void scope_cleanup();
 
 extern pair<constant, enum const_type> parse_constant(string s);
+extern pair<string, int> get_equivalent_pointer(string s);
+extern string reduce_pointer_level(string s);
+extern string arithmetic_type_upgrade(string type1, string type2, string op);
+extern string increase_array_level(string s);
