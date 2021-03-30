@@ -1,13 +1,10 @@
-struct x{
-	int zz;
-};
+// int fun(int a[4][10], int *b[]);
+int fun(int a, int *a[100]){
+	return;
+}
 int main(){
-	struct x{
-		float y;
-	};
-	struct x z;
-	char ch;
-	z.y = 3.4;
-	ch = z.y;
+	int a=1;
+	int *aa[10]; 
+	fun(a, aa);
 	return 0;
 }

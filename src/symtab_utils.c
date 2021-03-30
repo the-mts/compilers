@@ -397,8 +397,21 @@ string reduce_pointer_level(string s){
 	}
 	if(cnt1==0){
 		f--;
+		string s1="";
+		for(int i=0;i<=f;i++){
+			s1+=s[i];
+		}
+		return s1;
 	}
-	if(cnt1<=1){
+	if(cnt1==1){
+		if(cnt==0){
+			string s1 = "";
+			start-=2;
+			for(int i=0;i<=start;i++){
+				s1+=s[i];
+			}
+			return s1;
+		}
 		string s1="";
 		for(int i=0;i<=f;i++){
 			s1+=s[i];

@@ -1136,10 +1136,10 @@ direct_declarator
 															$$->node_type = 2;
 															if($$->node_data.back() != ']' && $$->node_data != "")
 																$$->node_data+=" ";
-															else{
-																printf("\e[1;31mError [line %d]:\e[0m Incorrect array format. \n", line );
-																exit(-1);
-															}
+															//else if($$->node_data!=""){
+															//	printf("\e[1;31mError [line %d]:\e[0m Incorrect array format. \n", line );
+															//	exit(-1);
+															//}
 															$$->node_data += "[]"; }
 	| direct_declarator '(' {func_params.clear();}
 	parameter_type_list ')'								{
@@ -1207,16 +1207,6 @@ parameter_declaration
 														}
 														$$ = $2;
 														string data_type_ = get_eqtype($1->node_data);
-														//string cmp;
-														//if($2->sz)
-														//	cmp = $2->v[$2->sz-1]->name;
-														//else
-														//	cmp = "";
-														//if(cmp == "pointer"){
-														//	data_type_+=" ";
-														//	for(int i = 0; i < $2->v[$2->sz-1]->node_type; i++)
-														//		data_type_+="*";
-														//}
 														if($2->node_data!=""){
 															data_type_+=" ";
 															data_type_+=$2->node_data;
@@ -1454,6 +1444,7 @@ function_definition
 														}
 														(*(tmp->arg_list))[i].second = func_params[i].second;
 													}
+													tmp->is_init = 1;
 												}
 												else{
 													check_param_list(func_params);
@@ -1512,6 +1503,7 @@ function_definition
 													}
 													(*(tmp->arg_list))[i].second = func_params[i].second;
 												}
+												tmp->is_init = 1;
 											}
 											else{
 												check_param_list(func_params);
