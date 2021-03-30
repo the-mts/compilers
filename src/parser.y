@@ -376,10 +376,19 @@ unary_expression
 
 																}
 	| SIZEOF unary_expression									{
-																	$$ = node_(1,"SIZEOF_unary",-1);
-																	$$->v[0] = $2;
+																	long unsigned sz = get_size($2->node_data);
+																	$$ = node_(0,(char*)to_string(sz).c_str(),CONSTANT);
+																	$$->node_data = "unsigned long int";
+																	$$->val_dt = IS_U_LONG;
+																	$$->val.u_long_const = sz;
 																}
-	| SIZEOF '(' type_name ')'									{$$ = node_(1,"SIZEOF_type",-1); $$->v[0] = $3;}
+	| SIZEOF '(' type_name ')'									{
+																	long unsigned sz = get_size($3->node_data);
+																	$$ = node_(0,(char*)to_string(sz).c_str(),CONSTANT);
+																	$$->node_data = "unsigned long int";
+																	$$->val_dt = IS_U_LONG;
+																	$$->val.u_long_const = sz;
+																}
 	;
 
 unary_operator
@@ -813,7 +822,7 @@ declaration
 																		}
 																	}
 																	if(tmp2=="struct"){
-																		tt_entry * entry = type_lookup(tmp);
+																		tt_entry * entry = current_type_lookup(tmp);
 																		if(entry==NULL){
 																			add_type_entry(tmp,tmp2);
 																		}
@@ -910,11 +919,11 @@ init_declarator
 	;
 
 storage_class_specifier
-	: TYPEDEF													{}
-	| EXTERN													{}
-	| STATIC													{}
-	| AUTO														{}
-	| REGISTER													{}
+	: TYPEDEF													{printf("\e[1;31mError [line %d]:\e[0m No support for storage class specifiers.\n", line);exit(-1);}
+	| EXTERN													{printf("\e[1;31mError [line %d]:\e[0m No support for storage class specifiers.\n", line);exit(-1);}
+	| STATIC													{printf("\e[1;31mError [line %d]:\e[0m No support for storage class specifiers.\n", line);exit(-1);}
+	| AUTO														{printf("\e[1;31mError [line %d]:\e[0m No support for storage class specifiers.\n", line);exit(-1);}
+	| REGISTER													{printf("\e[1;31mError [line %d]:\e[0m No support for storage class specifiers.\n", line);exit(-1);}
 	;
 
 type_specifier
@@ -947,10 +956,11 @@ struct_or_union_specifier
 																		$$->node_data = string((const char*)$1) + " " + string((const char*)$2);
 																	}
 
-	| struct_or_union IDENTIFIER 									{char* ch = (char*)malloc(sizeof(char)*(strlen($1)+strlen($2)+2)); 
-																	strcpy(ch,$1); strcat(ch," "); strcat(ch,$2);
-																	$$ = node_(0,ch,-1); free(ch);
-																	$$->node_data = string((const char*)$1)+" "+string((const char*)$2);
+	| struct_or_union IDENTIFIER 									{
+																		char* ch = (char*)malloc(sizeof(char)*(strlen($1)+strlen($2)+2)); 
+																		strcpy(ch,$1); strcat(ch," "); strcat(ch,$2);
+																		$$ = node_(0,ch,-1); free(ch);
+																		$$->node_data = string((const char*)$1)+" "+string((const char*)$2);
 																	}
 	;
 
@@ -1024,8 +1034,8 @@ specifier_qualifier_list
 	: type_specifier specifier_qualifier_list		{
 														$$ = $2; push_front($$,$1);
 														if($$->node_data != "")
-															$$->node_data += " ";
-														$$->node_data += $1->node_data;
+															$$->node_data = " " + $$->node_data;
+														$$->node_data = $1->node_data + $$->node_data;
 													}
 
 	| type_specifier								{
@@ -1115,7 +1125,7 @@ direct_declarator
 																exit(-1);
 															}
 															$$->node_data = $1->node_data;
-															if($$->node_data.back() != ']')
+															if($$->node_data.back() != ']' && $$->node_data != "")
 																$$->node_data+=" ";
 															$$->node_data += "[";
 															$$->node_data += to_string(tmp);
@@ -1124,7 +1134,7 @@ direct_declarator
 	| direct_declarator '[' ']'							{
 															$$ = $1;
 															$$->node_type = 2;
-															if($$->node_data.back() != ']')
+															if($$->node_data.back() != ']' && $$->node_data != "")
 																$$->node_data+=" ";
 															else{
 																printf("\e[1;31mError [line %d]:\e[0m Incorrect array format. \n", line );

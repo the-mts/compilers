@@ -41,6 +41,99 @@ void init_equiv_types(){
 	equiv_types.insert({"unsigned char", "char"});
 }
 
+unsigned long get_size(string s){
+	check_valid_array(s);
+	if(s.back() == '*')
+		return 8ul;
+	unsigned long ans = 0;
+	unsigned long elements = 1;
+	auto ind = s.find('[');
+	string array = "";
+	if(ind != string :: npos){
+		array = s.substr(ind,s.size());
+	}
+	string tmp = "";
+	for(auto x: array){
+		if(x == ']'){
+			elements*=stoul(tmp);
+			tmp = "";
+		}
+		else if(x != '[')
+			tmp+=x;
+	}
+	if(array == "")
+		goto skip_array;
+	if(ind != string :: npos){
+		s = s.substr(0,ind-1);
+	}
+	skip_array : ;
+	if(s.back() == '*'){
+		return elements*8ul;
+	}
+	while(s.back() == '*' || s.back() == ' '){
+		s.pop_back();
+	}
+	s = get_eqtype(s);
+	tt_entry* entry = type_lookup(s);
+	if(entry == NULL){
+		string tmp = "";
+		vector<string> v;
+		for(auto x : s){
+			if(x == ' '){
+				v.push_back(tmp);
+				tmp = "";
+			}
+			else
+				tmp+=x;
+		}
+		v.push_back(tmp);
+		if(v.back() == "int"){
+			if(v.size() > 1){
+				if(v[v.size()-2] == "short")
+					return 2ul*elements;
+				else if(v[v.size() -2] == "long")
+					return 8ul*elements;
+				else
+					return 4ul*elements;
+			}
+			return 4ul*elements;
+		}
+		else if(v.back() == "float"){
+			return 4ul*elements;
+		}
+		else if(v.back() == "char"){
+			return 1ul*elements;
+		}
+		else if(v.back() == "void"){
+			return 0ul*elements;
+		}
+		else if(v.back() == "double"){
+			if(v.size() > 1){
+				if(v[v.size()-2] == "long")
+					return 16ul*elements;
+				else
+					return 8ul*elements;
+			}
+			return 8ul*elements;
+		}
+	}
+	else{
+		if(entry->mem_list == NULL)
+			return 0ul;
+		if(entry->type == "struct")
+			for(auto x : *(entry->mem_list)){
+				unsigned long f = get_size(x.first);
+				ans+=f;
+			}
+		else
+			for(auto x : *(entry->mem_list)){
+				ans=max(ans,get_size(x.first));
+			}
+		return ans*elements;
+	}
+	return 0;
+}
+
 string get_eqtype(string type, int is_only_type){
 	vector<pair<int, string>> a;
 	unordered_map<string, int> m;
@@ -174,6 +267,7 @@ st_entry* add_entry(string key, string type, unsigned long size, long offset, en
 
 tt_entry* add_type_entry(string key, string type){
 	tt_entry * new_entry = new tt_entry;
+	new_entry->type = type;
 	typtab * temp = type_scope.back();
 	temp->insert({key, new_entry});
 	return new_entry;
