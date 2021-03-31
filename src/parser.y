@@ -1247,6 +1247,10 @@ type_name
 													}
 	| specifier_qualifier_list abstract_declarator	{
 														$1->node_data = get_eqtype($1->node_data);
+														if($2->node_data != ""){
+															$$->node_data+=" ";
+															$$->node_data+=$2->node_data;
+														}
 														$$ = $1; add_node($$,$2);
 													}
 	;
@@ -1254,19 +1258,80 @@ type_name
 abstract_declarator
 	: pointer										{$$ = $1;}
 	| direct_abstract_declarator					{$$ = $1;}
-	| pointer direct_abstract_declarator			{$$ = node_(2,"abs_decl",-1); $$->v[0] = $1; $$->v[1] = $2;}
+	| pointer direct_abstract_declarator			{$$ = node_(2,"abs_decl",-1); $$->v[0] = $1; $$->v[1] = $2;$$->node_data = $1->node_data+" "+$2->node_data;}
 	;
 
 direct_abstract_declarator
-	: '(' abstract_declarator ')'								{$$ = node_(1,"()",-1); $$->v[0]=$2;}
-	| '[' ']'													{$$ = node_(0,"[]",-1);}
-	| '[' constant_expression ']'								{$$ = node_(1,"[]",-1); $$->v[0]=$2;}
-	| direct_abstract_declarator '[' ']'						{$$ = $1; add_node($$, node_(0,"[]",-1));}
-	| direct_abstract_declarator '[' constant_expression ']'	{$$ = $1; node* x = node_(1,"[]",-1); x->v[0]=$3; add_node($$,x);}
-	| '(' ')'													{$$ = node_(0,"()",-1);}
-	| '(' parameter_type_list ')'								{$$ = node_(0,"()",-1); /*$$->v[0] = $2;*/}
-	| direct_abstract_declarator '(' ')'						{$$ = $1; add_node($$, node_(0,"()",-1));}
-	| direct_abstract_declarator '(' parameter_type_list ')'	{$$ = $1; add_node($$, node_(0,"()",-1));/* $$->v[$$->sz-1]->v[0] = $3;*/}
+	: '(' abstract_declarator ')'								{$$ = node_(1,"()",-1); $$->v[0]=$2;printf("\e[1;35mWarning [line %d]:\e[0m Abstract function declarations ignored.", line);}
+	| '[' ']'													{
+																	$$ = node_(0,"[]",-1);
+																	$$->node_type = 2;
+																	$$->node_data += "[";
+																	$$->node_data += "]";
+																}
+	| '[' constant_expression ']'								{
+																	$$ = node_(1,"[]",-1); $$->v[0] = $2;
+																	$$->node_type = 2;
+																	long long tmp;
+																	switch($2->val_dt){
+																		case IS_INT: tmp = $2->val.int_const; break;
+																		case IS_LONG: tmp = $2->val.long_const; break;
+																		case IS_SHORT: tmp = $2->val.short_const; break;
+																		case IS_U_INT: tmp = $2->val.u_int_const; break;
+																		case IS_U_LONG: tmp = $2->val.u_long_const; break;
+																		case IS_U_SHORT: tmp = $2->val.u_short_const; break;
+																		default:
+																			printf("\e[1;31mError [line %d]:\e[0m Incompatible data type for size in array declaration.\n", line);
+																			exit(-1);
+																	}
+																	if(tmp<=0){
+																		printf("\e[1;31mError [line %d]:\e[0m Array size cannot be zero or negative.\n", line);
+																		exit(-1);
+																	}
+																	if($$->node_data.back() != ']' && $$->node_data != "")
+																		$$->node_data+=" ";
+																	$$->node_data += "[";
+																	$$->node_data += to_string(tmp);
+																	$$->node_data += "]";
+																}
+	| direct_abstract_declarator '[' ']'						{
+																	$$ = $1;
+																	$$->node_type = 2;
+																	if($$->node_data.back() != ']' && $$->node_data != "")
+																		$$->node_data+=" ";
+																	$$->node_data += "[";
+																	$$->node_data += to_string(tmp);
+																	$$->node_data += "]";
+																}
+	| direct_abstract_declarator '[' constant_expression ']'	{
+																	$$ = $1;
+																	$$->node_type = 2;
+																	long long tmp;
+																	switch($3->val_dt){
+																		case IS_INT: tmp = $3->val.int_const; break;
+																		case IS_LONG: tmp = $3->val.long_const; break;
+																		case IS_SHORT: tmp = $3->val.short_const; break;
+																		case IS_U_INT: tmp = $3->val.u_int_const; break;
+																		case IS_U_LONG: tmp = $3->val.u_long_const; break;
+																		case IS_U_SHORT: tmp = $3->val.u_short_const; break;
+																		default:
+																			printf("\e[1;31mError [line %d]:\e[0m Incompatible data type for size in array declaration.\n", line);
+																			exit(-1);
+																	}
+																	if(tmp<=0){
+																		printf("\e[1;31mError [line %d]:\e[0m Array size cannot be zero or negative.\n", line);
+																		exit(-1);
+																	}
+																	if($$->node_data.back() != ']' && $$->node_data != "")
+																		$$->node_data+=" ";
+																	$$->node_data += "[";
+																	$$->node_data += to_string(tmp);
+																	$$->node_data += "]";
+																}
+	| '(' ')'													{$$ = node_(0,"()",-1);printf("\e[1;35mWarning [line %d]:\e[0m Abstract function declarations ignored.", line);}
+	| '(' parameter_type_list ')'								{$$ = node_(0,"()",-1); /*$$->v[0] = $2;*/printf("\e[1;35mWarning [line %d]:\e[0m Abstract function declarations ignored.", line);}
+	| direct_abstract_declarator '(' ')'						{$$ = $1; add_node($$, node_(0,"()",-1));printf("\e[1;35mWarning [line %d]:\e[0m Abstract function declarations ignored.", line);}
+	| direct_abstract_declarator '(' parameter_type_list ')'	{$$ = $1; add_node($$, node_(0,"()",-1));/* $$->v[$$->sz-1]->v[0] = $3;*/printf("\e[1;35mWarning [line %d]:\e[0m Abstract function declarations ignored.", line);}
 	;
 
 initializer
