@@ -44,6 +44,7 @@ struct st_entry{
 		this->sym_table = NULL;
 	}
 };
+
 struct tt_entry{
 	string type;
 	vector<pair<string, string>> * mem_list = NULL;

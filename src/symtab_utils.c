@@ -645,6 +645,23 @@ string arithmetic_type_upgrade(string type1, string type2, string op){
 }
 
 pair<constant, enum const_type> parse_constant(string s){
+	if(s[0]=='\''){
+		int n = s.length();
+		if(n<=2){
+			printf("\e[1;31mError [line %d]:\e[0m Empty character constant.\n",line);
+			exit(-1);
+		}
+		n--;
+		pair<constant, enum const_type> ans;
+		ans.second = IS_CHAR;
+		ans.first.char_const = 0;
+		long long mult = 1;
+		for(int i=n-1;i>=1;i--){
+			ans.first.char_const += mult*s[i];
+			mult*=256;
+		}
+		return ans;
+	}
 	unordered_map <char, int> m; 
 	for(int i=0; i<10; i++){
 		m['0'+i] = i;
@@ -653,7 +670,7 @@ pair<constant, enum const_type> parse_constant(string s){
 		m['A'+i-10] = i;
 		m['a'+i-10] = i;
 	}
-	pair<constant, enum const_type> ans;
+	pair<constant, enum const_type> ans/* = *new pair<constant, enum const_type>*/;
 	int is_float_or_double = 0;
 	int length = s.length();
 

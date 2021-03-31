@@ -69,23 +69,35 @@ primary_expression
 																	switch(parsed.second){
 																		case IS_INT:
 																			$$->node_data = "int";
+																			$$->val_dt = IS_INT;
 																		break;
 																		case IS_LONG:
 																			$$->node_data = "long int";
+																			$$->val_dt = IS_LONG;
 																		break;
 																		case IS_U_INT:
 																			$$->node_data = "unsigned int";
+																			$$->val_dt = IS_U_INT;
 																		break;
 																		case IS_U_LONG:
 																			$$->node_data = "unsigned long int";
-																		break;																		case IS_FLOAT:
+																			$$->val_dt = IS_U_LONG;
+																		break;																		
+																		case IS_FLOAT:
 																			$$->node_data = "float";
+																			$$->val_dt = IS_FLOAT;
 																		break;
 																		case IS_DOUBLE:
 																			$$->node_data = "double";
+																			$$->val_dt = IS_DOUBLE;
 																		break;
 																		case IS_LONG_DOUBLE:
 																			$$->node_data = "long double";
+																			$$->val_dt = IS_LONG_DOUBLE;
+																		break;
+																		case IS_CHAR:
+																			$$->node_data = "char";
+																			$$->val_dt = IS_CHAR;
 																		break;
 																	}
 																	$$->val = parsed.first;
@@ -263,7 +275,7 @@ postfix_expression
 																	$$ = node_(1, "exp--", -1); $$->v[0] = $1;
 																	$$->node_data = $1->node_data;
 																	tt_entry* type_entry = type_lookup($1->node_data);
-																	if(type_entry == NULL){
+																	if(type_entry != NULL){
 																		printf("\e[1;31mError [line %d]:\e[0m Decrement operator cannot be apllied on non-integer, non-floating point and non pointer types.\n",line);
 																		exit(-1);
 																	}/*array*/
@@ -287,7 +299,7 @@ unary_expression
 																	$$->v[0] = $2;
 																	$$->node_data = $2->node_data;
 																	tt_entry* type_entry = type_lookup($2->node_data);
-																	if(type_entry == NULL){
+																	if(type_entry != NULL){
 																		printf("\e[1;31mError [line %d]:\e[0m Increment operator cannot be apllied on non-integer, non-floating point and non pointer types.\n",line);
 																		exit(-1);
 																	}/*array*/
@@ -302,7 +314,7 @@ unary_expression
 																	$$->v[0] = $2;
 																	$$->node_data = $2->node_data;
 																	tt_entry* type_entry = type_lookup($2->node_data);
-																	if(type_entry == NULL){
+																	if(type_entry != NULL){
 																		printf("\e[1;31mError [line %d]:\e[0m Decrement operator cannot be apllied on non-integer, non-floating point and non pointer types.\n",line);
 																		exit(-1);
 																	}/*array*/
@@ -346,6 +358,23 @@ unary_expression
 																		}
 																		break;
 																		case '!':{
+																			if($2->token==CONSTANT){
+																				switch($2->val_dt){
+																					case IS_INT: $2->val.int_const = !$2->val.int_const; break;
+																					case IS_LONG: $2->val.long_const = !$2->val.long_const; break;
+																					case IS_SHORT: $2->val.short_const = !$2->val.short_const; break;
+																					case IS_U_INT: $2->val.u_int_const = !$2->val.u_int_const; break;
+																					case IS_U_LONG: $2->val.u_long_const = !$2->val.u_long_const; break;
+																					case IS_U_SHORT: $2->val.u_short_const = !$2->val.u_short_const; break;
+																					case IS_FLOAT: $2->val.float_const = !$2->val.float_const; break;
+																					case IS_DOUBLE: $2->val.double_const = !$2->val.double_const; break;
+																					case IS_LONG_DOUBLE: $2->val.long_double_const = !$2->val.long_double_const; break;
+																					case IS_CHAR: $2->val.char_const = !$2->val.char_const; break;
+																					default: printf("unary operation not supported on this.\n");exit(-1);
+																				}
+																				$$ = $2;
+																				break;
+																			}
 																			if(temp_data.back() == '*'){
 																				$$->value_type = RVALUE;
 																				$$->node_data = "int";
@@ -354,17 +383,71 @@ unary_expression
 																		}
 																		case '-':
 																		case '+':{
-																			if(temp_data.substr((int)temp_data.size() - 3,3) != "int"){
-																				if(temp_data != "float" && temp_data != "double" && temp_data != "long double"){
-																					printf("\e[1;31mError [line %d]:\e[0m Incompatible type for %c operator.\n",line,*($1));
-																					exit(-1);
+																			if($2->token==CONSTANT && *($1)=='+'){
+																				switch($2->val_dt){
+																					case IS_INT:$2->val.int_const = $2->val.int_const; break;
+																					case IS_LONG:$2->val.long_const = $2->val.long_const; break;
+																					case IS_SHORT:$2->val.short_const = $2->val.short_const; break;
+																					case IS_U_INT:$2->val.u_int_const = $2->val.u_int_const; break;
+																					case IS_U_LONG:$2->val.u_long_const = $2->val.u_long_const; break;
+																					case IS_U_SHORT:$2->val.u_short_const = $2->val.u_short_const; break;
+																					case IS_FLOAT: $2->val.float_const = $2->val.float_const; break;
+																					case IS_DOUBLE: $2->val.double_const = $2->val.double_const; break;
+																					case IS_LONG_DOUBLE: $2->val.long_double_const = $2->val.long_double_const; break;
+																					case IS_CHAR: $2->val.char_const = $2->val.char_const; break;
+																					default: printf("unary operation not supported on this.\n");exit(-1);
 																				}
+																				$$ = $2;
+																				break;
 																			}
-																			$$->node_data = temp_data;
-																			$$->value_type = RVALUE;
+																			else if($2->token==CONSTANT && *($1)=='-'){
+																				switch($2->val_dt){
+																					case IS_INT: $2->val.int_const = -$2->val.int_const; break;
+																					case IS_LONG: $2->val.long_const = -$2->val.long_const; break;
+																					case IS_SHORT: $2->val.short_const = -$2->val.short_const; break;
+																					case IS_U_INT: $2->val.u_int_const = -$2->val.u_int_const; break;
+																					case IS_U_LONG: $2->val.u_long_const = -$2->val.u_long_const; break;
+																					case IS_U_SHORT: $2->val.u_short_const = -$2->val.u_short_const; break;
+																					case IS_FLOAT: $2->val.float_const = -$2->val.float_const; break;
+																					case IS_DOUBLE: $2->val.double_const = -$2->val.double_const; break;
+																					case IS_LONG_DOUBLE: $2->val.long_double_const = -$2->val.long_double_const; break;
+																					case IS_CHAR: $2->val.char_const = -$2->val.char_const; break;
+																					default: printf("unary operation not supported on this.\n");exit(-1);
+																				}
+																				$$ = $2;
+																				break;
+																			}
+																			else{
+																				if(temp_data.find("int") != string::npos){
+																					if(temp_data != "float" && temp_data != "double" && temp_data != "long double"){
+																						printf("\e[1;31mError [line %d]:\e[0m Incompatible type for %c operator.\n",line,*($1));
+																						exit(-1);
+																					}
+																				}
+																				$$->node_data = temp_data;
+																				$$->value_type = RVALUE;
+																			}
 																		}
 																		break;
 																		case '~':{
+																			if($2->token==CONSTANT){
+																				switch($2->val_dt){
+																					case IS_INT: $2->val.int_const = ~$2->val.int_const; break;
+																					case IS_LONG: $2->val.long_const = ~$2->val.long_const; break;
+																					case IS_SHORT: $2->val.short_const = ~$2->val.short_const; break;
+																					case IS_U_INT: $2->val.u_int_const = ~$2->val.u_int_const; break;
+																					case IS_U_LONG: $2->val.u_long_const = ~$2->val.u_long_const; break;
+																					case IS_U_SHORT: $2->val.u_short_const = ~$2->val.u_short_const; break;
+																					case IS_FLOAT: 
+																					case IS_DOUBLE: 
+																					case IS_LONG_DOUBLE: printf("\e[1;31mError [line %d]:\e[0m ~ cannot be applied to non-integer types.\n",line);
+																											exit(-1); break;
+																					case IS_CHAR: $2->val.char_const = ~$2->val.char_const; break;
+																					default: printf("unary operation not supported on this.\n");exit(-1);
+																				}
+																				$$ = $2;
+																				break;
+																			}
 																			if(temp_data.substr((int)temp_data.size() - 3,3) != "int"){
 																				printf("\e[1;31mError [line %d]:\e[0m ~ cannot be applied to non-integer types.\n",line);
 																				exit(-1);
@@ -412,6 +495,9 @@ cast_expression
 multiplicative_expression
 	: cast_expression											{$$ = $1;}
 	| multiplicative_expression '*' cast_expression				{
+																	//if($1->token == CONSTANT && $3->token == CONSTANT){
+																	//	binary_op()
+																	//}
 																	$$ = node_(2,"*",-1);
 																	$$->v[0] = $1;
 																	$$->v[1] = $3;
@@ -444,7 +530,7 @@ multiplicative_expression
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
 																	}
-																	if(type.find("int") != string::npos){
+																	if(type.find("int") != string::npos && type.find("char") != string::npos){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
 																	}
@@ -484,7 +570,7 @@ shift_expression
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
 																	}
-																	if(type.find("int") != string::npos){
+																	if(type.find("int") != string::npos && type.find("char") != string::npos){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
 																	}
@@ -500,7 +586,7 @@ shift_expression
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
 																	}
-																	if(type.find("int") != string::npos){
+																	if(type.find("int") != string::npos && type.find("char") != string::npos){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
 																	}
@@ -612,7 +698,7 @@ and_expression
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
 																	}
-																	if(type.find("int") != string::npos){
+																	if(type.find("int") != string::npos && type.find("char") != string::npos){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
 																	}
@@ -632,7 +718,7 @@ exclusive_or_expression
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
 																	}
-																	if(type.find("int") != string::npos){
+																	if(type.find("int") != string::npos && type.find("char") != string::npos){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
 																	}
@@ -652,7 +738,7 @@ inclusive_or_expression
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
 																	}
-																	if(type.find("int") != string::npos){
+																	if(type.find("int") != string::npos && type.find("char") != string::npos){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
 																	}
@@ -763,7 +849,7 @@ assignment_expression
 																					printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2->name);
 																					exit(-1);
 																				}
-																				if(type.find("int") != string::npos){
+																				if(type.find("int") != string::npos && type.find("char") != string::npos){
 																					printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2->name);
 																					exit(-1);
 																				}
@@ -803,7 +889,9 @@ expression
 	;
 
 constant_expression
-	: conditional_expression									{$$ = $1;/*check if constant*/}
+	: conditional_expression									{
+																	$$ = $1;/*check if constant*/
+																}
 	;
 
 declaration
@@ -1218,7 +1306,26 @@ parameter_declaration
 														}
 														func_params.push_back({data_type_,$2->node_name});
 													}
-	| declaration_specifiers abstract_declarator	{$$ = NULL; /*not handled*/}
+	| declaration_specifiers abstract_declarator	{
+														$1->node_data = get_eqtype($1->node_data);
+														$$ = $2;
+														string data_type_ = get_eqtype($1->node_data);
+														if($2->node_data!=""){
+															data_type_+=" ";
+															data_type_+=$2->node_data;
+														}
+														if(data_type_.back()==']'){
+															data_type_ = reduce_pointer_level(data_type_);
+															check_valid_array(data_type_);
+															data_type_ = increase_array_level(data_type_);
+														}
+														func_params.push_back({data_type_,""});
+														//$$ = $1;
+														//if($2->node_data != ""){
+														//	$$->node_data += " "+ $2->node_data;
+														//} 
+														//func_params.push_back({$$->node_data, ""});
+													}
 	| declaration_specifiers						{
 														$$ = NULL;
 														$1->node_data = get_eqtype($1->node_data);
@@ -1256,9 +1363,25 @@ type_name
 	;
 
 abstract_declarator
-	: pointer										{$$ = $1;}
+	: pointer										{
+														$$ = $1;
+														string data_type_ = "";
+														for(int i = 0; i < $1->node_type; i++)
+															data_type_+="*";
+														$$->node_data = data_type_;
+													}
 	| direct_abstract_declarator					{$$ = $1;}
-	| pointer direct_abstract_declarator			{$$ = node_(2,"abs_decl",-1); $$->v[0] = $1; $$->v[1] = $2;$$->node_data = $1->node_data+" "+$2->node_data;}
+	| pointer direct_abstract_declarator			{
+														$$ = node_(2,"abs_decl",-1); 
+														$$->v[0] = $1; $$->v[1] = $2;
+														//$$->node_data = $1->node_data+" "+$2->node_data;
+														string data_type_ = "";
+														for(int i = 0; i < $1->node_type; i++)
+															data_type_+="*";
+														if(data_type_!="" && $2->node_data!="") data_type_+= " ";
+														data_type_ += $2->node_data;
+														$$->node_data = data_type_;
+													}
 	;
 
 direct_abstract_declarator
@@ -1300,7 +1423,6 @@ direct_abstract_declarator
 																	if($$->node_data.back() != ']' && $$->node_data != "")
 																		$$->node_data+=" ";
 																	$$->node_data += "[";
-																	$$->node_data += to_string(tmp);
 																	$$->node_data += "]";
 																}
 	| direct_abstract_declarator '[' constant_expression ']'	{

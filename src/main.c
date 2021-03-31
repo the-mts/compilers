@@ -74,7 +74,23 @@ int dfs(node* u, int num){
 	}
 	// if (u->name[0]!='\"')
 	fprintf(out_file,"\t%d [label=\"",x);
-
+	if(u->token == CONSTANT){
+		string ch = *new string;
+		switch(u->val_dt){
+			case IS_INT: u->name = (char*)(to_string(u->val.int_const)).c_str(); break;
+			case IS_LONG: u->name = (char*)(to_string(u->val.long_const)).c_str(); break;
+			case IS_SHORT: u->name = (char*)(to_string(u->val.short_const)).c_str(); break;
+			case IS_U_INT: u->name = (char*)(to_string(u->val.u_int_const)).c_str(); break;
+			case IS_U_LONG: u->name = (char*)(to_string(u->val.u_long_const)).c_str(); break;
+			case IS_U_SHORT: u->name = (char*)(to_string(u->val.u_short_const)).c_str(); break;
+			case IS_FLOAT: u->name = (char*)(to_string(u->val.float_const)).c_str(); break;
+			case IS_DOUBLE: u->name = (char*)(to_string(u->val.double_const)).c_str(); break;
+			case IS_LONG_DOUBLE: u->name = (char*)(to_string(u->val.long_double_const)).c_str(); break;
+			case IS_CHAR: ch = u->val.char_const; ch += '\0'; u->name = (char*)(ch).c_str(); break;
+			default: printf("Main.c not a constant\n");exit(-1);
+		}
+		// u->name = (char*)(to_string(tmp)).c_str();
+	}
 	int i = 0;
 	while(u->name[i] != '\0'){
 		if(u->name[i]=='\"' || u->name[i]=='\\') fprintf(out_file,"\\");
