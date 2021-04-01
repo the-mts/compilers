@@ -258,6 +258,7 @@ void init_symtab(){
 }
 
 st_entry* add_entry(string key, string type, unsigned long size, long offset, enum sym_type type_name){
+	size = get_size(type);
 	st_entry * new_entry = new st_entry(type, size, offset, type_name);
 	//assert(table_scope.size() != 0);//check scope stack
 	symtab * temp = table_scope.back();

@@ -12,6 +12,8 @@
 	string data_type = "";
 	string params = "";
 	vector<pair<string, string>> func_params;
+	int break_level=0;
+	int continue_level=0;
 %}
 %union {
 	struct node* nodes;
@@ -359,20 +361,21 @@ unary_expression
 																		break;
 																		case '!':{
 																			if($2->token==CONSTANT){
+																				$$ = $2;
 																				switch($2->val_dt){
-																					case IS_INT: $2->val.int_const = !$2->val.int_const; break;
-																					case IS_LONG: $2->val.long_const = !$2->val.long_const; break;
-																					case IS_SHORT: $2->val.short_const = !$2->val.short_const; break;
-																					case IS_U_INT: $2->val.u_int_const = !$2->val.u_int_const; break;
-																					case IS_U_LONG: $2->val.u_long_const = !$2->val.u_long_const; break;
-																					case IS_U_SHORT: $2->val.u_short_const = !$2->val.u_short_const; break;
-																					case IS_FLOAT: $2->val.float_const = !$2->val.float_const; break;
-																					case IS_DOUBLE: $2->val.double_const = !$2->val.double_const; break;
-																					case IS_LONG_DOUBLE: $2->val.long_double_const = !$2->val.long_double_const; break;
-																					case IS_CHAR: $2->val.char_const = !$2->val.char_const; break;
+																					case IS_INT: $$->val.int_const = !$2->val.int_const; break;
+																					case IS_LONG: $$->val.int_const = !$2->val.long_const; break;
+																					case IS_SHORT: $$->val.int_const = !$2->val.short_const; break;
+																					case IS_U_INT: $$->val.int_const = !$2->val.u_int_const; break;
+																					case IS_U_LONG: $$->val.int_const = !$2->val.u_long_const; break;
+																					case IS_U_SHORT: $$->val.int_const = !$2->val.u_short_const; break;
+																					case IS_FLOAT: $$->val.int_const = !$2->val.float_const; break;
+																					case IS_DOUBLE: $$->val.int_const = !$2->val.double_const; break;
+																					case IS_LONG_DOUBLE: $$->val.int_const = !$2->val.long_double_const; break;
+																					case IS_CHAR: $$->val.int_const = !$2->val.char_const; break;
 																					default: printf("unary operation not supported on this.\n");exit(-1);
 																				}
-																				$$ = $2;
+																				$$->val_dt = IS_INT;
 																				break;
 																			}
 																			if(temp_data.back() == '*'){
@@ -495,36 +498,42 @@ cast_expression
 multiplicative_expression
 	: cast_expression											{$$ = $1;}
 	| multiplicative_expression '*' cast_expression				{
-																	//if($1->token == CONSTANT && $3->token == CONSTANT){
-																	//	binary_op()
-																	//}
-																	$$ = node_(2,"*",-1);
-																	$$->v[0] = $1;
-																	$$->v[1] = $3;
 																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2));
 																	if(type.back() == '*'){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
+																	}
+																	if($1->token == CONSTANT && $3->token == CONSTANT){
+																		evaluate_const($1, $3, *($2), type);
+																		$$ = $1;
+																	}
+																	else{
+																		$$ = node_(2,"*",-1);
+																		$$->v[0] = $1;
+																		$$->v[1] = $3;
 																	}
 																	$$->node_data = type;
 																	$$->value_type = RVALUE;
 																}
 	| multiplicative_expression '/' cast_expression				{
-																	$$ = node_(2,"/",-1);
-																	$$->v[0] = $1;
-																	$$->v[1] = $3;
 																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2));
 																	if(type.back() == '*'){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
 																	}
+																	if($1->token == CONSTANT && $3->token == CONSTANT){
+																		evaluate_const($1, $3, *($2), type);
+																		$$ = $1;
+																	}
+																	else{
+																		$$ = node_(2,"/",-1);
+																		$$->v[0] = $1;
+																		$$->v[1] = $3;
+																	}
 																	$$->node_data = type;
 																	$$->value_type = RVALUE;
 																}
 	| multiplicative_expression '%' cast_expression				{
-																	$$ = node_(2,"%",-1);
-																	$$->v[0] = $1;
-																	$$->v[1] = $3;
 																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2));
 																	if(type.back() == '*'){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
@@ -533,6 +542,15 @@ multiplicative_expression
 																	if(type.find("int") != string::npos && type.find("char") != string::npos){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
+																	}
+																	if($1->token == CONSTANT && $3->token == CONSTANT){
+																		evaluate_const($1, $3, *($2), type);
+																		$$ = $1;
+																	}
+																	else{
+																		$$ = node_(2,"%",-1);
+																		$$->v[0] = $1;
+																		$$->v[1] = $3;
 																	}
 																	$$->node_data = type;
 																	$$->value_type = RVALUE;
@@ -542,18 +560,30 @@ multiplicative_expression
 additive_expression
 	: multiplicative_expression									{$$ = $1;}
 	| additive_expression '+' multiplicative_expression			{
-																	$$ = node_(2,"+",-1);
-																	$$->v[0] = $1;
-																	$$->v[1] = $3;
 																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2));
+																	if($1->token == CONSTANT && $3->token == CONSTANT){
+																		evaluate_const($1, $3, *($2), type);
+																		$$ = $1;
+																	}
+																	else{
+																		$$ = node_(2,"+",-1);
+																		$$->v[0] = $1;
+																		$$->v[1] = $3;
+																	}
 																	$$->node_data = type;
 																	$$->value_type = RVALUE;
 																}
 	| additive_expression '-' multiplicative_expression			{
-																	$$ = node_(2,"-",-1);
-																	$$->v[0] = $1;
-																	$$->v[1] = $3;
 																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2));
+																	if($1->token == CONSTANT && $3->token == CONSTANT){
+																		evaluate_const($1, $3, *($2), type);
+																		$$ = $1;
+																	}
+																	else{
+																		$$ = node_(2,"-",-1);
+																		$$->v[0] = $1;
+																		$$->v[1] = $3;
+																	}
 																	$$->node_data = type;
 																	$$->value_type = RVALUE;
 																}
@@ -562,9 +592,6 @@ additive_expression
 shift_expression
 	: additive_expression										{$$ = $1;}
 	| shift_expression LEFT_OP additive_expression				{
-																	$$ = node_(2,"<<",-1);
-																	$$->v[0] = $1;
-																	$$->v[1] = $3;
 																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2));
 																	if(type.back() == '*'){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
@@ -573,14 +600,20 @@ shift_expression
 																	if(type.find("int") != string::npos && type.find("char") != string::npos){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
+																	}
+																	if($1->token == CONSTANT && $3->token == CONSTANT){
+																		evaluate_const($1, $3, *($2), type);
+																		$$ = $1;
+																	}
+																	else{
+																		$$ = node_(2,"<<",-1);
+																		$$->v[0] = $1;
+																		$$->v[1] = $3;
 																	}
 																	$$->node_data = $1->node_data;
 																	$$->value_type = RVALUE;
 																}
 	| shift_expression RIGHT_OP additive_expression				{
-																	$$ = node_(2,">>",-1);
-																	$$->v[0] = $1;
-																	$$->v[1] = $3;
 																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2));
 																	if(type.back() == '*'){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
@@ -589,6 +622,15 @@ shift_expression
 																	if(type.find("int") != string::npos && type.find("char") != string::npos){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
+																	}
+																	if($1->token == CONSTANT && $3->token == CONSTANT){
+																		evaluate_const($1, $3, *($2), type);
+																		$$ = $1;
+																	}
+																	else{
+																		$$ = node_(2,">>",-1);
+																		$$->v[0] = $1;
+																		$$->v[1] = $3;
 																	}
 																	$$->node_data = $1->node_data;
 																	$$->value_type = RVALUE;
@@ -598,58 +640,82 @@ shift_expression
 relational_expression
 	: shift_expression											{$$ = $1;}
 	| relational_expression '<' shift_expression				{
-																	$$ = node_(2,"<",-1);
-																	$$->v[0] = $1;
-																	$$->v[1] = $3;
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
 																	pair<string,int> p2 = get_equivalent_pointer($3->node_data);
-																	if(!(p1.second || p2.second) || (p1.second && p2.second)){
+																	if((p1.second || p2.second) && (!p1.second || !p2.second)){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
 																	}
 																	arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
+																	if($1->token == CONSTANT && $3->token == CONSTANT){
+																		evaluate_const($1, $3, *($2), "int");
+																		$$ = $1;
+																	}
+																	else{
+																		$$ = node_(2,"<",-1);
+																		$$->v[0] = $1;
+																		$$->v[1] = $3;
+																	}
 																	$$->node_data = "int";
 																	$$->value_type = RVALUE;
 																}
 	| relational_expression '>' shift_expression				{
-																	$$ = node_(2,">",-1);
-																	$$->v[0] = $1;
-																	$$->v[1] = $3;
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
 																	pair<string,int> p2 = get_equivalent_pointer($3->node_data);
-																	if(!(p1.second || p2.second) || (p1.second && p2.second)){
+																	if((p1.second || p2.second) && (!p1.second || !p2.second)){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
 																	}
 																	arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
+																	if($1->token == CONSTANT && $3->token == CONSTANT){
+																		evaluate_const($1, $3, *($2), "int");
+																		$$ = $1;
+																	}
+																	else{
+																		$$ = node_(2,">",-1);
+																		$$->v[0] = $1;
+																		$$->v[1] = $3;
+																	}
 																	$$->node_data = "int";
 																	$$->value_type = RVALUE;
 																}
 	| relational_expression LE_OP shift_expression				{
-																	$$ = node_(2,"<=",-1);
-																	$$->v[0] = $1;
-																	$$->v[1] = $3;
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
 																	pair<string,int> p2 = get_equivalent_pointer($3->node_data);
-																	if(!(p1.second || p2.second) || (p1.second && p2.second)){
+																	if((p1.second || p2.second) && (!p1.second || !p2.second)){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
 																	}
 																	arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
+																	if($1->token == CONSTANT && $3->token == CONSTANT){
+																		evaluate_const($1, $3, *($2), "int");
+																		$$ = $1;
+																	}
+																	else{
+																		$$ = node_(2,"<=",-1);
+																		$$->v[0] = $1;
+																		$$->v[1] = $3;
+																	}
 																	$$->node_data = "int";
 																	$$->value_type = RVALUE;
 																}
 	| relational_expression GE_OP shift_expression				{
-																	$$ = node_(2,">=",-1);
-																	$$->v[0] = $1;
-																	$$->v[1] = $3;
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
 																	pair<string,int> p2 = get_equivalent_pointer($3->node_data);
-																	if(!(p1.second || p2.second) || (p1.second && p2.second)){
+																	if((p1.second || p2.second) && (!p1.second || !p2.second)){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
 																	}
 																	arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
+																	if($1->token == CONSTANT && $3->token == CONSTANT){
+																		evaluate_const($1, $3, *($2), "int");
+																		$$ = $1;
+																	}
+																	else{
+																		$$ = node_(2,">=",-1);
+																		$$->v[0] = $1;
+																		$$->v[1] = $3;
+																	}
 																	$$->node_data = "int";
 																	$$->value_type = RVALUE;
 																}
@@ -658,30 +724,42 @@ relational_expression
 equality_expression
 	: relational_expression										{$$ = $1;}
 	| equality_expression EQ_OP relational_expression			{
-																	$$ = node_(2,$2,-1);
-																	$$->v[0] = $1;
-																	$$->v[1] = $3;
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
 																	pair<string,int> p2 = get_equivalent_pointer($3->node_data);
-																	if(!(p1.second || p2.second) || (p1.second && p2.second)){
+																	if((p1.second || p2.second) && (!p1.second || !p2.second)){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
 																	}
 																	arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
+																	if($1->token == CONSTANT && $3->token == CONSTANT){
+																		evaluate_const($1, $3, *($2), "int");
+																		$$ = $1;
+																	}
+																	else{
+																		$$ = node_(2,$2,-1);
+																		$$->v[0] = $1;
+																		$$->v[1] = $3;
+																	}
 																	$$->node_data = "int";
 																	$$->value_type = RVALUE;
 																}
 	| equality_expression NE_OP relational_expression			{
-																	$$ = node_(2,$2,-1);
-																	$$->v[0] = $1;
-																	$$->v[1] = $3;
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
 																	pair<string,int> p2 = get_equivalent_pointer($3->node_data);
-																	if(!(p1.second || p2.second) || (p1.second && p2.second)){
+																	if((p1.second || p2.second) && (!p1.second || !p2.second)){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
 																	}
 																	arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
+																	if($1->token == CONSTANT && $3->token == CONSTANT){
+																		evaluate_const($1, $3, *($2), "int");
+																		$$ = $1;
+																	}
+																	else{
+																		$$ = node_(2,$2,-1);
+																		$$->v[0] = $1;
+																		$$->v[1] = $3;
+																	}
 																	$$->node_data = "int";
 																	$$->value_type = RVALUE;
 																}
@@ -690,9 +768,6 @@ equality_expression
 and_expression
 	: equality_expression										{$$ = $1;}
 	| and_expression '&' equality_expression					{
-																	$$ = node_(2,$2,-1);
-																	$$->v[0] = $1;
-																	$$->v[1] = $3;
 																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2));
 																	if(type.back() == '*'){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
@@ -701,6 +776,15 @@ and_expression
 																	if(type.find("int") != string::npos && type.find("char") != string::npos){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
+																	}
+																	if($1->token == CONSTANT && $3->token == CONSTANT){
+																		evaluate_const($1, $3, *($2), type);
+																		$$ = $1;
+																	}
+																	else{
+																		$$ = node_(2,$2,-1);
+																		$$->v[0] = $1;
+																		$$->v[1] = $3;
 																	}
 																	$$->node_data = type;
 																	$$->value_type = RVALUE;
@@ -710,9 +794,6 @@ and_expression
 exclusive_or_expression
 	: and_expression											{$$ = $1;}
 	| exclusive_or_expression '^' and_expression				{
-																	$$ = node_(2,$2,-1);
-																	$$->v[0] = $1;
-																	$$->v[1] = $3;
 																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2));
 																	if(type.back() == '*'){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
@@ -721,6 +802,14 @@ exclusive_or_expression
 																	if(type.find("int") != string::npos && type.find("char") != string::npos){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
+																	}
+																	if($1->token == CONSTANT && $3->token == CONSTANT){
+																		evaluate_const($1, $3, *($2), type);
+																		$$ = $1;
+																	}
+																	else{	$$ = node_(2,$2,-1);
+																		$$->v[0] = $1;
+																		$$->v[1] = $3;
 																	}
 																	$$->node_data = type;
 																	$$->value_type = RVALUE;
@@ -730,9 +819,6 @@ exclusive_or_expression
 inclusive_or_expression
 	: exclusive_or_expression									{$$ = $1;}
 	| inclusive_or_expression '|' exclusive_or_expression		{
-																	$$ = node_(2,$2,-1);
-																	$$->v[0] = $1;
-																	$$->v[1] = $3;
 																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2));
 																	if(type.back() == '*'){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
@@ -742,6 +828,15 @@ inclusive_or_expression
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
 																	}
+																	if($1->token == CONSTANT && $3->token == CONSTANT){
+																		evaluate_const($1, $3, *($2), type);
+																		$$ = $1;
+																	}
+																	else{
+																		$$ = node_(2,$2,-1);
+																		$$->v[0] = $1;
+																		$$->v[1] = $3;
+																	}
 																	$$->node_data = type;
 																	$$->value_type = RVALUE;
 																}
@@ -750,16 +845,22 @@ inclusive_or_expression
 logical_and_expression
 	: inclusive_or_expression									{$$ = $1;}
 	| logical_and_expression AND_OP inclusive_or_expression		{
-																	$$ = node_(2,$2,-1);
-																	$$->v[0] = $1;
-																	$$->v[1] = $3;
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
 																	pair<string,int> p2 = get_equivalent_pointer($3->node_data);
-																	if(!(p1.second || p2.second) || (p1.second && p2.second)){
+																	if((p1.second || p2.second) && (!p1.second || !p2.second)){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
 																	}
 																	arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
+																	if($1->token == CONSTANT && $3->token == CONSTANT){
+																		evaluate_const($1, $3, *($2), "int");
+																		$$ = $1;
+																	}
+																	else{
+																		$$ = node_(2,$2,-1);
+																		$$->v[0] = $1;
+																		$$->v[1] = $3;
+																	}
 																	$$->node_data = "int";
 																	$$->value_type = RVALUE;
 																}
@@ -768,16 +869,22 @@ logical_and_expression
 logical_or_expression
 	: logical_and_expression									{$$ = $1;}
 	| logical_or_expression OR_OP logical_and_expression		{
-																	$$ = node_(2,$2,-1);
-																	$$->v[0] = $1;
-																	$$->v[1] = $3;
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
 																	pair<string,int> p2 = get_equivalent_pointer($3->node_data);
-																	if(!(p1.second || p2.second) || (p1.second && p2.second)){
+																	if((p1.second || p2.second) && (!p1.second || !p2.second)){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
 																	}
 																	arithmetic_type_upgrade(p1.first,p2.first,string((const char*)$2));
+																	if($1->token == CONSTANT && $3->token == CONSTANT){
+																		evaluate_const($1, $3, *($2), "int");
+																		$$ = $1;
+																	}
+																	else{
+																		$$ = node_(2,$2,-1);
+																		$$->v[0] = $1;
+																		$$->v[1] = $3;
+																	}
 																	$$->node_data = "int";
 																	$$->value_type = RVALUE;
 																}
@@ -786,29 +893,53 @@ logical_or_expression
 conditional_expression
 	: logical_or_expression												{$$ = $1;}
 	| logical_or_expression '?' expression ':' conditional_expression	{
-																			$$ = node_(3,"ternary",-1);
-																			$$->v[0] = $1;
-																			$$->v[1] = $3;
-																			$$->v[2] = $5;
 																			pair<string,int> p1 = get_equivalent_pointer($1->node_data);
 																			pair<string,int> p2 = get_equivalent_pointer($3->node_data);
 																			pair<string,int> p3 = get_equivalent_pointer($5->node_data);
 																			if(p1.second != 0){
 																				arithmetic_type_upgrade(p1.first,"int", "ternary");
 																			}
-																			if(!(p3.second || p2.second) || (p3.second && p2.second)){
+																			if((p2.second || p3.second) && (!p2.second || !p3.second)){
 																				printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																				exit(-1);
 																			}
-																			if(p3.second && p2.second){
-																				$$->node_data = "void *";
+																			if($1->token == CONSTANT){
+																				int tmp;
+																				switch($1->val_dt){
+																					case IS_INT: tmp = $1->val.int_const; break;
+																					case IS_LONG: tmp = $1->val.long_const; break;
+																					case IS_SHORT: tmp = $1->val.short_const; break;
+																					case IS_U_INT: tmp = $1->val.u_int_const; break;
+																					case IS_U_LONG: tmp = $1->val.u_long_const; break;
+																					case IS_U_SHORT: tmp = $1->val.u_short_const; break;
+																					case IS_FLOAT: tmp = $1->val.float_const; break;
+																					case IS_DOUBLE: tmp = $1->val.double_const; break;
+																					case IS_LONG_DOUBLE: tmp = $1->val.long_double_const; break;
+																					case IS_CHAR: tmp = $1->val.char_const; break;
+																				}
+																				if(tmp){
+																					$$ = $3;
+																				}
+																				else{
+																					$$ = $5;
+																				}
+																				$$->value_type = RVALUE;
 																			}
-																			else if(p2.first == p3.first){
-																				$$->node_data = p3.first;
-																			}else{
-																				$$->node_data = arithmetic_type_upgrade(p1.first,p2.first, "ternary");
+																			else{
+																				$$ = node_(3,"ternary",-1);
+																				$$->v[0] = $1;
+																				$$->v[1] = $3;
+																				$$->v[2] = $5;
+																				if(p3.second && p2.second){
+																					$$->node_data = "void *";
+																				}
+																				else if(p2.first == p3.first){
+																					$$->node_data = p3.first;
+																				}else{
+																					$$->node_data = arithmetic_type_upgrade(p1.first,p2.first, "ternary");
+																				}
+																				$$->value_type = RVALUE;
 																			}
-																			$$->value_type = RVALUE;
 																		}
 	;
 
@@ -823,8 +954,26 @@ assignment_expression
 																			exit(-1);
 																		}
 																		string type;
-																		switch($2->token){
+																		string type1, type2;
+																			switch($2->token){
 																			case '=':
+																				type1 = get_equivalent_pointer($1->node_data).first;
+																				type2 = get_equivalent_pointer($3->node_data).first;
+																				type = arithmetic_type_upgrade(type1, type2, string((const char*)$2->name));
+																				if(type.back() == '*'){
+																					if(type1.back()=='*' && type2.back()=='*');
+																					else if(type1.back()=='*' && (type2.find("float") != string::npos || type2.find("double")!=string::npos)){
+																						printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2->name);
+																						exit(-1);
+																					}
+																					else if(type2.back()=='*' && (type1.find("float") != string::npos || type1.find("double")!=string::npos)){
+																						printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2->name);
+																						exit(-1);
+																					}
+																					else{
+																						printf("\e[1;35mWarning [line %d]:\e[0m Assignment is without a cast for operator %s.\n",line, $2->name);
+																					}
+																				}
 																			break;
 																			case MUL_ASSIGN:
 																			case DIV_ASSIGN:
@@ -979,15 +1128,17 @@ init_declarator
 																		exit(-1);
 																	}
 																	check_valid_array(data_type_);
-																	st_entry* tmp = add_entry($1->node_name, data_type_,0,0);
 																	if($1->node_type == 1){
+																		st_entry* tmp = add_entry($1->node_name, data_type_,0,0,IS_FUNC);
 																		tmp->type_name = IS_FUNC;
 																		check_param_list(func_params);
 																		vector<pair<string, string>> *temp = new vector<pair<string, string>>(func_params);
 																		tmp->arg_list = temp;
 																	}
-																	else
+																	else{
+																		st_entry* tmp = add_entry($1->node_name, data_type_,0,0,IS_VAR);
 																		tmp->type_name = IS_VAR;
+																	}
 																	$$ = NULL; free($1);
 																}
 	| declarator '=' initializer								{
@@ -1478,7 +1629,8 @@ statement
 
 labeled_statement
 	: IDENTIFIER ':' statement									{$$ = node_(1,$1,-1); $$->v[0] = $3;}
-	| CASE constant_expression ':' statement					{$$ = node_(2,$1,-1); $$->v[0] = $2; $$->v[1] = $4;}
+	| CASE constant_expression ':' {break_level++;} statement {break_level--;}
+																{$$ = node_(2,$1,-1); $$->v[0] = $2; $$->v[1] = $5;}
 	| DEFAULT ':' statement										{$$ = node_(1,$1,-1); $$->v[0] = $3;}
 	;
 
@@ -1557,18 +1709,38 @@ selection_statement
 	;
 
 iteration_statement
-	: WHILE '(' expression ')' statement											{$$ = node_(2,$1,-1); $$->v[0] = $3; $$->v[1] = $5;}
-	| DO statement WHILE '(' expression ')' ';'										{$$ = node_(2,"do-while",-1); $$->v[0] = $2; $$->v[1] = $5;}
-	| FOR '(' expression_statement expression_statement ')' statement				{$$ = node_(3,"for-w/o-update",-1); $$->v[0] = $3; $$->v[1] = $4; $$->v[2] = $6;}
-	| FOR '(' expression_statement expression_statement expression ')' statement	{$$ = node_(4,"for",-1); $$->v[0] = $3; $$->v[1] = $4; $$->v[2] = $5; $$->v[3] = $7;}
+	: WHILE '(' expression ')' {break_level++, continue_level++;} statement {break_level--, continue_level--;}											
+																					{$$ = node_(2,$1,-1); $$->v[0] = $3; $$->v[1] = $6;}
+	| DO {break_level++, continue_level++;} statement {break_level--, continue_level--;} WHILE '(' expression ')' ';'										
+																					{$$ = node_(2,"do-while",-1); $$->v[0] = $3; $$->v[1] = $7;}
+	| FOR '(' expression_statement expression_statement ')' {break_level++, continue_level++;} statement {break_level--, continue_level--;}
+																					{$$ = node_(3,"for-w/o-update",-1); $$->v[0] = $3; $$->v[1] = $4; $$->v[2] = $7;}
+	| FOR '(' expression_statement expression_statement expression ')' {break_level++, continue_level++;} statement {break_level--, continue_level--;}	
+																					{$$ = node_(4,"for",-1); $$->v[0] = $3; $$->v[1] = $4; $$->v[2] = $5; $$->v[3] = $8;}
 	;
 
 jump_statement
 	: GOTO IDENTIFIER ';'										{$$ = node_(1,$1,-1); $$->v[0] = node_(0,$2,IDENTIFIER);}
-	| CONTINUE ';'												{$$ = node_(0,$1,-1);}
-	| BREAK ';'													{$$ = node_(0,$1,-1);}
-	| RETURN ';'												{$$ = node_(0,$1,-1);}
-	| RETURN expression ';'										{$$ = node_(1,$1,-1); $$->v[0] = $2;}
+	| CONTINUE ';'												{
+																	$$ = node_(0,$1,-1);
+																	if(continue_level<=0){
+																		printf("\e[1;31mError [line %d]:\e[0m Continue statement not within loop.\n", line);
+																		exit(-1);
+																	}
+																}
+	| BREAK ';'													{
+																	$$ = node_(0,$1,-1); 
+																	if(break_level<=0){
+																		printf("\e[1;31mError [line %d]:\e[0m Break statement not within loop or switch.\n", line);
+																		exit(-1);
+																	}
+																}
+	| RETURN ';'												{
+																	$$ = node_(0,$1,-1);
+																}
+	| RETURN expression ';'										{
+																	$$ = node_(1,$1,-1); $$->v[0] = $2;
+																}
 	;
 
 augment_state
@@ -1635,7 +1807,7 @@ function_definition
 												}
 												else{
 													check_param_list(func_params);
-													st_entry* func_entry = add_entry($3->node_name, get_eqtype($1->node_data), 0, 0);
+													st_entry* func_entry = add_entry($3->node_name, get_eqtype($1->node_data), 0, 0, IS_FUNC);
 													if(!func_params.empty() && func_params[0].first == ""){
 														printf("\e[1;35mWarning [line %d]:\e[0m Function parameter type defaults to \"int\"\n", line);
 													}
@@ -1694,7 +1866,7 @@ function_definition
 											}
 											else{
 												check_param_list(func_params);
-												st_entry* func_entry = add_entry($1->node_name, "int", 0, 0);
+												st_entry* func_entry = add_entry($1->node_name, "int", 0, 0, IS_FUNC);
 												printf("\e[1;35mWarning [line %d]:\e[0m Function return type defaults to \"int\"\n", line);
 												if(!func_params.empty() && func_params[0].first == ""){
 													printf("\e[1;35mWarning [line %d]:\e[0m Function parameter type defaults to \"int\"\n", line);
