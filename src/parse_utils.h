@@ -18,4 +18,4 @@ typedef struct node{
 node* node_(int x, char * s, int token);
 void add_node(node* par, node* add);
 void push_front(node* par, node* add);
-void evaluate_const(node* par, node* child);
+void evaluate_const(node* par, node* child, int op, string type);
