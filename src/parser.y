@@ -338,6 +338,9 @@ unary_expression
 																				if(temp_data.back() == '*'){
 																					$$->node_data = temp_data+'*';
 																				}
+																				else if(temp_data.back() == ']'){
+																					$$->node_data = increase_array_level(temp_data);
+																				}
 																				else{
 																					$$->node_data = temp_data + " *";
 																				}
@@ -423,7 +426,7 @@ unary_expression
 																			}
 																			else{
 																				if(temp_data.find("int") != string::npos){
-																					if(temp_data != "float" && temp_data != "double" && temp_data != "long double"){
+																					if(temp_data == "float" || temp_data == "double" || temp_data == "long double"){
 																						printf("\e[1;31mError [line %d]:\e[0m Incompatible type for %c operator.\n",line,*($1));
 																						exit(-1);
 																					}
@@ -515,7 +518,7 @@ cast_expression
 																	}
 																	else if(p2.second){
 																		if($2->node_data == "float" || $2->node_data == "double" || $2->node_data == "long double"){
-																			printf("\e[1;31mError [line %d]:\e[0m Cannot cast to pointer from floating point values.\n",line);
+																			printf("\e[1;31mError [line %d]:\e[0m Cannot cast pointers to floating point values.\n",line);
 																			exit(-1);
 																		}
 																	}
@@ -983,8 +986,9 @@ assignment_expression
 																			}
 																			string type;
 																			string type1, type2;
-																			type1 = get_equivalent_pointer($1->node_data).first;
-																			type2 = get_equivalent_pointer($3->node_data).first;
+																			pair<string, int> p1 = get_equivalent_pointer($1->node_data);
+																			pair<string, int> p2 = get_equivalent_pointer($3->node_data);
+																			type1 = p1.first, type2 = p2.first;
 																			tt_entry* entry1 = type_lookup(type1);
 																			tt_entry* entry2 = type_lookup(type2);
 																			if(entry1 && entry2){
@@ -1004,9 +1008,26 @@ assignment_expression
 																			}
 																			switch($2->token){
 																			case '=':
+																				if(p1.second && p2.second){
+																					if(p1.first != p2.first){
+																						printf("\e[1;35mWarning [line %d]:\e[0m Assignment to %s from incompatible pointer type %s.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
+																					}
+																				}
+																				else if(p1.second){
+																					if($3->node_data == "float" || $3->node_data == "double" || $3->node_data == "long double"){
+																						printf("\e[1;31mError [line %d]:\e[0m Cannot assign floating point values to pointers.\n",line);
+																						exit(-1);
+																					}
+																				}
+																				else if(p2.second){
+																					if($1->node_data == "float" || $1->node_data == "double" || $1->node_data == "long double"){
+																						printf("\e[1;31mError [line %d]:\e[0m Cannot assign pointers to floating point values.\n",line);
+																						exit(-1);
+																					}
+																				}
+																				/*if(type1.back()=='*' && type2.back()=='*') break;
 																				type = arithmetic_type_upgrade(type1, type2, string((const char*)$2->name));
 																				if(type.back() == '*'){
-																					if(type1.back()=='*' && type2.back()=='*');
 																					else if(type1.back()=='*' && (type2.find("float") != string::npos || type2.find("double")!=string::npos)){
 																						printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2->name);
 																						exit(-1);
@@ -1018,7 +1039,7 @@ assignment_expression
 																					else{
 																						printf("\e[1;35mWarning [line %d]:\e[0m Assignment is without a cast for operator %s.\n",line, $2->name);
 																					}
-																				}
+																				}*/
 																			break;
 																			case MUL_ASSIGN:
 																			case DIV_ASSIGN:
@@ -1103,7 +1124,7 @@ declaration
 																			tmp2+=ch;
 																		}
 																	}
-																	if(tmp2=="struct"){
+																	if(tmp2=="struct" || tmp2=="union"){
 																		tt_entry * entry = current_type_lookup(tmp);
 																		if(entry==NULL){
 																			add_type_entry(tmp,tmp2);
@@ -1198,6 +1219,47 @@ init_declarator
 																			exit(-1);
 																		}
 																		st_entry* tmp = add_entry($1->name, data_type, 0, 0, IS_VAR);/*change IS_VAR*/
+																		string type;
+																		string type1, type2;
+																		pair<string, int> p1 = get_equivalent_pointer(data_type);
+																		pair<string, int> p2 = get_equivalent_pointer($3->node_data);
+																		type1 = p1.first, type2 = p2.first;
+																		tt_entry* entry1 = type_lookup(type1);
+																		tt_entry* entry2 = type_lookup(type2);
+																		if(entry1 && entry2){
+																			if(entry1 != entry2){
+																				printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator =.\n",line);
+																				exit(-1);
+																			}
+																			break;
+																		}
+																		if(entry1 || entry2){
+																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator =.\n",line);
+																			exit(-1);
+																		}
+																		if((data_type.find("[") != string::npos && data_type.find("[]") == string::npos)){
+																			printf("\e[1;31mError [line %d]:\e[0m Array variables cannot be reassigned.\n",line);
+																			exit(-1);
+																		}
+																		if(p1.second && p2.second){
+																			if(p1.first != p2.first){
+																				printf("\e[1;35mWarning [line %d]:\e[0m Assignment to %s from incompatible pointer type %s.\n",line, data_type.c_str(), $3->node_data.c_str());
+																			}
+																		}
+																		else if(p1.second){
+																			if($3->node_data == "float" || $3->node_data == "double" || $3->node_data == "long double"){
+																				printf("\e[1;31mError [line %d]:\e[0m Cannot assign floating point values to pointers.\n",line);
+																				exit(-1);
+																			}
+																		}
+																		else if(p2.second){
+																			if(data_type == "float" || data_type == "double" || data_type == "long double"){
+																				printf("\e[1;31mError [line %d]:\e[0m Cannot assign pointers to floating point values.\n",line);
+																				exit(-1);
+																			}
+																		}
+																		$$->node_data = data_type;
+																		$$->value_type = RVALUE;
 																	}
 																}
 	;
@@ -1253,8 +1315,9 @@ M4
 																		string temp1((const char*)$<id>0);
 																		string temp2((const char*)$<id>-1);
 																		tt_entry* tmp2 = current_type_lookup(temp2+" "+temp1); 
-																		if(tmp2==NULL)
+																		if(tmp2==NULL){
 																			tt_entry* tmp = add_type_entry(temp2+" "+temp1, temp2);
+																		}
 																		else if(tmp2->is_init == 1){
 																			printf("\e[1;31mError [line %d]:\e[0m Redefinition of %s\n", line, (temp2+" "+temp1).c_str());
 																			exit(-1);
@@ -1281,6 +1344,7 @@ M5
 																				struct_entry->mem_list->push_back({type, name});
 																			}
 																		}
+																		check_mem_list(*(struct_entry->mem_list), string($<id>-4)+" "+string($<id>-3));
 																		struct_entry->is_init = 1;
 																	}			
 	;

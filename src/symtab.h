@@ -97,3 +97,4 @@ extern st_entry* current_lookup(string key);
 extern void struct_init_check(string type);
 extern tt_entry* current_type_lookup(string key);
 extern unsigned long get_size(string s);
+extern void check_mem_list(vector<pair<string, string>> v, string s);

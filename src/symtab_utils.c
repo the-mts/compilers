@@ -43,7 +43,9 @@ void init_equiv_types(){
 }
 
 unsigned long get_size(string s){
-	check_valid_array(s);
+	if(s.find("[]") != string :: npos){
+		return 8ul;
+	}
 	if(s.back() == '*')
 		return 8ul;
 	unsigned long ans = 0;
@@ -139,6 +141,7 @@ string get_eqtype(string type, int is_only_type){
 	vector<pair<int, string>> a;
 	unordered_map<string, int> m;
 	m["struct"] = 0;
+	m["union"] = 0;
 	m["enum"] = 0;
 	m["signed"] = 1;
 	m["unsigned"] = 1;
@@ -198,6 +201,20 @@ void check_param_list(vector<pair<string, string>> v){
 			continue;
 		if(m.find(p.second)!=m.end()){
 			printf("\e[1;31mError [line %d]:\e[0m Redefinition of parameter %s\n", line, p.second.c_str());
+			exit(-1);
+		}
+		m.insert({p.second,1});
+	}
+	return;
+}
+
+void check_mem_list(vector<pair<string, string>> v, string s){
+	map<string, int> m;
+	for(auto p: v){
+		if(p.second=="")
+			continue;
+		if(m.find(p.second)!=m.end()){
+			printf("\e[1;31mError [line %d]:\e[0m Redefinition of parameter %s in %s\n", line, p.second.c_str(), s.c_str());
 			exit(-1);
 		}
 		m.insert({p.second,1});
@@ -327,7 +344,7 @@ void scope_cleanup(){
 unsigned long power(int x, int p){
 	unsigned long ans = 1;
 	for(int i = 0; i < p; i++){
-		ans*=p;
+		ans*=x;
 	}
 	return ans;
 }
@@ -717,7 +734,6 @@ pair<constant, enum const_type> parse_constant(string s){
 	else{
 		if(s[0] == '0'){
 			if(length>1 && s[1] == 'x'){
-				// cout<<"YES\n";
 				if(s[length-1] == 'u' || s[length-1] == 'U'){
 					if(s[length-2] == 'l' || s[length-2] == 'L'){
 						ans.second = IS_U_LONG;

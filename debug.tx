@@ -1,0 +1,1992 @@
+Starting parse
+Entering state 0
+Reading a token: Next token is token STRUCT ()
+Shifting token STRUCT ()
+Entering state 19
+Reducing stack by rule 110 (line 1365):
+   $1 = token STRUCT ()
+-> $$ = nterm struct_or_union ()
+Stack now 0
+Entering state 29
+Reading a token: Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 49
+Reading a token: Next token is token '{' ()
+Reducing stack by rule 107 (line 1314):
+-> $$ = nterm M4 ()
+Stack now 0 29 49
+Entering state 71
+Next token is token '{' ()
+Shifting token '{' ()
+Entering state 121
+Reading a token: Next token is token INT ()
+Shifting token INT ()
+Entering state 10
+Reducing stack by rule 95 (line 1279):
+   $1 = token INT ()
+-> $$ = nterm type_specifier ()
+Stack now 0 29 49 71 121
+Entering state 134
+Reading a token: Next token is token IDENTIFIER ()
+Reducing stack by rule 116 (line 1389):
+   $1 = nterm type_specifier ()
+-> $$ = nterm specifier_qualifier_list ()
+Stack now 0 29 49 71 121
+Entering state 182
+Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 1
+Reducing stack by rule 135 (line 1454):
+   $1 = token IDENTIFIER ()
+-> $$ = nterm direct_declarator ()
+Stack now 0 29 49 71 121 182
+Entering state 33
+Reading a token: Next token is token ',' ()
+Reducing stack by rule 134 (line 1448):
+   $1 = nterm direct_declarator ()
+-> $$ = nterm declarator ()
+Stack now 0 29 49 71 121 182
+Entering state 269
+Next token is token ',' ()
+Reducing stack by rule 121 (line 1404):
+   $1 = nterm declarator ()
+-> $$ = nterm struct_declarator ()
+Stack now 0 29 49 71 121 182
+Entering state 268
+Reducing stack by rule 119 (line 1399):
+   $1 = nterm struct_declarator ()
+-> $$ = nterm struct_declarator_list ()
+Stack now 0 29 49 71 121 182
+Entering state 267
+Next token is token ',' ()
+Shifting token ',' ()
+Entering state 310
+Reading a token: Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 1
+Reducing stack by rule 135 (line 1454):
+   $1 = token IDENTIFIER ()
+-> $$ = nterm direct_declarator ()
+Stack now 0 29 49 71 121 182 267 310
+Entering state 33
+Reading a token: Next token is token ';' ()
+Reducing stack by rule 134 (line 1448):
+   $1 = nterm direct_declarator ()
+-> $$ = nterm declarator ()
+Stack now 0 29 49 71 121 182 267 310
+Entering state 269
+Next token is token ';' ()
+Reducing stack by rule 121 (line 1404):
+   $1 = nterm declarator ()
+-> $$ = nterm struct_declarator ()
+Stack now 0 29 49 71 121 182 267 310
+Entering state 336
+Reducing stack by rule 120 (line 1400):
+   $1 = nterm struct_declarator_list ()
+   $2 = token ',' ()
+   $3 = nterm struct_declarator ()
+-> $$ = nterm struct_declarator_list ()
+Stack now 0 29 49 71 121 182
+Entering state 267
+Next token is token ';' ()
+Shifting token ';' ()
+Entering state 311
+Reducing stack by rule 114 (line 1375):
+   $1 = nterm specifier_qualifier_list ()
+   $2 = nterm struct_declarator_list ()
+   $3 = token ';' ()
+-> $$ = nterm struct_declaration ()
+Stack now 0 29 49 71 121
+Entering state 181
+Reducing stack by rule 112 (line 1370):
+   $1 = nterm struct_declaration ()
+-> $$ = nterm struct_declaration_list ()
+Stack now 0 29 49 71 121
+Entering state 180
+Reading a token: Next token is token '}' ()
+Reducing stack by rule 108 (line 1329):
+-> $$ = nterm M5 ()
+Stack now 0 29 49 71 121 180
+Entering state 264
+Next token is token '}' ()
+Shifting token '}' ()
+Entering state 308
+Reducing stack by rule 104 (line 1291):
+   $1 = nterm struct_or_union ()
+   $2 = token IDENTIFIER ()
+   $3 = nterm M4 ()
+   $4 = token '{' ()
+   $5 = nterm struct_declaration_list ()
+   $6 = nterm M5 ()
+   $7 = token '}' ()
+-> $$ = nterm struct_or_union_specifier ()
+Stack now 0
+Entering state 28
+Reducing stack by rule 101 (line 1285):
+   $1 = nterm struct_or_union_specifier ()
+-> $$ = nterm type_specifier ()
+Stack now 0
+Entering state 27
+Reading a token: Next token is token ';' ()
+Reducing stack by rule 79 (line 1143):
+   $1 = nterm type_specifier ()
+-> $$ = nterm declaration_specifiers ()
+Stack now 0
+Entering state 25
+Next token is token ';' ()
+Shifting token ';' ()
+Entering state 45
+Reducing stack by rule 75 (line 1113):
+   $1 = nterm declaration_specifiers ()
+   $2 = token ';' ()
+-> $$ = nterm declaration ()
+Stack now 0
+Entering state 24
+Reducing stack by rule 221 (line 1875):
+   $1 = nterm declaration ()
+-> $$ = nterm external_declaration ()
+Stack now 0
+Entering state 37
+Reducing stack by rule 218 (line 1860):
+   $1 = nterm external_declaration ()
+-> $$ = nterm translation_unit ()
+Stack now 0
+Entering state 36
+Reading a token: Next token is token INT ()
+Shifting token INT ()
+Entering state 10
+Reducing stack by rule 95 (line 1279):
+   $1 = token INT ()
+-> $$ = nterm type_specifier ()
+Stack now 0 36
+Entering state 27
+Reading a token: Next token is token IDENTIFIER ()
+Reducing stack by rule 79 (line 1143):
+   $1 = nterm type_specifier ()
+-> $$ = nterm declaration_specifiers ()
+Stack now 0 36
+Entering state 25
+Next token is token IDENTIFIER ()
+Reducing stack by rule 228 (line 2007):
+-> $$ = nterm M3 ()
+Stack now 0 36 25
+Entering state 46
+Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 1
+Reducing stack by rule 135 (line 1454):
+   $1 = token IDENTIFIER ()
+-> $$ = nterm direct_declarator ()
+Stack now 0 36 25 46
+Entering state 33
+Reading a token: Next token is token '=' ()
+Reducing stack by rule 134 (line 1448):
+   $1 = nterm direct_declarator ()
+-> $$ = nterm declarator ()
+Stack now 0 36 25 46
+Entering state 70
+Next token is token '=' ()
+Shifting token '=' ()
+Entering state 118
+Reading a token: Next token is token CONSTANT ()
+Shifting token CONSTANT ()
+Entering state 79
+Reducing stack by rule 2 (line 69):
+   $1 = token CONSTANT ()
+-> $$ = nterm primary_expression ()
+Stack now 0 36 25 46 70 118
+Entering state 92
+Reducing stack by rule 5 (line 114):
+   $1 = nterm primary_expression ()
+-> $$ = nterm postfix_expression ()
+Stack now 0 36 25 46 70 118
+Entering state 93
+Reading a token: Next token is token ';' ()
+Reducing stack by rule 15 (line 299):
+   $1 = nterm postfix_expression ()
+-> $$ = nterm unary_expression ()
+Stack now 0 36 25 46 70 118
+Entering state 130
+Next token is token ';' ()
+Reducing stack by rule 27 (line 494):
+   $1 = nterm unary_expression ()
+-> $$ = nterm cast_expression ()
+Stack now 0 36 25 46 70 118
+Entering state 96
+Reducing stack by rule 29 (line 530):
+   $1 = nterm cast_expression ()
+-> $$ = nterm multiplicative_expression ()
+Stack now 0 36 25 46 70 118
+Entering state 97
+Next token is token ';' ()
+Reducing stack by rule 33 (line 592):
+   $1 = nterm multiplicative_expression ()
+-> $$ = nterm additive_expression ()
+Stack now 0 36 25 46 70 118
+Entering state 98
+Next token is token ';' ()
+Reducing stack by rule 36 (line 624):
+   $1 = nterm additive_expression ()
+-> $$ = nterm shift_expression ()
+Stack now 0 36 25 46 70 118
+Entering state 99
+Next token is token ';' ()
+Reducing stack by rule 39 (line 672):
+   $1 = nterm shift_expression ()
+-> $$ = nterm relational_expression ()
+Stack now 0 36 25 46 70 118
+Entering state 100
+Next token is token ';' ()
+Reducing stack by rule 44 (line 756):
+   $1 = nterm relational_expression ()
+-> $$ = nterm equality_expression ()
+Stack now 0 36 25 46 70 118
+Entering state 101
+Next token is token ';' ()
+Reducing stack by rule 47 (line 800):
+   $1 = nterm equality_expression ()
+-> $$ = nterm and_expression ()
+Stack now 0 36 25 46 70 118
+Entering state 102
+Next token is token ';' ()
+Reducing stack by rule 49 (line 826):
+   $1 = nterm and_expression ()
+-> $$ = nterm exclusive_or_expression ()
+Stack now 0 36 25 46 70 118
+Entering state 103
+Next token is token ';' ()
+Reducing stack by rule 51 (line 851):
+   $1 = nterm exclusive_or_expression ()
+-> $$ = nterm inclusive_or_expression ()
+Stack now 0 36 25 46 70 118
+Entering state 104
+Next token is token ';' ()
+Reducing stack by rule 53 (line 877):
+   $1 = nterm inclusive_or_expression ()
+-> $$ = nterm logical_and_expression ()
+Stack now 0 36 25 46 70 118
+Entering state 105
+Next token is token ';' ()
+Reducing stack by rule 55 (line 901):
+   $1 = nterm logical_and_expression ()
+-> $$ = nterm logical_or_expression ()
+Stack now 0 36 25 46 70 118
+Entering state 106
+Next token is token ';' ()
+Reducing stack by rule 57 (line 925):
+   $1 = nterm logical_or_expression ()
+-> $$ = nterm conditional_expression ()
+Stack now 0 36 25 46 70 118
+Entering state 131
+Reducing stack by rule 59 (line 978):
+   $1 = nterm conditional_expression ()
+-> $$ = nterm assignment_expression ()
+Stack now 0 36 25 46 70 118
+Entering state 176
+Reducing stack by rule 173 (line 1720):
+   $1 = nterm assignment_expression ()
+-> $$ = nterm initializer ()
+Stack now 0 36 25 46 70 118
+Entering state 177
+Reducing stack by rule 86 (line 1210):
+   $1 = nterm declarator ()
+   $2 = token '=' ()
+   $3 = nterm initializer ()
+-> $$ = nterm init_declarator ()
+Stack now 0 36 25 46
+Entering state 69
+Reducing stack by rule 83 (line 1162):
+   $1 = nterm init_declarator ()
+-> $$ = nterm init_declarator_list ()
+Stack now 0 36 25 46
+Entering state 68
+Next token is token ';' ()
+Shifting token ';' ()
+Entering state 117
+Reducing stack by rule 76 (line 1137):
+   $1 = nterm declaration_specifiers ()
+   $2 = nterm M3 ()
+   $3 = nterm init_declarator_list ()
+   $4 = token ';' ()
+-> $$ = nterm declaration ()
+Stack now 0 36
+Entering state 24
+Reducing stack by rule 221 (line 1875):
+   $1 = nterm declaration ()
+-> $$ = nterm external_declaration ()
+Stack now 0 36
+Entering state 60
+Reducing stack by rule 219 (line 1861):
+   $1 = nterm translation_unit ()
+   $2 = nterm external_declaration ()
+-> $$ = nterm translation_unit ()
+Stack now 0
+Entering state 36
+Reading a token: Next token is token VOID ()
+Shifting token VOID ()
+Entering state 18
+Reducing stack by rule 92 (line 1276):
+   $1 = token VOID ()
+-> $$ = nterm type_specifier ()
+Stack now 0 36
+Entering state 27
+Reading a token: Next token is token IDENTIFIER ()
+Reducing stack by rule 79 (line 1143):
+   $1 = nterm type_specifier ()
+-> $$ = nterm declaration_specifiers ()
+Stack now 0 36
+Entering state 25
+Next token is token IDENTIFIER ()
+Reducing stack by rule 228 (line 2007):
+-> $$ = nterm M3 ()
+Stack now 0 36 25
+Entering state 46
+Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 1
+Reducing stack by rule 135 (line 1454):
+   $1 = token IDENTIFIER ()
+-> $$ = nterm direct_declarator ()
+Stack now 0 36 25 46
+Entering state 33
+Reading a token: Next token is token '(' ()
+Shifting token '(' ()
+Entering state 57
+Reading a token: Next token is token STRUCT ()
+Reducing stack by rule 139 (line 1492):
+-> $$ = nterm $@1 ()
+Stack now 0 36 25 46 33 57
+Entering state 109
+Next token is token STRUCT ()
+Shifting token STRUCT ()
+Entering state 19
+Reducing stack by rule 110 (line 1365):
+   $1 = token STRUCT ()
+-> $$ = nterm struct_or_union ()
+Stack now 0 36 25 46 33 57 109
+Entering state 29
+Reading a token: Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 49
+Reading a token: Next token is token IDENTIFIER ()
+Reducing stack by rule 106 (line 1305):
+   $1 = nterm struct_or_union ()
+   $2 = token IDENTIFIER ()
+-> $$ = nterm struct_or_union_specifier ()
+Stack now 0 36 25 46 33 57 109
+Entering state 28
+Reducing stack by rule 101 (line 1285):
+   $1 = nterm struct_or_union_specifier ()
+-> $$ = nterm type_specifier ()
+Stack now 0 36 25 46 33 57 109
+Entering state 27
+Next token is token IDENTIFIER ()
+Reducing stack by rule 79 (line 1143):
+   $1 = nterm type_specifier ()
+-> $$ = nterm declaration_specifiers ()
+Stack now 0 36 25 46 33 57 109
+Entering state 165
+Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 1
+Reducing stack by rule 135 (line 1454):
+   $1 = token IDENTIFIER ()
+-> $$ = nterm direct_declarator ()
+Stack now 0 36 25 46 33 57 109 165
+Entering state 33
+Reading a token: Next token is token ')' ()
+Reducing stack by rule 134 (line 1448):
+   $1 = nterm direct_declarator ()
+-> $$ = nterm declarator ()
+Stack now 0 36 25 46 33 57 109 165
+Entering state 257
+Reducing stack by rule 154 (line 1550):
+   $1 = nterm declaration_specifiers ()
+   $2 = nterm declarator ()
+-> $$ = nterm parameter_declaration ()
+Stack now 0 36 25 46 33 57 109
+Entering state 168
+Reducing stack by rule 152 (line 1545):
+   $1 = nterm parameter_declaration ()
+-> $$ = nterm parameter_list ()
+Stack now 0 36 25 46 33 57 109
+Entering state 167
+Next token is token ')' ()
+Reducing stack by rule 151 (line 1540):
+   $1 = nterm parameter_list ()
+-> $$ = nterm parameter_type_list ()
+Stack now 0 36 25 46 33 57 109
+Entering state 166
+Next token is token ')' ()
+Shifting token ')' ()
+Entering state 260
+Reducing stack by rule 140 (line 1492):
+   $1 = nterm direct_declarator ()
+   $2 = token '(' ()
+   $3 = nterm $@1 ()
+   $4 = nterm parameter_type_list ()
+   $5 = token ')' ()
+-> $$ = nterm direct_declarator ()
+Stack now 0 36 25 46
+Entering state 33
+Reading a token: Next token is token '{' ()
+Reducing stack by rule 134 (line 1448):
+   $1 = nterm direct_declarator ()
+-> $$ = nterm declarator ()
+Stack now 0 36 25 46
+Entering state 70
+Next token is token '{' ()
+Reducing stack by rule 222 (line 1879):
+-> $$ = nterm $@14 ()
+Stack now 0 36 25 46 70
+Entering state 120
+Reducing stack by rule 189 (line 1765):
+-> $$ = nterm M1 ()
+Stack now 0 36 25 46 70 120
+Entering state 76
+Next token is token '{' ()
+Shifting token '{' ()
+Entering state 124
+Reading a token: Next token is token STRUCT ()
+Shifting token STRUCT ()
+Entering state 19
+Reducing stack by rule 110 (line 1365):
+   $1 = token STRUCT ()
+-> $$ = nterm struct_or_union ()
+Stack now 0 36 25 46 70 120 76 124
+Entering state 29
+Reading a token: Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 49
+Reading a token: Next token is token IDENTIFIER ()
+Reducing stack by rule 106 (line 1305):
+   $1 = nterm struct_or_union ()
+   $2 = token IDENTIFIER ()
+-> $$ = nterm struct_or_union_specifier ()
+Stack now 0 36 25 46 70 120 76 124
+Entering state 28
+Reducing stack by rule 101 (line 1285):
+   $1 = nterm struct_or_union_specifier ()
+-> $$ = nterm type_specifier ()
+Stack now 0 36 25 46 70 120 76 124
+Entering state 27
+Next token is token IDENTIFIER ()
+Reducing stack by rule 79 (line 1143):
+   $1 = nterm type_specifier ()
+-> $$ = nterm declaration_specifiers ()
+Stack now 0 36 25 46 70 120 76 124
+Entering state 53
+Next token is token IDENTIFIER ()
+Reducing stack by rule 228 (line 2007):
+-> $$ = nterm M3 ()
+Stack now 0 36 25 46 70 120 76 124 53
+Entering state 73
+Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 1
+Reducing stack by rule 135 (line 1454):
+   $1 = token IDENTIFIER ()
+-> $$ = nterm direct_declarator ()
+Stack now 0 36 25 46 70 120 76 124 53 73
+Entering state 33
+Reading a token: Next token is token ';' ()
+Reducing stack by rule 134 (line 1448):
+   $1 = nterm direct_declarator ()
+-> $$ = nterm declarator ()
+Stack now 0 36 25 46 70 120 76 124 53 73
+Entering state 123
+Next token is token ';' ()
+Reducing stack by rule 85 (line 1176):
+   $1 = nterm declarator ()
+-> $$ = nterm init_declarator ()
+Stack now 0 36 25 46 70 120 76 124 53 73
+Entering state 69
+Reducing stack by rule 83 (line 1162):
+   $1 = nterm init_declarator ()
+-> $$ = nterm init_declarator_list ()
+Stack now 0 36 25 46 70 120 76 124 53 73
+Entering state 68
+Next token is token ';' ()
+Shifting token ';' ()
+Entering state 117
+Reducing stack by rule 76 (line 1137):
+   $1 = nterm declaration_specifiers ()
+   $2 = nterm M3 ()
+   $3 = nterm init_declarator_list ()
+   $4 = token ';' ()
+-> $$ = nterm declaration ()
+Stack now 0 36 25 46 70 120 76 124
+Entering state 52
+Reducing stack by rule 191 (line 1782):
+   $1 = nterm declaration ()
+-> $$ = nterm declaration_list ()
+Stack now 0 36 25 46 70 120 76 124
+Entering state 202
+Reading a token: Next token is token IF ()
+Shifting token IF ()
+Entering state 187
+Reading a token: Next token is token '(' ()
+Shifting token '(' ()
+Entering state 274
+Reading a token: Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 78
+Reducing stack by rule 1 (line 58):
+   $1 = token IDENTIFIER ()
+-> $$ = nterm primary_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 187 274
+Entering state 92
+Reducing stack by rule 5 (line 114):
+   $1 = nterm primary_expression ()
+-> $$ = nterm postfix_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 187 274
+Entering state 93
+Reading a token: Next token is token '.' ()
+Shifting token '.' ()
+Entering state 143
+Reading a token: Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 236
+Reducing stack by rule 9 (line 192):
+   $1 = nterm postfix_expression ()
+   $2 = token '.' ()
+   $3 = token IDENTIFIER ()
+-> $$ = nterm postfix_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 187 274
+Entering state 93
+Reading a token: Next token is token GE_OP ()
+Reducing stack by rule 15 (line 299):
+   $1 = nterm postfix_expression ()
+-> $$ = nterm unary_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 187 274
+Entering state 130
+Next token is token GE_OP ()
+Reducing stack by rule 27 (line 494):
+   $1 = nterm unary_expression ()
+-> $$ = nterm cast_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 187 274
+Entering state 96
+Reducing stack by rule 29 (line 530):
+   $1 = nterm cast_expression ()
+-> $$ = nterm multiplicative_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 187 274
+Entering state 97
+Next token is token GE_OP ()
+Reducing stack by rule 33 (line 592):
+   $1 = nterm multiplicative_expression ()
+-> $$ = nterm additive_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 187 274
+Entering state 98
+Next token is token GE_OP ()
+Reducing stack by rule 36 (line 624):
+   $1 = nterm additive_expression ()
+-> $$ = nterm shift_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 187 274
+Entering state 99
+Next token is token GE_OP ()
+Reducing stack by rule 39 (line 672):
+   $1 = nterm shift_expression ()
+-> $$ = nterm relational_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 187 274
+Entering state 100
+Next token is token GE_OP ()
+Shifting token GE_OP ()
+Entering state 153
+Reading a token: Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 78
+Reducing stack by rule 1 (line 58):
+   $1 = token IDENTIFIER ()
+-> $$ = nterm primary_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 187 274 100 153
+Entering state 92
+Reducing stack by rule 5 (line 114):
+   $1 = nterm primary_expression ()
+-> $$ = nterm postfix_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 187 274 100 153
+Entering state 93
+Reading a token: Next token is token ')' ()
+Reducing stack by rule 15 (line 299):
+   $1 = nterm postfix_expression ()
+-> $$ = nterm unary_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 187 274 100 153
+Entering state 94
+Reducing stack by rule 27 (line 494):
+   $1 = nterm unary_expression ()
+-> $$ = nterm cast_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 187 274 100 153
+Entering state 96
+Reducing stack by rule 29 (line 530):
+   $1 = nterm cast_expression ()
+-> $$ = nterm multiplicative_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 187 274 100 153
+Entering state 97
+Next token is token ')' ()
+Reducing stack by rule 33 (line 592):
+   $1 = nterm multiplicative_expression ()
+-> $$ = nterm additive_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 187 274 100 153
+Entering state 98
+Next token is token ')' ()
+Reducing stack by rule 36 (line 624):
+   $1 = nterm additive_expression ()
+-> $$ = nterm shift_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 187 274 100 153
+Entering state 245
+Next token is token ')' ()
+Reducing stack by rule 43 (line 733):
+   $1 = nterm relational_expression ()
+   $2 = token GE_OP ()
+   $3 = nterm shift_expression ()
+-> $$ = nterm relational_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 187 274
+Entering state 100
+Next token is token ')' ()
+Reducing stack by rule 44 (line 756):
+   $1 = nterm relational_expression ()
+-> $$ = nterm equality_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 187 274
+Entering state 101
+Next token is token ')' ()
+Reducing stack by rule 47 (line 800):
+   $1 = nterm equality_expression ()
+-> $$ = nterm and_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 187 274
+Entering state 102
+Next token is token ')' ()
+Reducing stack by rule 49 (line 826):
+   $1 = nterm and_expression ()
+-> $$ = nterm exclusive_or_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 187 274
+Entering state 103
+Next token is token ')' ()
+Reducing stack by rule 51 (line 851):
+   $1 = nterm exclusive_or_expression ()
+-> $$ = nterm inclusive_or_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 187 274
+Entering state 104
+Next token is token ')' ()
+Reducing stack by rule 53 (line 877):
+   $1 = nterm inclusive_or_expression ()
+-> $$ = nterm logical_and_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 187 274
+Entering state 105
+Next token is token ')' ()
+Reducing stack by rule 55 (line 901):
+   $1 = nterm logical_and_expression ()
+-> $$ = nterm logical_or_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 187 274
+Entering state 106
+Next token is token ')' ()
+Reducing stack by rule 57 (line 925):
+   $1 = nterm logical_or_expression ()
+-> $$ = nterm conditional_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 187 274
+Entering state 131
+Reducing stack by rule 59 (line 978):
+   $1 = nterm conditional_expression ()
+-> $$ = nterm assignment_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 187 274
+Entering state 132
+Reducing stack by rule 72 (line 1093):
+   $1 = nterm assignment_expression ()
+-> $$ = nterm expression ()
+Stack now 0 36 25 46 70 120 76 124 202 187 274
+Entering state 317
+Next token is token ')' ()
+Shifting token ')' ()
+Entering state 339
+Reading a token: Next token is token '{' ()
+Reducing stack by rule 189 (line 1765):
+-> $$ = nterm M1 ()
+Stack now 0 36 25 46 70 120 76 124 202 187 274 317 339
+Entering state 76
+Next token is token '{' ()
+Shifting token '{' ()
+Entering state 124
+Reading a token: Next token is token RETURN ()
+Shifting token RETURN ()
+Entering state 195
+Reading a token: Next token is token ';' ()
+Shifting token ';' ()
+Entering state 282
+Reducing stack by rule 215 (line 1847):
+   $1 = token RETURN ()
+   $2 = token ';' ()
+-> $$ = nterm jump_statement ()
+Stack now 0 36 25 46 70 120 76 124 202 187 274 317 339 76 124
+Entering state 207
+Reducing stack by rule 179 (line 1736):
+   $1 = nterm jump_statement ()
+-> $$ = nterm statement ()
+Stack now 0 36 25 46 70 120 76 124 202 187 274 317 339 76 124
+Entering state 199
+Reducing stack by rule 193 (line 1805):
+   $1 = nterm statement ()
+-> $$ = nterm statement_list ()
+Stack now 0 36 25 46 70 120 76 124 202 187 274 317 339 76 124
+Entering state 203
+Reading a token: Next token is token '}' ()
+Shifting token '}' ()
+Entering state 288
+Reducing stack by rule 190 (line 1776):
+-> $$ = nterm M2 ()
+Stack now 0 36 25 46 70 120 76 124 202 187 274 317 339 76 124 203 288
+Entering state 326
+Reducing stack by rule 186 (line 1748):
+   $1 = nterm M1 ()
+   $2 = token '{' ()
+   $3 = nterm statement_list ()
+   $4 = token '}' ()
+   $5 = nterm M2 ()
+-> $$ = nterm compound_statement ()
+Stack now 0 36 25 46 70 120 76 124 202 187 274 317 339
+Entering state 201
+Reducing stack by rule 175 (line 1732):
+   $1 = nterm compound_statement ()
+-> $$ = nterm statement ()
+Stack now 0 36 25 46 70 120 76 124 202 187 274 317 339
+Entering state 348
+Reading a token: Next token is token IDENTIFIER ()
+Reducing stack by rule 197 (line 1815):
+   $1 = token IF ()
+   $2 = token '(' ()
+   $3 = nterm expression ()
+   $4 = token ')' ()
+   $5 = nterm statement ()
+-> $$ = nterm selection_statement ()
+Stack now 0 36 25 46 70 120 76 124 202
+Entering state 205
+Reducing stack by rule 177 (line 1734):
+   $1 = nterm selection_statement ()
+-> $$ = nterm statement ()
+Stack now 0 36 25 46 70 120 76 124 202
+Entering state 199
+Reducing stack by rule 193 (line 1805):
+   $1 = nterm statement ()
+-> $$ = nterm statement_list ()
+Stack now 0 36 25 46 70 120 76 124 202
+Entering state 287
+Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 184
+Reading a token: Next token is token '.' ()
+Reducing stack by rule 1 (line 58):
+   $1 = token IDENTIFIER ()
+-> $$ = nterm primary_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 92
+Reducing stack by rule 5 (line 114):
+   $1 = nterm primary_expression ()
+-> $$ = nterm postfix_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 93
+Next token is token '.' ()
+Shifting token '.' ()
+Entering state 143
+Reading a token: Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 236
+Reducing stack by rule 9 (line 192):
+   $1 = nterm postfix_expression ()
+   $2 = token '.' ()
+   $3 = token IDENTIFIER ()
+-> $$ = nterm postfix_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 93
+Reading a token: Next token is token '=' ()
+Reducing stack by rule 15 (line 299):
+   $1 = nterm postfix_expression ()
+-> $$ = nterm unary_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 130
+Next token is token '=' ()
+Shifting token '=' ()
+Entering state 219
+Reducing stack by rule 61 (line 1079):
+   $1 = token '=' ()
+-> $$ = nterm assignment_operator ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130
+Entering state 220
+Reading a token: Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 78
+Reducing stack by rule 1 (line 58):
+   $1 = token IDENTIFIER ()
+-> $$ = nterm primary_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 92
+Reducing stack by rule 5 (line 114):
+   $1 = nterm primary_expression ()
+-> $$ = nterm postfix_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 93
+Reading a token: Next token is token '.' ()
+Shifting token '.' ()
+Entering state 143
+Reading a token: Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 236
+Reducing stack by rule 9 (line 192):
+   $1 = nterm postfix_expression ()
+   $2 = token '.' ()
+   $3 = token IDENTIFIER ()
+-> $$ = nterm postfix_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 93
+Reading a token: Next token is token '+' ()
+Reducing stack by rule 15 (line 299):
+   $1 = nterm postfix_expression ()
+-> $$ = nterm unary_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 130
+Next token is token '+' ()
+Reducing stack by rule 27 (line 494):
+   $1 = nterm unary_expression ()
+-> $$ = nterm cast_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 96
+Reducing stack by rule 29 (line 530):
+   $1 = nterm cast_expression ()
+-> $$ = nterm multiplicative_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 97
+Next token is token '+' ()
+Reducing stack by rule 33 (line 592):
+   $1 = nterm multiplicative_expression ()
+-> $$ = nterm additive_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 98
+Next token is token '+' ()
+Shifting token '+' ()
+Entering state 148
+Reading a token: Next token is token CONSTANT ()
+Shifting token CONSTANT ()
+Entering state 79
+Reducing stack by rule 2 (line 69):
+   $1 = token CONSTANT ()
+-> $$ = nterm primary_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220 98 148
+Entering state 92
+Reducing stack by rule 5 (line 114):
+   $1 = nterm primary_expression ()
+-> $$ = nterm postfix_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220 98 148
+Entering state 93
+Reading a token: Next token is token ';' ()
+Reducing stack by rule 15 (line 299):
+   $1 = nterm postfix_expression ()
+-> $$ = nterm unary_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220 98 148
+Entering state 94
+Reducing stack by rule 27 (line 494):
+   $1 = nterm unary_expression ()
+-> $$ = nterm cast_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220 98 148
+Entering state 96
+Reducing stack by rule 29 (line 530):
+   $1 = nterm cast_expression ()
+-> $$ = nterm multiplicative_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220 98 148
+Entering state 240
+Next token is token ';' ()
+Reducing stack by rule 34 (line 593):
+   $1 = nterm additive_expression ()
+   $2 = token '+' ()
+   $3 = nterm multiplicative_expression ()
+-> $$ = nterm additive_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 98
+Next token is token ';' ()
+Reducing stack by rule 36 (line 624):
+   $1 = nterm additive_expression ()
+-> $$ = nterm shift_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 99
+Next token is token ';' ()
+Reducing stack by rule 39 (line 672):
+   $1 = nterm shift_expression ()
+-> $$ = nterm relational_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 100
+Next token is token ';' ()
+Reducing stack by rule 44 (line 756):
+   $1 = nterm relational_expression ()
+-> $$ = nterm equality_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 101
+Next token is token ';' ()
+Reducing stack by rule 47 (line 800):
+   $1 = nterm equality_expression ()
+-> $$ = nterm and_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 102
+Next token is token ';' ()
+Reducing stack by rule 49 (line 826):
+   $1 = nterm and_expression ()
+-> $$ = nterm exclusive_or_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 103
+Next token is token ';' ()
+Reducing stack by rule 51 (line 851):
+   $1 = nterm exclusive_or_expression ()
+-> $$ = nterm inclusive_or_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 104
+Next token is token ';' ()
+Reducing stack by rule 53 (line 877):
+   $1 = nterm inclusive_or_expression ()
+-> $$ = nterm logical_and_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 105
+Next token is token ';' ()
+Reducing stack by rule 55 (line 901):
+   $1 = nterm logical_and_expression ()
+-> $$ = nterm logical_or_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 106
+Next token is token ';' ()
+Reducing stack by rule 57 (line 925):
+   $1 = nterm logical_or_expression ()
+-> $$ = nterm conditional_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 131
+Reducing stack by rule 59 (line 978):
+   $1 = nterm conditional_expression ()
+-> $$ = nterm assignment_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 291
+Reducing stack by rule 60 (line 979):
+   $1 = nterm unary_expression ()
+   $2 = nterm assignment_operator ()
+   $3 = nterm assignment_expression ()
+-> $$ = nterm assignment_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 132
+Reducing stack by rule 72 (line 1093):
+   $1 = nterm assignment_expression ()
+-> $$ = nterm expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 198
+Next token is token ';' ()
+Shifting token ';' ()
+Entering state 285
+Reducing stack by rule 196 (line 1811):
+   $1 = nterm expression ()
+   $2 = token ';' ()
+-> $$ = nterm expression_statement ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 204
+Reducing stack by rule 176 (line 1733):
+   $1 = nterm expression_statement ()
+-> $$ = nterm statement ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 289
+Reducing stack by rule 194 (line 1806):
+   $1 = nterm statement_list ()
+   $2 = nterm statement ()
+-> $$ = nterm statement_list ()
+Stack now 0 36 25 46 70 120 76 124 202
+Entering state 287
+Reading a token: Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 184
+Reading a token: Next token is token '.' ()
+Reducing stack by rule 1 (line 58):
+   $1 = token IDENTIFIER ()
+-> $$ = nterm primary_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 92
+Reducing stack by rule 5 (line 114):
+   $1 = nterm primary_expression ()
+-> $$ = nterm postfix_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 93
+Next token is token '.' ()
+Shifting token '.' ()
+Entering state 143
+Reading a token: Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 236
+Reducing stack by rule 9 (line 192):
+   $1 = nterm postfix_expression ()
+   $2 = token '.' ()
+   $3 = token IDENTIFIER ()
+-> $$ = nterm postfix_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 93
+Reading a token: Next token is token '=' ()
+Reducing stack by rule 15 (line 299):
+   $1 = nterm postfix_expression ()
+-> $$ = nterm unary_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 130
+Next token is token '=' ()
+Shifting token '=' ()
+Entering state 219
+Reducing stack by rule 61 (line 1079):
+   $1 = token '=' ()
+-> $$ = nterm assignment_operator ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130
+Entering state 220
+Reading a token: Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 78
+Reducing stack by rule 1 (line 58):
+   $1 = token IDENTIFIER ()
+-> $$ = nterm primary_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 92
+Reducing stack by rule 5 (line 114):
+   $1 = nterm primary_expression ()
+-> $$ = nterm postfix_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 93
+Reading a token: Next token is token '.' ()
+Shifting token '.' ()
+Entering state 143
+Reading a token: Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 236
+Reducing stack by rule 9 (line 192):
+   $1 = nterm postfix_expression ()
+   $2 = token '.' ()
+   $3 = token IDENTIFIER ()
+-> $$ = nterm postfix_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 93
+Reading a token: Next token is token '*' ()
+Reducing stack by rule 15 (line 299):
+   $1 = nterm postfix_expression ()
+-> $$ = nterm unary_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 130
+Next token is token '*' ()
+Reducing stack by rule 27 (line 494):
+   $1 = nterm unary_expression ()
+-> $$ = nterm cast_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 96
+Reducing stack by rule 29 (line 530):
+   $1 = nterm cast_expression ()
+-> $$ = nterm multiplicative_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 97
+Next token is token '*' ()
+Shifting token '*' ()
+Entering state 147
+Reading a token: Next token is token CONSTANT ()
+Shifting token CONSTANT ()
+Entering state 79
+Reducing stack by rule 2 (line 69):
+   $1 = token CONSTANT ()
+-> $$ = nterm primary_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220 97 147
+Entering state 92
+Reducing stack by rule 5 (line 114):
+   $1 = nterm primary_expression ()
+-> $$ = nterm postfix_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220 97 147
+Entering state 93
+Reading a token: Next token is token ';' ()
+Reducing stack by rule 15 (line 299):
+   $1 = nterm postfix_expression ()
+-> $$ = nterm unary_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220 97 147
+Entering state 94
+Reducing stack by rule 27 (line 494):
+   $1 = nterm unary_expression ()
+-> $$ = nterm cast_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220 97 147
+Entering state 239
+Reducing stack by rule 30 (line 531):
+   $1 = nterm multiplicative_expression ()
+   $2 = token '*' ()
+   $3 = nterm cast_expression ()
+-> $$ = nterm multiplicative_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 97
+Next token is token ';' ()
+Reducing stack by rule 33 (line 592):
+   $1 = nterm multiplicative_expression ()
+-> $$ = nterm additive_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 98
+Next token is token ';' ()
+Reducing stack by rule 36 (line 624):
+   $1 = nterm additive_expression ()
+-> $$ = nterm shift_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 99
+Next token is token ';' ()
+Reducing stack by rule 39 (line 672):
+   $1 = nterm shift_expression ()
+-> $$ = nterm relational_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 100
+Next token is token ';' ()
+Reducing stack by rule 44 (line 756):
+   $1 = nterm relational_expression ()
+-> $$ = nterm equality_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 101
+Next token is token ';' ()
+Reducing stack by rule 47 (line 800):
+   $1 = nterm equality_expression ()
+-> $$ = nterm and_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 102
+Next token is token ';' ()
+Reducing stack by rule 49 (line 826):
+   $1 = nterm and_expression ()
+-> $$ = nterm exclusive_or_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 103
+Next token is token ';' ()
+Reducing stack by rule 51 (line 851):
+   $1 = nterm exclusive_or_expression ()
+-> $$ = nterm inclusive_or_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 104
+Next token is token ';' ()
+Reducing stack by rule 53 (line 877):
+   $1 = nterm inclusive_or_expression ()
+-> $$ = nterm logical_and_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 105
+Next token is token ';' ()
+Reducing stack by rule 55 (line 901):
+   $1 = nterm logical_and_expression ()
+-> $$ = nterm logical_or_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 106
+Next token is token ';' ()
+Reducing stack by rule 57 (line 925):
+   $1 = nterm logical_or_expression ()
+-> $$ = nterm conditional_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 131
+Reducing stack by rule 59 (line 978):
+   $1 = nterm conditional_expression ()
+-> $$ = nterm assignment_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 130 220
+Entering state 291
+Reducing stack by rule 60 (line 979):
+   $1 = nterm unary_expression ()
+   $2 = nterm assignment_operator ()
+   $3 = nterm assignment_expression ()
+-> $$ = nterm assignment_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 132
+Reducing stack by rule 72 (line 1093):
+   $1 = nterm assignment_expression ()
+-> $$ = nterm expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 198
+Next token is token ';' ()
+Shifting token ';' ()
+Entering state 285
+Reducing stack by rule 196 (line 1811):
+   $1 = nterm expression ()
+   $2 = token ';' ()
+-> $$ = nterm expression_statement ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 204
+Reducing stack by rule 176 (line 1733):
+   $1 = nterm expression_statement ()
+-> $$ = nterm statement ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 289
+Reducing stack by rule 194 (line 1806):
+   $1 = nterm statement_list ()
+   $2 = nterm statement ()
+-> $$ = nterm statement_list ()
+Stack now 0 36 25 46 70 120 76 124 202
+Entering state 287
+Reading a token: Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 184
+Reading a token: Next token is token '(' ()
+Reducing stack by rule 1 (line 58):
+   $1 = token IDENTIFIER ()
+-> $$ = nterm primary_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 92
+Reducing stack by rule 5 (line 114):
+   $1 = nterm primary_expression ()
+-> $$ = nterm postfix_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 93
+Next token is token '(' ()
+Shifting token '(' ()
+Entering state 142
+Reading a token: Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 78
+Reducing stack by rule 1 (line 58):
+   $1 = token IDENTIFIER ()
+-> $$ = nterm primary_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 93 142
+Entering state 92
+Reducing stack by rule 5 (line 114):
+   $1 = nterm primary_expression ()
+-> $$ = nterm postfix_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 93 142
+Entering state 93
+Reading a token: Next token is token ')' ()
+Reducing stack by rule 15 (line 299):
+   $1 = nterm postfix_expression ()
+-> $$ = nterm unary_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 93 142
+Entering state 130
+Next token is token ')' ()
+Reducing stack by rule 27 (line 494):
+   $1 = nterm unary_expression ()
+-> $$ = nterm cast_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 93 142
+Entering state 96
+Reducing stack by rule 29 (line 530):
+   $1 = nterm cast_expression ()
+-> $$ = nterm multiplicative_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 93 142
+Entering state 97
+Next token is token ')' ()
+Reducing stack by rule 33 (line 592):
+   $1 = nterm multiplicative_expression ()
+-> $$ = nterm additive_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 93 142
+Entering state 98
+Next token is token ')' ()
+Reducing stack by rule 36 (line 624):
+   $1 = nterm additive_expression ()
+-> $$ = nterm shift_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 93 142
+Entering state 99
+Next token is token ')' ()
+Reducing stack by rule 39 (line 672):
+   $1 = nterm shift_expression ()
+-> $$ = nterm relational_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 93 142
+Entering state 100
+Next token is token ')' ()
+Reducing stack by rule 44 (line 756):
+   $1 = nterm relational_expression ()
+-> $$ = nterm equality_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 93 142
+Entering state 101
+Next token is token ')' ()
+Reducing stack by rule 47 (line 800):
+   $1 = nterm equality_expression ()
+-> $$ = nterm and_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 93 142
+Entering state 102
+Next token is token ')' ()
+Reducing stack by rule 49 (line 826):
+   $1 = nterm and_expression ()
+-> $$ = nterm exclusive_or_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 93 142
+Entering state 103
+Next token is token ')' ()
+Reducing stack by rule 51 (line 851):
+   $1 = nterm exclusive_or_expression ()
+-> $$ = nterm inclusive_or_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 93 142
+Entering state 104
+Next token is token ')' ()
+Reducing stack by rule 53 (line 877):
+   $1 = nterm inclusive_or_expression ()
+-> $$ = nterm logical_and_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 93 142
+Entering state 105
+Next token is token ')' ()
+Reducing stack by rule 55 (line 901):
+   $1 = nterm logical_and_expression ()
+-> $$ = nterm logical_or_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 93 142
+Entering state 106
+Next token is token ')' ()
+Reducing stack by rule 57 (line 925):
+   $1 = nterm logical_or_expression ()
+-> $$ = nterm conditional_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 93 142
+Entering state 131
+Reducing stack by rule 59 (line 978):
+   $1 = nterm conditional_expression ()
+-> $$ = nterm assignment_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287 93 142
+Entering state 235
+Reducing stack by rule 13 (line 294):
+   $1 = nterm assignment_expression ()
+-> $$ = nterm argument_expression_list ()
+Stack now 0 36 25 46 70 120 76 124 202 287 93 142
+Entering state 234
+Next token is token ')' ()
+Shifting token ')' ()
+Entering state 304
+Reducing stack by rule 8 (line 152):
+   $1 = nterm postfix_expression ()
+   $2 = token '(' ()
+   $3 = nterm argument_expression_list ()
+   $4 = token ')' ()
+-> $$ = nterm postfix_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 93
+Reading a token: Next token is token ';' ()
+Reducing stack by rule 15 (line 299):
+   $1 = nterm postfix_expression ()
+-> $$ = nterm unary_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 130
+Next token is token ';' ()
+Reducing stack by rule 27 (line 494):
+   $1 = nterm unary_expression ()
+-> $$ = nterm cast_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 96
+Reducing stack by rule 29 (line 530):
+   $1 = nterm cast_expression ()
+-> $$ = nterm multiplicative_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 97
+Next token is token ';' ()
+Reducing stack by rule 33 (line 592):
+   $1 = nterm multiplicative_expression ()
+-> $$ = nterm additive_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 98
+Next token is token ';' ()
+Reducing stack by rule 36 (line 624):
+   $1 = nterm additive_expression ()
+-> $$ = nterm shift_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 99
+Next token is token ';' ()
+Reducing stack by rule 39 (line 672):
+   $1 = nterm shift_expression ()
+-> $$ = nterm relational_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 100
+Next token is token ';' ()
+Reducing stack by rule 44 (line 756):
+   $1 = nterm relational_expression ()
+-> $$ = nterm equality_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 101
+Next token is token ';' ()
+Reducing stack by rule 47 (line 800):
+   $1 = nterm equality_expression ()
+-> $$ = nterm and_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 102
+Next token is token ';' ()
+Reducing stack by rule 49 (line 826):
+   $1 = nterm and_expression ()
+-> $$ = nterm exclusive_or_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 103
+Next token is token ';' ()
+Reducing stack by rule 51 (line 851):
+   $1 = nterm exclusive_or_expression ()
+-> $$ = nterm inclusive_or_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 104
+Next token is token ';' ()
+Reducing stack by rule 53 (line 877):
+   $1 = nterm inclusive_or_expression ()
+-> $$ = nterm logical_and_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 105
+Next token is token ';' ()
+Reducing stack by rule 55 (line 901):
+   $1 = nterm logical_and_expression ()
+-> $$ = nterm logical_or_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 106
+Next token is token ';' ()
+Reducing stack by rule 57 (line 925):
+   $1 = nterm logical_or_expression ()
+-> $$ = nterm conditional_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 131
+Reducing stack by rule 59 (line 978):
+   $1 = nterm conditional_expression ()
+-> $$ = nterm assignment_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 132
+Reducing stack by rule 72 (line 1093):
+   $1 = nterm assignment_expression ()
+-> $$ = nterm expression ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 198
+Next token is token ';' ()
+Shifting token ';' ()
+Entering state 285
+Reducing stack by rule 196 (line 1811):
+   $1 = nterm expression ()
+   $2 = token ';' ()
+-> $$ = nterm expression_statement ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 204
+Reducing stack by rule 176 (line 1733):
+   $1 = nterm expression_statement ()
+-> $$ = nterm statement ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 289
+Reducing stack by rule 194 (line 1806):
+   $1 = nterm statement_list ()
+   $2 = nterm statement ()
+-> $$ = nterm statement_list ()
+Stack now 0 36 25 46 70 120 76 124 202
+Entering state 287
+Reading a token: Next token is token RETURN ()
+Shifting token RETURN ()
+Entering state 195
+Reading a token: Next token is token ';' ()
+Shifting token ';' ()
+Entering state 282
+Reducing stack by rule 215 (line 1847):
+   $1 = token RETURN ()
+   $2 = token ';' ()
+-> $$ = nterm jump_statement ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 207
+Reducing stack by rule 179 (line 1736):
+   $1 = nterm jump_statement ()
+-> $$ = nterm statement ()
+Stack now 0 36 25 46 70 120 76 124 202 287
+Entering state 289
+Reducing stack by rule 194 (line 1806):
+   $1 = nterm statement_list ()
+   $2 = nterm statement ()
+-> $$ = nterm statement_list ()
+Stack now 0 36 25 46 70 120 76 124 202
+Entering state 287
+Reading a token: Next token is token '}' ()
+Shifting token '}' ()
+Entering state 325
+Reducing stack by rule 190 (line 1776):
+-> $$ = nterm M2 ()
+Stack now 0 36 25 46 70 120 76 124 202 287 325
+Entering state 344
+Reducing stack by rule 188 (line 1755):
+   $1 = nterm M1 ()
+   $2 = token '{' ()
+   $3 = nterm declaration_list ()
+   $4 = nterm statement_list ()
+   $5 = token '}' ()
+   $6 = nterm M2 ()
+-> $$ = nterm compound_statement ()
+Stack now 0 36 25 46 70 120
+Entering state 179
+Reducing stack by rule 223 (line 1879):
+   $1 = nterm declaration_specifiers ()
+   $2 = nterm M3 ()
+   $3 = nterm declarator ()
+   $4 = nterm $@14 ()
+   $5 = nterm compound_statement ()
+-> $$ = nterm function_definition ()
+Stack now 0 36
+Entering state 38
+Reducing stack by rule 220 (line 1874):
+   $1 = nterm function_definition ()
+-> $$ = nterm external_declaration ()
+Stack now 0 36
+Entering state 60
+Reducing stack by rule 219 (line 1861):
+   $1 = nterm translation_unit ()
+   $2 = nterm external_declaration ()
+-> $$ = nterm translation_unit ()
+Stack now 0
+Entering state 36
+Reading a token: Next token is token INT ()
+Shifting token INT ()
+Entering state 10
+Reducing stack by rule 95 (line 1279):
+   $1 = token INT ()
+-> $$ = nterm type_specifier ()
+Stack now 0 36
+Entering state 27
+Reading a token: Next token is token IDENTIFIER ()
+Reducing stack by rule 79 (line 1143):
+   $1 = nterm type_specifier ()
+-> $$ = nterm declaration_specifiers ()
+Stack now 0 36
+Entering state 25
+Next token is token IDENTIFIER ()
+Reducing stack by rule 228 (line 2007):
+-> $$ = nterm M3 ()
+Stack now 0 36 25
+Entering state 46
+Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 1
+Reducing stack by rule 135 (line 1454):
+   $1 = token IDENTIFIER ()
+-> $$ = nterm direct_declarator ()
+Stack now 0 36 25 46
+Entering state 33
+Reading a token: Next token is token '(' ()
+Shifting token '(' ()
+Entering state 57
+Reading a token: Next token is token ')' ()
+Reducing stack by rule 143 (line 1514):
+-> $$ = nterm $@3 ()
+Stack now 0 36 25 46 33 57
+Entering state 111
+Next token is token ')' ()
+Shifting token ')' ()
+Entering state 171
+Reducing stack by rule 144 (line 1514):
+   $1 = nterm direct_declarator ()
+   $2 = token '(' ()
+   $3 = nterm $@3 ()
+   $4 = token ')' ()
+-> $$ = nterm direct_declarator ()
+Stack now 0 36 25 46
+Entering state 33
+Reading a token: Next token is token '{' ()
+Reducing stack by rule 134 (line 1448):
+   $1 = nterm direct_declarator ()
+-> $$ = nterm declarator ()
+Stack now 0 36 25 46
+Entering state 70
+Next token is token '{' ()
+Reducing stack by rule 222 (line 1879):
+-> $$ = nterm $@14 ()
+Stack now 0 36 25 46 70
+Entering state 120
+Reducing stack by rule 189 (line 1765):
+-> $$ = nterm M1 ()
+Stack now 0 36 25 46 70 120
+Entering state 76
+Next token is token '{' ()
+Shifting token '{' ()
+Entering state 124
+Reading a token: Next token is token INT ()
+Shifting token INT ()
+Entering state 10
+Reducing stack by rule 95 (line 1279):
+   $1 = token INT ()
+-> $$ = nterm type_specifier ()
+Stack now 0 36 25 46 70 120 76 124
+Entering state 27
+Reading a token: Next token is token IDENTIFIER ()
+Reducing stack by rule 79 (line 1143):
+   $1 = nterm type_specifier ()
+-> $$ = nterm declaration_specifiers ()
+Stack now 0 36 25 46 70 120 76 124
+Entering state 53
+Next token is token IDENTIFIER ()
+Reducing stack by rule 228 (line 2007):
+-> $$ = nterm M3 ()
+Stack now 0 36 25 46 70 120 76 124 53
+Entering state 73
+Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 1
+Reducing stack by rule 135 (line 1454):
+   $1 = token IDENTIFIER ()
+-> $$ = nterm direct_declarator ()
+Stack now 0 36 25 46 70 120 76 124 53 73
+Entering state 33
+Reading a token: Next token is token '=' ()
+Reducing stack by rule 134 (line 1448):
+   $1 = nterm direct_declarator ()
+-> $$ = nterm declarator ()
+Stack now 0 36 25 46 70 120 76 124 53 73
+Entering state 123
+Next token is token '=' ()
+Shifting token '=' ()
+Entering state 118
+Reading a token: Next token is token CONSTANT ()
+Shifting token CONSTANT ()
+Entering state 79
+Reducing stack by rule 2 (line 69):
+   $1 = token CONSTANT ()
+-> $$ = nterm primary_expression ()
+Stack now 0 36 25 46 70 120 76 124 53 73 123 118
+Entering state 92
+Reducing stack by rule 5 (line 114):
+   $1 = nterm primary_expression ()
+-> $$ = nterm postfix_expression ()
+Stack now 0 36 25 46 70 120 76 124 53 73 123 118
+Entering state 93
+Reading a token: Next token is token ';' ()
+Reducing stack by rule 15 (line 299):
+   $1 = nterm postfix_expression ()
+-> $$ = nterm unary_expression ()
+Stack now 0 36 25 46 70 120 76 124 53 73 123 118
+Entering state 130
+Next token is token ';' ()
+Reducing stack by rule 27 (line 494):
+   $1 = nterm unary_expression ()
+-> $$ = nterm cast_expression ()
+Stack now 0 36 25 46 70 120 76 124 53 73 123 118
+Entering state 96
+Reducing stack by rule 29 (line 530):
+   $1 = nterm cast_expression ()
+-> $$ = nterm multiplicative_expression ()
+Stack now 0 36 25 46 70 120 76 124 53 73 123 118
+Entering state 97
+Next token is token ';' ()
+Reducing stack by rule 33 (line 592):
+   $1 = nterm multiplicative_expression ()
+-> $$ = nterm additive_expression ()
+Stack now 0 36 25 46 70 120 76 124 53 73 123 118
+Entering state 98
+Next token is token ';' ()
+Reducing stack by rule 36 (line 624):
+   $1 = nterm additive_expression ()
+-> $$ = nterm shift_expression ()
+Stack now 0 36 25 46 70 120 76 124 53 73 123 118
+Entering state 99
+Next token is token ';' ()
+Reducing stack by rule 39 (line 672):
+   $1 = nterm shift_expression ()
+-> $$ = nterm relational_expression ()
+Stack now 0 36 25 46 70 120 76 124 53 73 123 118
+Entering state 100
+Next token is token ';' ()
+Reducing stack by rule 44 (line 756):
+   $1 = nterm relational_expression ()
+-> $$ = nterm equality_expression ()
+Stack now 0 36 25 46 70 120 76 124 53 73 123 118
+Entering state 101
+Next token is token ';' ()
+Reducing stack by rule 47 (line 800):
+   $1 = nterm equality_expression ()
+-> $$ = nterm and_expression ()
+Stack now 0 36 25 46 70 120 76 124 53 73 123 118
+Entering state 102
+Next token is token ';' ()
+Reducing stack by rule 49 (line 826):
+   $1 = nterm and_expression ()
+-> $$ = nterm exclusive_or_expression ()
+Stack now 0 36 25 46 70 120 76 124 53 73 123 118
+Entering state 103
+Next token is token ';' ()
+Reducing stack by rule 51 (line 851):
+   $1 = nterm exclusive_or_expression ()
+-> $$ = nterm inclusive_or_expression ()
+Stack now 0 36 25 46 70 120 76 124 53 73 123 118
+Entering state 104
+Next token is token ';' ()
+Reducing stack by rule 53 (line 877):
+   $1 = nterm inclusive_or_expression ()
+-> $$ = nterm logical_and_expression ()
+Stack now 0 36 25 46 70 120 76 124 53 73 123 118
+Entering state 105
+Next token is token ';' ()
+Reducing stack by rule 55 (line 901):
+   $1 = nterm logical_and_expression ()
+-> $$ = nterm logical_or_expression ()
+Stack now 0 36 25 46 70 120 76 124 53 73 123 118
+Entering state 106
+Next token is token ';' ()
+Reducing stack by rule 57 (line 925):
+   $1 = nterm logical_or_expression ()
+-> $$ = nterm conditional_expression ()
+Stack now 0 36 25 46 70 120 76 124 53 73 123 118
+Entering state 131
+Reducing stack by rule 59 (line 978):
+   $1 = nterm conditional_expression ()
+-> $$ = nterm assignment_expression ()
+Stack now 0 36 25 46 70 120 76 124 53 73 123 118
+Entering state 176
+Reducing stack by rule 173 (line 1720):
+   $1 = nterm assignment_expression ()
+-> $$ = nterm initializer ()
+Stack now 0 36 25 46 70 120 76 124 53 73 123 118
+Entering state 177
+Reducing stack by rule 86 (line 1210):
+   $1 = nterm declarator ()
+   $2 = token '=' ()
+   $3 = nterm initializer ()
+-> $$ = nterm init_declarator ()
+Stack now 0 36 25 46 70 120 76 124 53 73
+Entering state 69
+Reducing stack by rule 83 (line 1162):
+   $1 = nterm init_declarator ()
+-> $$ = nterm init_declarator_list ()
+Stack now 0 36 25 46 70 120 76 124 53 73
+Entering state 68
+Next token is token ';' ()
+Shifting token ';' ()
+Entering state 117
+Reducing stack by rule 76 (line 1137):
+   $1 = nterm declaration_specifiers ()
+   $2 = nterm M3 ()
+   $3 = nterm init_declarator_list ()
+   $4 = token ';' ()
+-> $$ = nterm declaration ()
+Stack now 0 36 25 46 70 120 76 124
+Entering state 52
+Reducing stack by rule 191 (line 1782):
+   $1 = nterm declaration ()
+-> $$ = nterm declaration_list ()
+Stack now 0 36 25 46 70 120 76 124
+Entering state 202
+Reading a token: Next token is token DOUBLE ()
+Shifting token DOUBLE ()
+Entering state 15
+Reducing stack by rule 98 (line 1282):
+   $1 = token DOUBLE ()
+-> $$ = nterm type_specifier ()
+Stack now 0 36 25 46 70 120 76 124 202
+Entering state 27
+Reading a token: Next token is token IDENTIFIER ()
+Reducing stack by rule 79 (line 1143):
+   $1 = nterm type_specifier ()
+-> $$ = nterm declaration_specifiers ()
+Stack now 0 36 25 46 70 120 76 124 202
+Entering state 53
+Next token is token IDENTIFIER ()
+Reducing stack by rule 228 (line 2007):
+-> $$ = nterm M3 ()
+Stack now 0 36 25 46 70 120 76 124 202 53
+Entering state 73
+Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 1
+Reducing stack by rule 135 (line 1454):
+   $1 = token IDENTIFIER ()
+-> $$ = nterm direct_declarator ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73
+Entering state 33
+Reading a token: Next token is token '=' ()
+Reducing stack by rule 134 (line 1448):
+   $1 = nterm direct_declarator ()
+-> $$ = nterm declarator ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73
+Entering state 123
+Next token is token '=' ()
+Shifting token '=' ()
+Entering state 118
+Reading a token: Next token is token '(' ()
+Shifting token '(' ()
+Entering state 85
+Reading a token: Next token is token '&' ()
+Shifting token '&' ()
+Entering state 89
+Reducing stack by rule 21 (line 485):
+   $1 = token '&' ()
+-> $$ = nterm unary_operator ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118 85
+Entering state 95
+Reading a token: Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 78
+Reducing stack by rule 1 (line 58):
+   $1 = token IDENTIFIER ()
+-> $$ = nterm primary_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118 85 95
+Entering state 92
+Reducing stack by rule 5 (line 114):
+   $1 = nterm primary_expression ()
+-> $$ = nterm postfix_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118 85 95
+Entering state 93
+Reading a token: Next token is token ')' ()
+Reducing stack by rule 15 (line 299):
+   $1 = nterm postfix_expression ()
+-> $$ = nterm unary_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118 85 95
+Entering state 94
+Reducing stack by rule 27 (line 494):
+   $1 = nterm unary_expression ()
+-> $$ = nterm cast_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118 85 95
+Entering state 144
+Reducing stack by rule 18 (line 330):
+   $1 = nterm unary_operator ()
+   $2 = nterm cast_expression ()
+-> $$ = nterm unary_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118 85
+Entering state 130
+Next token is token ')' ()
+Reducing stack by rule 27 (line 494):
+   $1 = nterm unary_expression ()
+-> $$ = nterm cast_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118 85
+Entering state 96
+Reducing stack by rule 29 (line 530):
+   $1 = nterm cast_expression ()
+-> $$ = nterm multiplicative_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118 85
+Entering state 97
+Next token is token ')' ()
+Reducing stack by rule 33 (line 592):
+   $1 = nterm multiplicative_expression ()
+-> $$ = nterm additive_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118 85
+Entering state 98
+Next token is token ')' ()
+Reducing stack by rule 36 (line 624):
+   $1 = nterm additive_expression ()
+-> $$ = nterm shift_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118 85
+Entering state 99
+Next token is token ')' ()
+Reducing stack by rule 39 (line 672):
+   $1 = nterm shift_expression ()
+-> $$ = nterm relational_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118 85
+Entering state 100
+Next token is token ')' ()
+Reducing stack by rule 44 (line 756):
+   $1 = nterm relational_expression ()
+-> $$ = nterm equality_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118 85
+Entering state 101
+Next token is token ')' ()
+Reducing stack by rule 47 (line 800):
+   $1 = nterm equality_expression ()
+-> $$ = nterm and_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118 85
+Entering state 102
+Next token is token ')' ()
+Reducing stack by rule 49 (line 826):
+   $1 = nterm and_expression ()
+-> $$ = nterm exclusive_or_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118 85
+Entering state 103
+Next token is token ')' ()
+Reducing stack by rule 51 (line 851):
+   $1 = nterm exclusive_or_expression ()
+-> $$ = nterm inclusive_or_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118 85
+Entering state 104
+Next token is token ')' ()
+Reducing stack by rule 53 (line 877):
+   $1 = nterm inclusive_or_expression ()
+-> $$ = nterm logical_and_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118 85
+Entering state 105
+Next token is token ')' ()
+Reducing stack by rule 55 (line 901):
+   $1 = nterm logical_and_expression ()
+-> $$ = nterm logical_or_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118 85
+Entering state 106
+Next token is token ')' ()
+Reducing stack by rule 57 (line 925):
+   $1 = nterm logical_or_expression ()
+-> $$ = nterm conditional_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118 85
+Entering state 131
+Reducing stack by rule 59 (line 978):
+   $1 = nterm conditional_expression ()
+-> $$ = nterm assignment_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118 85
+Entering state 132
+Reducing stack by rule 72 (line 1093):
+   $1 = nterm assignment_expression ()
+-> $$ = nterm expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118 85
+Entering state 133
+Next token is token ')' ()
+Shifting token ')' ()
+Entering state 222
+Reducing stack by rule 4 (line 110):
+   $1 = token '(' ()
+   $2 = nterm expression ()
+   $3 = token ')' ()
+-> $$ = nterm primary_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118
+Entering state 92
+Reducing stack by rule 5 (line 114):
+   $1 = nterm primary_expression ()
+-> $$ = nterm postfix_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118
+Entering state 93
+Reading a token: Next token is token ';' ()
+Reducing stack by rule 15 (line 299):
+   $1 = nterm postfix_expression ()
+-> $$ = nterm unary_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118
+Entering state 130
+Next token is token ';' ()
+Reducing stack by rule 27 (line 494):
+   $1 = nterm unary_expression ()
+-> $$ = nterm cast_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118
+Entering state 96
+Reducing stack by rule 29 (line 530):
+   $1 = nterm cast_expression ()
+-> $$ = nterm multiplicative_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118
+Entering state 97
+Next token is token ';' ()
+Reducing stack by rule 33 (line 592):
+   $1 = nterm multiplicative_expression ()
+-> $$ = nterm additive_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118
+Entering state 98
+Next token is token ';' ()
+Reducing stack by rule 36 (line 624):
+   $1 = nterm additive_expression ()
+-> $$ = nterm shift_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118
+Entering state 99
+Next token is token ';' ()
+Reducing stack by rule 39 (line 672):
+   $1 = nterm shift_expression ()
+-> $$ = nterm relational_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118
+Entering state 100
+Next token is token ';' ()
+Reducing stack by rule 44 (line 756):
+   $1 = nterm relational_expression ()
+-> $$ = nterm equality_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118
+Entering state 101
+Next token is token ';' ()
+Reducing stack by rule 47 (line 800):
+   $1 = nterm equality_expression ()
+-> $$ = nterm and_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118
+Entering state 102
+Next token is token ';' ()
+Reducing stack by rule 49 (line 826):
+   $1 = nterm and_expression ()
+-> $$ = nterm exclusive_or_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118
+Entering state 103
+Next token is token ';' ()
+Reducing stack by rule 51 (line 851):
+   $1 = nterm exclusive_or_expression ()
+-> $$ = nterm inclusive_or_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118
+Entering state 104
+Next token is token ';' ()
+Reducing stack by rule 53 (line 877):
+   $1 = nterm inclusive_or_expression ()
+-> $$ = nterm logical_and_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118
+Entering state 105
+Next token is token ';' ()
+Reducing stack by rule 55 (line 901):
+   $1 = nterm logical_and_expression ()
+-> $$ = nterm logical_or_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118
+Entering state 106
+Next token is token ';' ()
+Reducing stack by rule 57 (line 925):
+   $1 = nterm logical_or_expression ()
+-> $$ = nterm conditional_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118
+Entering state 131
+Reducing stack by rule 59 (line 978):
+   $1 = nterm conditional_expression ()
+-> $$ = nterm assignment_expression ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118
+Entering state 176
+Reducing stack by rule 173 (line 1720):
+   $1 = nterm assignment_expression ()
+-> $$ = nterm initializer ()
+Stack now 0 36 25 46 70 120 76 124 202 53 73 123 118
+Entering state 177
+Reducing stack by rule 86 (line 1210):
+   $1 = nterm declarator ()
+   $2 = token '=' ()
+   $3 = nterm initializer ()

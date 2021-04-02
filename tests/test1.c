@@ -1,27 +1,26 @@
-int main()
-{
-	int x = 1, y = 0, z;
-	int x1, x2;
-	x = x & y;
-	x = !x;
-	z = 15, x = 2;
-	z >>= 2;
-	z = z<<3;
-	++x++;
-	if(x)
-		z = 12;
-	else
-		z = z*(!y);
-	x = x?x:y;
-	{
-		int i=0, j;
-		for(i=1;i<=5;i++)
-		{
-			x*=1;
-		}
-		while((i=5) && j==6)
-		{
-			x/=2;
-		}
-	}
+struct st;
+
+int fun1(int, char*, char, double);
+void fun2(int* [], long double *xx[2][3], struct st);
+	
+struct st{
+	int x, y;
+	int* z;
+};
+
+int fun1(int x, char* y, char z, double w){
+	z = x;
+	x = '\'';
+	*y = 1.2+3<1+'a'? w:x;
+	x = *y;
+	return 0;
+}
+
+void fun2(int* x[], long double* xx[][3], struct st s){
+	int y = sizeof(s);
+	return;
+}
+
+int main(){
+	return 0;
 }
