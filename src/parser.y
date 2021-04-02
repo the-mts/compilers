@@ -264,11 +264,11 @@ postfix_expression
 																	$$->node_data = $1->node_data;
 																	tt_entry* type_entry = type_lookup($1->node_data);
 																	if(type_entry != NULL){
-																		printf("\e[1;31mError [line %d]:\e[0m Increment operator cannot be apllied on non-integer, non-floating point and non pointer types.\n",line);
+																		printf("\e[1;31mError [line %d]:\e[0m Increment operator cannot be applied on non-integer, non-floating point and non pointer types.\n",line);
 																		exit(-1);
 																	}/*array*/
 																	if($1->value_type == RVALUE){
-																		printf("\e[1;31mError [line %d]:\e[0m Increment operator cannot be apllied on rvalue.\n",line);
+																		printf("\e[1;31mError [line %d]:\e[0m Increment operator cannot be applied on rvalue.\n",line);
 																		exit(-1);
 																	}
 																	$$->value_type = RVALUE;
@@ -278,11 +278,11 @@ postfix_expression
 																	$$->node_data = $1->node_data;
 																	tt_entry* type_entry = type_lookup($1->node_data);
 																	if(type_entry != NULL){
-																		printf("\e[1;31mError [line %d]:\e[0m Decrement operator cannot be apllied on non-integer, non-floating point and non pointer types.\n",line);
+																		printf("\e[1;31mError [line %d]:\e[0m Decrement operator cannot be applied on non-integer, non-floating point and non pointer types.\n",line);
 																		exit(-1);
 																	}/*array*/
 																	if($1->value_type == RVALUE){
-																		printf("\e[1;31mError [line %d]:\e[0m Decrement operator cannot be apllied on rvalue.\n",line);
+																		printf("\e[1;31mError [line %d]:\e[0m Decrement operator cannot be applied on rvalue.\n",line);
 																		exit(-1);
 																	}
 																	$$->value_type = RVALUE;
@@ -302,11 +302,11 @@ unary_expression
 																	$$->node_data = $2->node_data;
 																	tt_entry* type_entry = type_lookup($2->node_data);
 																	if(type_entry != NULL){
-																		printf("\e[1;31mError [line %d]:\e[0m Increment operator cannot be apllied on non-integer, non-floating point and non pointer types.\n",line);
+																		printf("\e[1;31mError [line %d]:\e[0m Increment operator cannot be applied on non-integer, non-floating point and non pointer types.\n",line);
 																		exit(-1);
 																	}/*array*/
 																	if($2->value_type == RVALUE){
-																		printf("\e[1;31mError [line %d]:\e[0m Increment operator cannot be apllied on rvalue.\n",line);
+																		printf("\e[1;31mError [line %d]:\e[0m Increment operator cannot be applied on rvalue.\n",line);
 																		exit(-1);
 																	}
 																	$$->value_type = RVALUE;
@@ -317,11 +317,11 @@ unary_expression
 																	$$->node_data = $2->node_data;
 																	tt_entry* type_entry = type_lookup($2->node_data);
 																	if(type_entry != NULL){
-																		printf("\e[1;31mError [line %d]:\e[0m Decrement operator cannot be apllied on non-integer, non-floating point and non pointer types.\n",line);
+																		printf("\e[1;31mError [line %d]:\e[0m Decrement operator cannot be applied on non-integer, non-floating point and non pointer types.\n",line);
 																		exit(-1);
 																	}/*array*/
 																	if($2->value_type == RVALUE){
-																		printf("\e[1;31mError [line %d]:\e[0m Decrement operator cannot be apllied on rvalue.\n",line);
+																		printf("\e[1;31mError [line %d]:\e[0m Decrement operator cannot be applied on rvalue.\n",line);
 																		exit(-1);
 																	}
 																	$$->value_type = RVALUE;
