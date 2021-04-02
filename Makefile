@@ -3,7 +3,7 @@ LEX=flex
 YACC=bison -y
 BIN=bin
 SRC=src
-.PHONY: all clean realclean
+.PHONY: all clean realclean fileclean
 all: $(BIN)/parser
 
 $(BIN)/parser: $(SRC)/lex.yy.c $(SRC)/y.tab.c $(BIN)/main.o $(BIN)/parse_utils.o $(BIN)/symtab_utils.o
@@ -25,7 +25,10 @@ $(BIN)/symtab_utils.o: $(SRC)/symtab_utils.c $(SRC)/symtab.h
 	$(CC) -c -Wno-abi $< -o $@
 
 clean:
-	$(RM) $(SRC)/lex.yy.c $(SRC)/y.tab.c $(SRC)/y.tab.h $(SRC)/y.output $(BIN)/parse_utils.o $(BIN)/main.o ./*.dot ./*.ps
+	$(RM) $(SRC)/lex.yy.c $(SRC)/y.tab.c $(SRC)/y.tab.h $(SRC)/y.output $(BIN)/parse_utils.o $(BIN)/main.o
 
-realclean: clean
-	$(RM) $(BIN)/parser $(BIN)/*.csv $(BIN)/*.out
+fileclean:
+	$(RM) $(BIN)/*.csv $(BIN)/*.out $(BIN)/*.dot $(BIN)/*.ps
+
+realclean: clean fileclean
+	$(RM) $(BIN)/parser
