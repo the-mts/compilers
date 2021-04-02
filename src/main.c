@@ -9,16 +9,7 @@ extern node* root;
 extern int column;
 extern int yydebug;
 FILE* out_file;
-
-/*  
-	string type;
-	unsigned long size;
-	long offset;
-	int is_init;
-	enum sym_type type_name;
-	symtab* sym_table;
-	vector<pair<string, string>> *arg_list;
-*/
+int typ_file = 0;
 
 void print_table(typtab* table){
 	for(auto i = table->begin(); i != table->end(); i++){
@@ -58,9 +49,9 @@ void dfs3(table_tree* u){
 }
 
 void dfs2(table_tree* u){
-	cout<< "Symbol Table Pointer: "<< u->val<<endl;
+	// cout<< "Symbol Table Pointer: "<< u->val<<endl;
 	print_table(u->val);
-	cout<<endl;
+	// cout<<endl;
 	for(auto i : u->v){
 		dfs2(i);
 	}
@@ -119,12 +110,20 @@ int main(int argc, char const* argv[]){
 		return 1;
 	}
 	out_file = stdout;
+	int skipnext = 0;
 	for(int i = 2; i < argc; i++){
-		if(argv[i][0] != '-')
+		if(skipnext){
+			skipnext = 0;
 			continue;
+		}
+		if(argv[i][0] != '-'){
+			printf("Invalid option format.\n");
+			return 1;
+			continue;
+		}
 		int j = 1;
 		while(argv[i][j]!='\0'){
-			if(argv[i][j] != 'g' && argv[i][j] != 'o'){
+			if(argv[i][j] != 'g' && argv[i][j] != 'o' && argv[i][j] != 't'){
 				fprintf(stderr,"Invalid Option\n");
 				return 1;
 			}
@@ -136,11 +135,15 @@ int main(int argc, char const* argv[]){
 					fprintf(stderr, "Output file not specified\n");
 					return 1;
 				}
+				skipnext = 1;
 				out_file = fopen(argv[i+1],"w+");
 				if(out_file == NULL){
 					fprintf(stderr,"Can't Open Output File\n");
 					return 1;
 				}
+			}
+			if(argv[i][j] == 't'){
+				typ_file = 1;
 			}
 			j++;
 		}
@@ -155,11 +158,16 @@ int main(int argc, char const* argv[]){
 	dfs(root,0);
 	fprintf(out_file,"}");
 
-	freopen("symtab.out", "w", stdout);
-	dfs2(st_root);
-
-	freopen("typtab.out", "w", stdout);
-	dfs3(st_root);
-	
+	freopen("bin/global_symtab.out", "w", stdout);
+	print_table(st_root->val);
+	for(auto x : (st_root->v)){
+		string name = "bin/"+x->name+"_symtab.out";
+		freopen((const char*)name.c_str(), "w", stdout);
+		dfs2(x);
+	}
+	if(typ_file){
+		freopen("bin/typtab.out", "w", stdout);
+		dfs3(st_root);
+	}
 	return 0;
 }

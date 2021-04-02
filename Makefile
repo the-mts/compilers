@@ -28,4 +28,4 @@ clean:
 	$(RM) $(SRC)/lex.yy.c $(SRC)/y.tab.c $(SRC)/y.tab.h $(SRC)/y.output $(BIN)/parse_utils.o $(BIN)/main.o ./*.dot ./*.ps
 
 realclean: clean
-	$(RM) $(BIN)/scanner
+	$(RM) $(BIN)/parser $(BIN)/*.csv $(BIN)/*.out

@@ -57,6 +57,7 @@ struct table_tree{
 	typtab* types;
 	vector<table_tree*> v;
 	table_tree * par;
+	string name = "";
 	table_tree(symtab* val, typtab* types, table_tree* par = NULL){
 		this->val = val;
 		this->types = types;

@@ -1,10 +1,10 @@
 # CS335 Parser
 
-This is a standalone parser for our CS335 Compilers project. It parses a given program (with the source language C) and generates a DOT file of the Abstract Syntax Tree, which can be viewed using a graph visualizer like Graphviz.
+This is a standalone parser and semantic analyser for our CS335 Compilers project. It parses a given program (with the source language C) and generates a DOT file of the Abstract Syntax Tree, which can be viewed using a graph visualizer like Graphviz. It dumps the symbol table in the file `symtab.csv` and can also dump the types table in `typtab.out`.
 
 ## Description
 
-The repository develops over the previously built lexer. Additional files for parser have been created. The file `parser.y` in `src` directory is a yacc file that specifies the grammar and actions that construct the AST. The directory also contains `parse_utils.c` and `parse_utils.h` that provide basic utility functions to create and modify the tree nodes. The file `main.c` contains the driver code that takes the input file, calls the parser over it, prints the tree in the DOT specification format, and finally stores it in a DOT file.
+The repository develops over the previously built parser. Additional files for semantic analyser have been created. The file `parser.y` in `src` directory is a yacc file that specifies the grammar and actions that construct the AST. The directory also contains `symtab_utils.c` and `symtab.h` that provide basic utility functions to create and modify the symbol table and types table. The file `main.c` contains the driver code that takes the input file, calls the parser over it, prints the tree in the DOT specification format, and finally stores it in a DOT file. It also dumps the symbol table and types table if chosen.
 
 The makefile will generate `y.tab.c` parser file, the corresponding header file, and the `lex.yy.c` scanner file. It will then compile all the source files to generate the `parser` binary in the `bin` directory. Our sample testcases are given in the directory `tests` with the names as `test<num>.c` (where `num` is from 1 to 5).
 

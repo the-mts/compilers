@@ -1,5 +1,6 @@
 #include "symtab.h"
 using namespace std;
+extern string next_name;
 vector<symtab*> table_scope;
 vector<typtab*> type_scope;
 symtab global;
@@ -258,9 +259,9 @@ void init_symtab(){
 }
 
 st_entry* add_entry(string key, string type, unsigned long size, long offset, enum sym_type type_name){
-	size = get_size(type);
+	if(type_name != IS_FUNC)
+		size = get_size(type);
 	st_entry * new_entry = new st_entry(type, size, offset, type_name);
-	//assert(table_scope.size() != 0);//check scope stack
 	symtab * temp = table_scope.back();
 	temp->insert({key, new_entry});
 	return new_entry;
@@ -312,6 +313,8 @@ void new_scope(){
 	table_tree * temp = new table_tree(new_table, new_type_table, curr);
 	curr->v.push_back(temp);
 	curr = temp;
+	curr->name = next_name;
+	next_name = "";
 	table_scope.push_back(new_table);
 	type_scope.push_back(new_type_table);
 }

@@ -14,6 +14,7 @@
 	vector<pair<string, string>> func_params;
 	int break_level=0;
 	int continue_level=0;
+	string next_name;
 %}
 %union {
 	struct node* nodes;
@@ -492,6 +493,33 @@ cast_expression
 																	$$ = node_(2,"()_typecast",-1);
 																	$$->v[0] = $2;
 																	$$->v[1] = $4;
+																	pair<string,int> p1 = get_equivalent_pointer($2->node_data);
+																	pair<string,int> p2 = get_equivalent_pointer($4->node_data);
+																	tt_entry * entry1 = type_lookup(p1.first);
+																	tt_entry * entry2 = type_lookup(p2.first);
+																	if(entry1 || entry2){
+																		printf("\e[1;31mError [line %d]:\e[0m Typecasts forbidden for non-scalar types.\n",line);
+																		exit(-1);
+																	}
+																	if($2->node_data.find("[") != string::npos){
+																		printf("\e[1;31mError [line %d]:\e[0m Cast specifies array type.\n",line);
+																		exit(-1);
+																	}
+																	if(p1.second && p2.second){
+																	}
+																	else if(p1.second){
+																		if($4->node_data == "float" || $4->node_data == "double" || $4->node_data == "long double"){
+																			printf("\e[1;31mError [line %d]:\e[0m Cannot cast floating point values to pointers.\n",line);
+																			exit(-1);
+																		}
+																	}
+																	else if(p2.second){
+																		if($2->node_data == "float" || $2->node_data == "double" || $2->node_data == "long double"){
+																			printf("\e[1;31mError [line %d]:\e[0m Cannot cast to pointer from floating point values.\n",line);
+																			exit(-1);
+																		}
+																	}
+																	$$->node_data = $2->node_data;
 																}
 	;
 
@@ -900,7 +928,7 @@ conditional_expression
 																				arithmetic_type_upgrade(p1.first,"int", "ternary");
 																			}
 																			if((p2.second || p3.second) && (!p2.second || !p3.second)){
-																				printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
+																				printf("\e[1;31mError [line %d]:\e[0m Incompatible types for ternary operator.\n",line);
 																				exit(-1);
 																			}
 																			if($1->token == CONSTANT){
@@ -946,19 +974,36 @@ conditional_expression
 assignment_expression
 	: conditional_expression										{$$ = $1;}
 	| unary_expression assignment_operator assignment_expression	{
-																		$$ = $2;
-																		add_node($$, $1);
-																		add_node($$, $3);
-																		if($1->value_type == RVALUE){
-																			printf("\e[1;31mError [line %d]:\e[0m lvalue required as left operand of %s.\n",line, $2->name);
-																			exit(-1);
-																		}
-																		string type;
-																		string type1, type2;
+																			$$ = $2;
+																			add_node($$, $1);
+																			add_node($$, $3);
+																			if($1->value_type == RVALUE){
+																				printf("\e[1;31mError [line %d]:\e[0m lvalue required as left operand of %s.\n",line, $2->name);
+																				exit(-1);
+																			}
+																			string type;
+																			string type1, type2;
+																			type1 = get_equivalent_pointer($1->node_data).first;
+																			type2 = get_equivalent_pointer($3->node_data).first;
+																			tt_entry* entry1 = type_lookup(type1);
+																			tt_entry* entry2 = type_lookup(type2);
+																			if(entry1 && entry2){
+																				if(entry1 != entry2){
+																					printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2->name);
+																					exit(-1);
+																				}
+																				break;
+																			}
+																			if(entry1 || entry2){
+																				printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2->name);
+																				exit(-1);
+																			}
+																			if(($1->node_data.find("[") != string::npos && $1->node_data.find("[]") == string::npos)){
+																				printf("\e[1;31mError [line %d]:\e[0m Array variables cannot be reassigned.\n",line);
+																				exit(-1);
+																			}
 																			switch($2->token){
 																			case '=':
-																				type1 = get_equivalent_pointer($1->node_data).first;
-																				type2 = get_equivalent_pointer($3->node_data).first;
 																				type = arithmetic_type_upgrade(type1, type2, string((const char*)$2->name));
 																				if(type.back() == '*'){
 																					if(type1.back()=='*' && type2.back()=='*');
@@ -1822,6 +1867,7 @@ function_definition
 													vector<pair<string, string>> *tmp = new vector<pair<string, string>>(func_params);
 													func_entry->arg_list = tmp;
 												}
+												next_name = $3->node_name;
 											} 
 
 	compound_statement					{
@@ -1880,6 +1926,7 @@ function_definition
 												func_entry->is_init = 1;										//added func_params
 												vector<pair<string, string>> *tmp = new vector<pair<string, string>>(func_params);
 												func_entry->arg_list = tmp;
+												next_name = $1->node_name;
 											}
 										}
 
