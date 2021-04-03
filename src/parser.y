@@ -335,14 +335,14 @@ unary_expression
 																		case '&':{
 																			if($2->value_type == LVALUE){
 																				$$->value_type = RVALUE;
-																				if(temp_data.back() == '*'){
-																					$$->node_data = temp_data+'*';
+																				if($2->node_data.back() == '*'){
+																					$$->node_data = $2->node_data+'*';
 																				}
-																				else if(temp_data.back() == ']'){
-																					$$->node_data = increase_array_level(temp_data);
+																				else if($2->node_data.back() == ']'){
+																					$$->node_data = increase_array_level($2->node_data);
 																				}
 																				else{
-																					$$->node_data = temp_data + " *";
+																					$$->node_data = $2->node_data + " *";
 																				}
 																			}
 																			else{
@@ -1214,6 +1214,12 @@ init_declarator
 																		exit(-1);
 																	}
 																	else{
+																		string data_type_ = data_type;
+																		if($1->node_data!=""){
+																			data_type += " ";
+																			data_type += $1->node_data;
+																		}
+																		
 																		if(current_lookup($1->node_name)!=NULL){
 																			printf("\e[1;31mError [line %d]:\e[0m Redeclaration of %s\n", line, $1->node_name.c_str());
 																			exit(-1);
@@ -1260,7 +1266,10 @@ init_declarator
 																		}
 																		$$->node_data = data_type;
 																		$$->value_type = RVALUE;
+
+																		data_type = data_type_;
 																	}
+
 																}
 	;
 
@@ -1913,6 +1922,7 @@ function_definition
 														(*(tmp->arg_list))[i].second = func_params[i].second;
 													}
 													tmp->is_init = 1;
+													next_name = $1->node_name;
 												}
 												else{
 													check_param_list(func_params);
@@ -1973,6 +1983,7 @@ function_definition
 													(*(tmp->arg_list))[i].second = func_params[i].second;
 												}
 												tmp->is_init = 1;
+												next_name = $1->node_name;
 											}
 											else{
 												check_param_list(func_params);

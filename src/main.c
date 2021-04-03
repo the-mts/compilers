@@ -40,7 +40,7 @@ void print_table(symtab* table){
 }
 
 void dfs3(table_tree* u){
-	cout<< "Scope Type Pointer: "<< u->types << " " << u->val <<endl;
+	cout<< "In \'"<< u->name <<"\' scope: "<< u->types <<endl;
 	print_table(u->types);
 	cout<<endl;
 	for(auto i : u->v){

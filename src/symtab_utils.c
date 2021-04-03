@@ -271,6 +271,7 @@ void init_symtab(){
 	table_scope.push_back(&global);
 	type_scope.push_back(&types_table);
 	st_root = new table_tree(&global, &types_table);
+	st_root->name = "global";
 	curr = st_root;
 
 }
