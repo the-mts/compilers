@@ -120,6 +120,15 @@ postfix_expression
 																		printf("\e[1;31mError [line %d]:\e[0m Subscripted value is neither array nor pointer.\n",line);
 																		exit(-1);
 																	}
+																	pair<string,int> p2 = get_equivalent_pointer($3->node_data);
+																	if(p2.second != 0){
+																		printf("\e[1;31mError [line %d]:\e[0m Array subscript is not an integer.\n",line);
+																		exit(-1);
+																	}
+																	if($3->node_data.find("int")==string::npos && $3->node_data.find("char")==string::npos){
+																		printf("\e[1;31mError [line %d]:\e[0m Array subscript is not an integer.\n",line);
+																		exit(-1);
+																	}
 																	$$->node_data = reduce_pointer_level($1->node_data);
 																}
 	| postfix_expression '(' ')'								{
@@ -265,11 +274,11 @@ postfix_expression
 																	$$->node_data = $1->node_data;
 																	tt_entry* type_entry = type_lookup($1->node_data);
 																	if(type_entry != NULL){
-																		printf("\e[1;31mError [line %d]:\e[0m Increment operator cannot be apllied on non-integer, non-floating point and non pointer types.\n",line);
+																		printf("\e[1;31mError [line %d]:\e[0m Increment operator cannot be applied on non-integer, non-floating point and non pointer types.\n",line);
 																		exit(-1);
 																	}/*array*/
 																	if($1->value_type == RVALUE){
-																		printf("\e[1;31mError [line %d]:\e[0m Increment operator cannot be apllied on rvalue.\n",line);
+																		printf("\e[1;31mError [line %d]:\e[0m Increment operator cannot be applied on rvalue.\n",line);
 																		exit(-1);
 																	}
 																	$$->value_type = RVALUE;
@@ -279,11 +288,11 @@ postfix_expression
 																	$$->node_data = $1->node_data;
 																	tt_entry* type_entry = type_lookup($1->node_data);
 																	if(type_entry != NULL){
-																		printf("\e[1;31mError [line %d]:\e[0m Decrement operator cannot be apllied on non-integer, non-floating point and non pointer types.\n",line);
+																		printf("\e[1;31mError [line %d]:\e[0m Decrement operator cannot be applied on non-integer, non-floating point and non pointer types.\n",line);
 																		exit(-1);
 																	}/*array*/
 																	if($1->value_type == RVALUE){
-																		printf("\e[1;31mError [line %d]:\e[0m Decrement operator cannot be apllied on rvalue.\n",line);
+																		printf("\e[1;31mError [line %d]:\e[0m Decrement operator cannot be applied on rvalue.\n",line);
 																		exit(-1);
 																	}
 																	$$->value_type = RVALUE;
@@ -303,11 +312,11 @@ unary_expression
 																	$$->node_data = $2->node_data;
 																	tt_entry* type_entry = type_lookup($2->node_data);
 																	if(type_entry != NULL){
-																		printf("\e[1;31mError [line %d]:\e[0m Increment operator cannot be apllied on non-integer, non-floating point and non pointer types.\n",line);
+																		printf("\e[1;31mError [line %d]:\e[0m Increment operator cannot be applied on non-integer, non-floating point and non pointer types.\n",line);
 																		exit(-1);
 																	}/*array*/
 																	if($2->value_type == RVALUE){
-																		printf("\e[1;31mError [line %d]:\e[0m Increment operator cannot be apllied on rvalue.\n",line);
+																		printf("\e[1;31mError [line %d]:\e[0m Increment operator cannot be applied on rvalue.\n",line);
 																		exit(-1);
 																	}
 																	$$->value_type = RVALUE;
@@ -318,11 +327,11 @@ unary_expression
 																	$$->node_data = $2->node_data;
 																	tt_entry* type_entry = type_lookup($2->node_data);
 																	if(type_entry != NULL){
-																		printf("\e[1;31mError [line %d]:\e[0m Decrement operator cannot be apllied on non-integer, non-floating point and non pointer types.\n",line);
+																		printf("\e[1;31mError [line %d]:\e[0m Decrement operator cannot be applied on non-integer, non-floating point and non pointer types.\n",line);
 																		exit(-1);
 																	}/*array*/
 																	if($2->value_type == RVALUE){
-																		printf("\e[1;31mError [line %d]:\e[0m Decrement operator cannot be apllied on rvalue.\n",line);
+																		printf("\e[1;31mError [line %d]:\e[0m Decrement operator cannot be applied on rvalue.\n",line);
 																		exit(-1);
 																	}
 																	$$->value_type = RVALUE;
@@ -377,7 +386,7 @@ unary_expression
 																					case IS_DOUBLE: $$->val.int_const = !$2->val.double_const; break;
 																					case IS_LONG_DOUBLE: $$->val.int_const = !$2->val.long_double_const; break;
 																					case IS_CHAR: $$->val.int_const = !$2->val.char_const; break;
-																					default: printf("unary operation not supported on this.\n");exit(-1);
+																					default: printf("\e[1;31mError [line %d]:\e[0m Invalid argument to unary operator '%s'.\n",line, $1); exit(-1);
 																				}
 																				$$->val_dt = IS_INT;
 																				break;
@@ -402,7 +411,7 @@ unary_expression
 																					case IS_DOUBLE: $2->val.double_const = $2->val.double_const; break;
 																					case IS_LONG_DOUBLE: $2->val.long_double_const = $2->val.long_double_const; break;
 																					case IS_CHAR: $2->val.char_const = $2->val.char_const; break;
-																					default: printf("unary operation not supported on this.\n");exit(-1);
+																					default: printf("\e[1;31mError [line %d]:\e[0m Invalid argument to unary operator '%s'.\n",line, $1); exit(-1);
 																				}
 																				$$ = $2;
 																				break;
@@ -419,7 +428,7 @@ unary_expression
 																					case IS_DOUBLE: $2->val.double_const = -$2->val.double_const; break;
 																					case IS_LONG_DOUBLE: $2->val.long_double_const = -$2->val.long_double_const; break;
 																					case IS_CHAR: $2->val.char_const = -$2->val.char_const; break;
-																					default: printf("unary operation not supported on this.\n");exit(-1);
+																					default: printf("\e[1;31mError [line %d]:\e[0m Invalid argument to unary operator '%s'.\n",line, $1); exit(-1);
 																				}
 																				$$ = $2;
 																				break;
@@ -450,7 +459,7 @@ unary_expression
 																					case IS_LONG_DOUBLE: printf("\e[1;31mError [line %d]:\e[0m ~ cannot be applied to non-integer types.\n",line);
 																											exit(-1); break;
 																					case IS_CHAR: $2->val.char_const = ~$2->val.char_const; break;
-																					default: printf("unary operation not supported on this.\n");exit(-1);
+																					default: printf("\e[1;31mError [line %d]:\e[0m Invalid argument to unary operator '%s'.\n",line, $1); exit(-1);
 																				}
 																				$$ = $2;
 																				break;
@@ -570,7 +579,7 @@ multiplicative_expression
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
 																	}
-																	if(type.find("int") != string::npos && type.find("char") != string::npos){
+																	if(type.find("int") == string::npos && type.find("char") == string::npos){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
 																	}
@@ -624,16 +633,17 @@ shift_expression
 	: additive_expression										{$$ = $1;}
 	| shift_expression LEFT_OP additive_expression				{
 																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2));
+																	// printf("TYPE: %s\n", type.c_str());
 																	if(type.back() == '*'){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
 																	}
-																	if(type.find("int") != string::npos && type.find("char") != string::npos){
+																	if(type.find("int") == string::npos && type.find("char") == string::npos){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
 																	}
 																	if($1->token == CONSTANT && $3->token == CONSTANT){
-																		evaluate_const($1, $3, *($2), type);
+																		evaluate_const($1, $3, LEFT_OP, type);
 																		$$ = $1;
 																	}
 																	else{
@@ -650,12 +660,12 @@ shift_expression
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
 																	}
-																	if(type.find("int") != string::npos && type.find("char") != string::npos){
+																	if(type.find("int") == string::npos && type.find("char") == string::npos){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
 																	}
 																	if($1->token == CONSTANT && $3->token == CONSTANT){
-																		evaluate_const($1, $3, *($2), type);
+																		evaluate_const($1, $3, RIGHT_OP, type);
 																		$$ = $1;
 																	}
 																	else{
@@ -719,7 +729,7 @@ relational_expression
 																	}
 																	arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
 																	if($1->token == CONSTANT && $3->token == CONSTANT){
-																		evaluate_const($1, $3, *($2), "int");
+																		evaluate_const($1, $3, LE_OP, "int");
 																		$$ = $1;
 																	}
 																	else{
@@ -739,7 +749,7 @@ relational_expression
 																	}
 																	arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
 																	if($1->token == CONSTANT && $3->token == CONSTANT){
-																		evaluate_const($1, $3, *($2), "int");
+																		evaluate_const($1, $3, GE_OP, "int");
 																		$$ = $1;
 																	}
 																	else{
@@ -763,7 +773,7 @@ equality_expression
 																	}
 																	arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
 																	if($1->token == CONSTANT && $3->token == CONSTANT){
-																		evaluate_const($1, $3, *($2), "int");
+																		evaluate_const($1, $3, EQ_OP, "int");
 																		$$ = $1;
 																	}
 																	else{
@@ -783,7 +793,7 @@ equality_expression
 																	}
 																	arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
 																	if($1->token == CONSTANT && $3->token == CONSTANT){
-																		evaluate_const($1, $3, *($2), "int");
+																		evaluate_const($1, $3, NE_OP, "int");
 																		$$ = $1;
 																	}
 																	else{
@@ -804,7 +814,7 @@ and_expression
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
 																	}
-																	if(type.find("int") != string::npos && type.find("char") != string::npos){
+																	if(type.find("int") == string::npos && type.find("char") == string::npos){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
 																	}
@@ -830,7 +840,7 @@ exclusive_or_expression
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
 																	}
-																	if(type.find("int") != string::npos && type.find("char") != string::npos){
+																	if(type.find("int") == string::npos && type.find("char") == string::npos){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
 																	}
@@ -855,7 +865,7 @@ inclusive_or_expression
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
 																	}
-																	if(type.find("int") != string::npos && type.find("char") != string::npos){
+																	if(type.find("int") == string::npos && type.find("char") == string::npos){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2);
 																		exit(-1);
 																	}
@@ -884,7 +894,7 @@ logical_and_expression
 																	}
 																	arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
 																	if($1->token == CONSTANT && $3->token == CONSTANT){
-																		evaluate_const($1, $3, *($2), "int");
+																		evaluate_const($1, $3, AND_OP, "int");
 																		$$ = $1;
 																	}
 																	else{
@@ -908,7 +918,7 @@ logical_or_expression
 																	}
 																	arithmetic_type_upgrade(p1.first,p2.first,string((const char*)$2));
 																	if($1->token == CONSTANT && $3->token == CONSTANT){
-																		evaluate_const($1, $3, *($2), "int");
+																		evaluate_const($1, $3, OR_OP, "int");
 																		$$ = $1;
 																	}
 																	else{
@@ -1018,12 +1028,14 @@ assignment_expression
 																						printf("\e[1;31mError [line %d]:\e[0m Cannot assign floating point values to pointers.\n",line);
 																						exit(-1);
 																					}
+																					printf("\e[1;35mWarning [line %d]:\e[0m Assignment to %s from incompatible type %s.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
 																				}
 																				else if(p2.second){
 																					if($1->node_data == "float" || $1->node_data == "double" || $1->node_data == "long double"){
 																						printf("\e[1;31mError [line %d]:\e[0m Cannot assign pointers to floating point values.\n",line);
 																						exit(-1);
 																					}
+																					printf("\e[1;35mWarning [line %d]:\e[0m Assignment to %s from incompatible type %s.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
 																				}
 																				/*if(type1.back()=='*' && type2.back()=='*') break;
 																				type = arithmetic_type_upgrade(type1, type2, string((const char*)$2->name));
@@ -1064,7 +1076,7 @@ assignment_expression
 																					printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2->name);
 																					exit(-1);
 																				}
-																				if(type.find("int") != string::npos && type.find("char") != string::npos){
+																				if(type.find("int") == string::npos && type.find("char") == string::npos){
 																					printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, $2->name);
 																					exit(-1);
 																				}
@@ -1216,18 +1228,18 @@ init_declarator
 																	else{
 																		string data_type_ = data_type;
 																		if($1->node_data!=""){
-																			data_type += " ";
-																			data_type += $1->node_data;
+																			data_type_ += " ";
+																			data_type_ += $1->node_data;
 																		}
 																		
 																		if(current_lookup($1->node_name)!=NULL){
 																			printf("\e[1;31mError [line %d]:\e[0m Redeclaration of %s\n", line, $1->node_name.c_str());
 																			exit(-1);
 																		}
-																		st_entry* tmp = add_entry($1->name, data_type, 0, 0, IS_VAR);/*change IS_VAR*/
+																		st_entry* tmp = add_entry($1->name, data_type_, 0, 0, IS_VAR);/*change IS_VAR*/
 																		string type;
 																		string type1, type2;
-																		pair<string, int> p1 = get_equivalent_pointer(data_type);
+																		pair<string, int> p1 = get_equivalent_pointer(data_type_);
 																		pair<string, int> p2 = get_equivalent_pointer($3->node_data);
 																		type1 = p1.first, type2 = p2.first;
 																		tt_entry* entry1 = type_lookup(type1);
@@ -1243,13 +1255,13 @@ init_declarator
 																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator =.\n",line);
 																			exit(-1);
 																		}
-																		if((data_type.find("[") != string::npos && data_type.find("[]") == string::npos)){
+																		if((data_type_.find("[") != string::npos && data_type_.find("[]") == string::npos)){
 																			printf("\e[1;31mError [line %d]:\e[0m Array variables cannot be reassigned.\n",line);
 																			exit(-1);
 																		}
 																		if(p1.second && p2.second){
 																			if(p1.first != p2.first){
-																				printf("\e[1;35mWarning [line %d]:\e[0m Assignment to %s from incompatible pointer type %s.\n",line, data_type.c_str(), $3->node_data.c_str());
+																				printf("\e[1;35mWarning [line %d]:\e[0m Assignment to %s from incompatible pointer type %s.\n",line, data_type_.c_str(), $3->node_data.c_str());
 																			}
 																		}
 																		else if(p1.second){
@@ -1257,17 +1269,17 @@ init_declarator
 																				printf("\e[1;31mError [line %d]:\e[0m Cannot assign floating point values to pointers.\n",line);
 																				exit(-1);
 																			}
+																			printf("\e[1;35mWarning [line %d]:\e[0m Assignment to %s from incompatible type %s.\n",line, data_type_.c_str(), $3->node_data.c_str());
 																		}
 																		else if(p2.second){
-																			if(data_type == "float" || data_type == "double" || data_type == "long double"){
+																			if(data_type_ == "float" || data_type_ == "double" || data_type_ == "long double"){
 																				printf("\e[1;31mError [line %d]:\e[0m Cannot assign pointers to floating point values.\n",line);
 																				exit(-1);
 																			}
+																			printf("\e[1;35mWarning [line %d]:\e[0m Assignment to %s from incompatible type %s.\n",line, data_type_.c_str(), $3->node_data.c_str());
 																		}
-																		$$->node_data = data_type;
+																		$$->node_data = data_type_;
 																		$$->value_type = RVALUE;
-
-																		data_type = data_type_;
 																	}
 
 																}

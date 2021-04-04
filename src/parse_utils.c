@@ -30,10 +30,10 @@ void push_front(node* par, node* add){
 
 void evaluate_const(node* node1, node* node2, int op, string type){
 	int flag1 = 0, flag2 = 0;
-	if(arithmetic_type_upgrade(node1->node_data,"long int","evaluate_const").find("int") == string::npos){
+	if(arithmetic_type_upgrade(node1->node_data,"long int","evaluate_const").find("int") == string::npos && arithmetic_type_upgrade(node1->node_data,"long int","evaluate_const").find("char") == string::npos){
 		flag1 =1;
 	}
-	if(arithmetic_type_upgrade(node2->node_data,"long int","evaluate_const").find("int") == string::npos){
+	if(arithmetic_type_upgrade(node2->node_data,"long int","evaluate_const").find("int") == string::npos && arithmetic_type_upgrade(node2->node_data,"long int","evaluate_const").find("char") == string::npos){
 		flag2 =1;
 	}
 	long long tmp1,tmp2;
@@ -76,12 +76,13 @@ void evaluate_const(node* node1, node* node2, int op, string type){
 			case IS_U_SHORT: tmp2 = node2->val.u_short_const; break;
 		}
 	}
+	// printf("%c\n", op);
 	switch(op){
 		case '^': ans1 = (tmp1^tmp2); goto s00;
 		case '|': ans1 = (tmp1|tmp2); goto s00;
 		case '&': ans1 = (tmp1&tmp2); goto s00;
 		case RIGHT_OP: ans1 = (tmp1 >> tmp2); goto s00;
-		case LEFT_OP: ans1 = (tmp1 << tmp2); goto s00;
+		case LEFT_OP: ans1 = (tmp1 << tmp2); goto s00; // printf("%Ld << %Ld = %Ld\n", tmp1, tmp2, ans1); 
 		case '%': if(tmp2 == 0){
 				printf("\e[1;31mError [line %d]:\e[0m Remainder by 0 not allowed.\n",line);
 				exit(-1);
@@ -101,7 +102,7 @@ void evaluate_const(node* node1, node* node2, int op, string type){
 			else{
 				ans1 = tmp1 - tmp2; goto s00;
 			}
-		case '/': if((flag2 ? tmp2 : tmpp2)){
+		case '/': if(!(flag2 ? tmpp2 : tmp2)){
 				printf("\e[1;31mError [line %d]:\e[0m Division by 0 not allowed.\n",line);
 				exit(-1);
 			}

@@ -77,7 +77,7 @@ int dfs(node* u, int num){
 			case IS_FLOAT: u->name = (char*)(to_string(u->val.float_const)).c_str(); break;
 			case IS_DOUBLE: u->name = (char*)(to_string(u->val.double_const)).c_str(); break;
 			case IS_LONG_DOUBLE: u->name = (char*)(to_string(u->val.long_double_const)).c_str(); break;
-			case IS_CHAR: ch = u->val.char_const; ch += '\0'; u->name = (char*)(ch).c_str(); break;
+			case IS_CHAR: ch = "'"; ch += u->val.char_const; ch += "'"; u->name = (char*)(ch).c_str(); break;
 			default: printf("Main.c not a constant\n");exit(-1);
 		}
 		// u->name = (char*)(to_string(tmp)).c_str();
