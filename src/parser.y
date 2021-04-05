@@ -434,11 +434,13 @@ unary_expression
 																				break;
 																			}
 																			else{
-																				if(temp_data.find("int") != string::npos){
-																					if(temp_data == "float" || temp_data == "double" || temp_data == "long double"){
-																						printf("\e[1;31mError [line %d]:\e[0m Incompatible type for %c operator.\n",line,*($1));
-																						exit(-1);
-																					}
+																				if(temp_data.back()=='*'){
+																					printf("\e[1;31mError [line %d]:\e[0m Incompatible type for %c operator.\n",line,*($1));
+																					exit(-1);
+																				}
+																				if(temp_data.find("int") == string::npos && temp_data.find("double") == string::npos && temp_data.find("float") == string::npos && temp_data.find("char") == string::npos){
+																					printf("\e[1;31mError [line %d]:\e[0m Incompatible type for %c operator.\n",line,*($1));
+																					exit(-1);
 																				}
 																				$$->node_data = temp_data;
 																				$$->value_type = RVALUE;
@@ -464,12 +466,14 @@ unary_expression
 																				$$ = $2;
 																				break;
 																			}
-																			if(temp_data.substr((int)temp_data.size() - 3,3) != "int"){
-																				printf("\e[1;31mError [line %d]:\e[0m ~ cannot be applied to non-integer types.\n",line);
-																				exit(-1);
+																			else{
+																				if(temp_data.substr((int)temp_data.size() - 3,3) != "int"){
+																					printf("\e[1;31mError [line %d]:\e[0m ~ cannot be applied to non-integer types.\n",line);
+																					exit(-1);
+																				}
+																				$$->node_data = temp_data;
+																				$$->value_type = RVALUE;
 																			}
-																			$$->node_data = temp_data;
-																			$$->value_type = RVALUE;
 																		}
 																	}
 
@@ -524,12 +528,14 @@ cast_expression
 																			printf("\e[1;31mError [line %d]:\e[0m Cannot cast floating point values to pointers.\n",line);
 																			exit(-1);
 																		}
+																		printf("\e[1;35mWarning [line %d]:\e[0m Cast to %s to incompatible type %s.\n",line, $4->node_data.c_str(), $2->node_data.c_str());
 																	}
 																	else if(p2.second){
 																		if($2->node_data == "float" || $2->node_data == "double" || $2->node_data == "long double"){
 																			printf("\e[1;31mError [line %d]:\e[0m Cannot cast pointers to floating point values.\n",line);
 																			exit(-1);
 																		}
+																		printf("\e[1;35mWarning [line %d]:\e[0m Cast from %s to incompatible type %s.\n",line, $4->node_data.c_str(), $2->node_data.c_str());
 																	}
 																	$$->node_data = $2->node_data;
 																}

@@ -10,6 +10,8 @@ extern int column;
 extern int yydebug;
 FILE* out_file;
 int typ_file = 0;
+int scope_num = 0;
+string curr_fun = "";
 
 void print_table(typtab* table){
 	for(auto i = table->begin(); i != table->end(); i++){
@@ -26,6 +28,15 @@ void print_table(typtab* table){
 }
 
 void print_table(symtab* table){
+	if(scope_num == 0){
+		scope_num++;
+		string name = "bin/"+curr_fun+"_symtab.out";
+		freopen((const char*)name.c_str(), "w", stdout);
+	}
+	else{
+		string name = "bin/"+curr_fun+"("+to_string(scope_num++)+")"+"_symtab.out";
+		freopen((const char*)name.c_str(), "w", stdout);
+	}
 	for(auto i = table->begin(); i != table->end(); i++){
 		st_entry* temp = i->second;
 		cout << i->first << "\t\t\t" << temp->type << "\t\t\t" << temp->size << "\t\n";
@@ -161,8 +172,10 @@ int main(int argc, char const* argv[]){
 	freopen("bin/global_symtab.out", "w", stdout);
 	print_table(st_root->val);
 	for(auto x : (st_root->v)){
-		string name = "bin/"+x->name+"_symtab.out";
-		freopen((const char*)name.c_str(), "w", stdout);
+		scope_num = 0;
+		// string name = "bin/"+x->name+"_symtab.out";
+		curr_fun = x->name;
+		// freopen((const char*)name.c_str(), "w", stdout);
 		dfs2(x);
 	}
 	if(typ_file){
