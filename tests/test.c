@@ -1,9 +1,6 @@
-struct s
-{
-	int x;
-};
+struct;
 
-void main()
-{
-	
+int main(){
+	struct x* p;
+	p->q;
 }

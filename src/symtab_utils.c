@@ -168,13 +168,13 @@ string get_eqtype(string type, int is_only_type){
 	
 	if(a[0].first==0){
 		if(a.size()!=2){
-			printf("\e[1;31mError [line %d]:\e[0m Invalid data type\n", line);
+			printf("\e[1;31mError [line %d]:\e[0m Invalid data type.\n", line);
 			exit(-1);
 		}
 		if(is_only_type){
 			tt_entry * tmp = type_lookup(type);
 			if(tmp==NULL){
-				printf("\e[1;31mError [line %d]:\e[0m Undeclared type %s\n", line, type.c_str());
+				printf("\e[1;31mError [line %d]:\e[0m Undeclared type '%s'.\n", line, type.c_str());
 				exit(-1);
 			}
 		}
@@ -188,7 +188,7 @@ string get_eqtype(string type, int is_only_type){
 	}
 
 	if(equiv_types.find(new_type)==equiv_types.end()){
-		printf("\e[1;31mError [line %d]:\e[0m Invalid data type\n", line);
+		printf("\e[1;31mError [line %d]:\e[0m Invalid data type.\n", line);
 		exit(-1);
 	}
 	return equiv_types[new_type];
@@ -200,7 +200,7 @@ void check_param_list(vector<pair<string, string>> v){
 		if(p.second=="")
 			continue;
 		if(m.find(p.second)!=m.end()){
-			printf("\e[1;31mError [line %d]:\e[0m Redefinition of parameter %s\n", line, p.second.c_str());
+			printf("\e[1;31mError [line %d]:\e[0m Redefinition of parameter '%s'.\n", line, p.second.c_str());
 			exit(-1);
 		}
 		m.insert({p.second,1});
@@ -214,7 +214,7 @@ void check_mem_list(vector<pair<string, string>> v, string s){
 		if(p.second=="")
 			continue;
 		if(m.find(p.second)!=m.end()){
-			printf("\e[1;31mError [line %d]:\e[0m Redefinition of parameter %s in %s\n", line, p.second.c_str(), s.c_str());
+			printf("\e[1;31mError [line %d]:\e[0m Redefinition of parameter '%s' in '%s'.\n", line, p.second.c_str(), s.c_str());
 			exit(-1);
 		}
 		m.insert({p.second,1});
@@ -227,7 +227,7 @@ void check_valid_array(string s){
 	int f=0;
 	for(int i=0;i<n;i++){
 		if(i<n-1 && s[i]=='[' && s[i+1]==']'){
-			printf("\e[1;31mError [line %d]:\e[0m Invalid array declaration\n", line);
+			printf("\e[1;31mError [line %d]:\e[0m Invalid array declaration.\n", line);
 			exit(-1);
 		}
 	}
@@ -252,7 +252,7 @@ void struct_init_check(string type){
 	string type1 = a[0] + " " + a[1];
 	tt_entry* entry = type_lookup(type1);
 	if(entry==NULL){
-		printf("\e[1;31mError [line %d]:\e[0m Undeclared type %s\n", line, type1.c_str());
+		printf("\e[1;31mError [line %d]:\e[0m Undeclared type '%s'.\n", line, type1.c_str());
 		exit(-1);
 	}
 	if(entry->is_init==1){
@@ -263,7 +263,7 @@ void struct_init_check(string type){
 			return;
 		}
 	}
-	printf("\e[1;31mError [line %d]:\e[0m Uninitialized type %s\n", line, type1.c_str());
+	printf("\e[1;31mError [line %d]:\e[0m Uninitialized type '%s'.\n", line, type1.c_str());
 	exit(-1);
 }
 
@@ -490,8 +490,9 @@ string increase_array_level(string s){
 
 string arithmetic_type_upgrade(string type1, string type2, string op){
 	// float double long double int long unsigned int unsigned long int char pointer
+	// printf("Entered upgrade with '%s'.\n", op.c_str());
 	if(type_lookup(type1) || type_lookup(type2)){
-		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, op.c_str());
+		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, op.c_str());
 		exit(-1);
 	}
 	unordered_map<string, int> m1;
@@ -507,67 +508,67 @@ string arithmetic_type_upgrade(string type1, string type2, string op){
 	if(type1 == "long double"){
 		if(m1.count(type2)){
 			ans = "long double";
-			return ans;
+			goto implicit_warn;
 		}
 		else{
-			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, op.c_str());
+			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, op.c_str());
 			exit(-1);
 		}
 	}
 	if(type2 == "long double"){
 		if(m1.count(type1)){
 			ans = "long double";
-			return ans;
+			goto implicit_warn;
 		}
 		else{
-			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, op.c_str());
+			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, op.c_str());
 			exit(-1);
 		}
 	}
 	if(type1 == "double"){
 		if(m1.count(type2)){
 			ans = "double";
-			return ans;
+			goto implicit_warn;
 		}
 		else{
-			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, op.c_str());
+			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, op.c_str());
 			exit(-1);
 		}
 	}
 	if(type2 == "double"){
 		if(m1.count(type1)){
 			ans = "double";
-			return ans;
+			goto implicit_warn;
 		}
 		else{
-			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, op.c_str());
+			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, op.c_str());
 			exit(-1);
 		}
 	}
 	if(type1 == "float"){
 		if(m1.count(type2)){
 			ans = "float";
-			return ans;
+			goto implicit_warn;
 		}
 		else{
-			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, op.c_str());
+			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, op.c_str());
 			exit(-1);
 		}
 	}
 	if(type2 == "float"){
 		if(m1.count(type1)){
 			ans = "float";
-			return ans;
+			goto implicit_warn;
 		}
 		else{
-			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, op.c_str());
+			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, op.c_str());
 			exit(-1);
 		}
 	}
 	if(type1 == "unsigned long int"){
 		if(m1.count(type2)){
 			ans = "unsigned long int";
-			return ans;
+			goto implicit_warn;
 		}
 		else{
 			return type2;
@@ -576,7 +577,7 @@ string arithmetic_type_upgrade(string type1, string type2, string op){
 	if(type2 == "unsigned long int"){
 		if(m1.count(type1)){
 			ans = "unsigned long int";
-			return ans;
+			goto implicit_warn;
 		}
 		else{
 			return type1;
@@ -584,16 +585,16 @@ string arithmetic_type_upgrade(string type1, string type2, string op){
 	}
 	if(type1 == "long int" && type2 == "unsigned int"){
 		ans = "unsigned long int";
-		return ans;
+		goto implicit_warn;
 	}
 	if(type2 == "long int" && type1 == "unsigned int"){
 		ans = "unsigned long int";
-		return ans;
+		goto implicit_warn;
 	}
 	if(type1 == "long int"){
 		if(m1.count(type2)){
 			ans = "long int";
-			return ans;		}
+			goto implicit_warn;		}
 
 		else{
 			return type2;
@@ -602,7 +603,7 @@ string arithmetic_type_upgrade(string type1, string type2, string op){
 	if(type2 == "long int"){
 		if(m1.count(type1)){
 			ans = "long int";
-			return ans;
+			goto implicit_warn;
 		}
 		else{
 			return type1;
@@ -611,7 +612,7 @@ string arithmetic_type_upgrade(string type1, string type2, string op){
 	if(type1 == "unsigned int"){
 		if(m1.count(type2)){
 			ans = "unsigned int";
-			return ans;		}
+			goto implicit_warn;		}
 
 		else{
 			return type2;
@@ -620,7 +621,7 @@ string arithmetic_type_upgrade(string type1, string type2, string op){
 	if(type2 == "unsigned int"){
 		if(m1.count(type1)){
 			ans = "unsigned int";
-			return ans;
+			goto implicit_warn;
 		}
 		else{
 			return type1;
@@ -629,7 +630,7 @@ string arithmetic_type_upgrade(string type1, string type2, string op){
 	if(type1 == "int"){
 		if(m1.count(type2)){
 			ans = "int";
-			return ans;		}
+			goto implicit_warn;		}
 
 		else{
 			return type2;
@@ -638,7 +639,7 @@ string arithmetic_type_upgrade(string type1, string type2, string op){
 	if(type2 == "int"){
 		if(m1.count(type1)){
 			ans = "int";
-			return ans;
+			goto implicit_warn;
 		}
 		else{
 			return type1;
@@ -647,7 +648,7 @@ string arithmetic_type_upgrade(string type1, string type2, string op){
 	if(type1 == "char"){
 		if(m1.count(type2)){
 			ans = "int";
-			return ans;		}
+			goto implicit_warn;		}
 
 		else{
 			return type2;
@@ -656,14 +657,19 @@ string arithmetic_type_upgrade(string type1, string type2, string op){
 	if(type2 == "char"){
 		if(m1.count(type1)){
 			ans = "int";
-			return ans;
+			goto implicit_warn;
 		}
 		else{
 			return type1;
 		}
 	}
-	printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator %s.\n",line, op.c_str());
+	printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, op.c_str());
 	exit(-1);
+
+	implicit_warn:
+	if(type1!=ans && op!="evaluate_const") printf("\e[1;35mWarning [line %d]:\e[0m Implicit conversion from '%s' to '%s'.\n", line, type1.c_str(), ans.c_str());
+	if(type2!=ans && op!="evaluate_const") printf("\e[1;35mWarning [line %d]:\e[0m Implicit conversion from '%s' to '%s'.\n", line, type2.c_str(), ans.c_str());
+	return ans;
 }
 
 pair<constant, enum const_type> parse_constant(string s){

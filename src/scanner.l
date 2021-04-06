@@ -118,7 +118,7 @@ int column = 1;
 int line  = 1;
 
 void yyerror(const char* yytext){
-	printf("ERROR at line %d: %s\n", line, yytext);
+	printf("\e[1;31mError [line %d]:\e[0m %s\n", line, yytext);
 	column++;
 }
 
