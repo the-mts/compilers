@@ -25,7 +25,7 @@ $(BIN)/symtab_utils.o: $(SRC)/symtab_utils.c $(SRC)/symtab.h
 	$(CC) -c -Wno-abi $< -o $@
 
 clean:
-	$(RM) $(SRC)/lex.yy.c $(SRC)/y.tab.c $(SRC)/y.tab.h $(SRC)/y.output $(BIN)/parse_utils.o $(BIN)/main.o
+	$(RM) $(SRC)/lex.yy.c $(SRC)/y.tab.c $(SRC)/y.tab.h $(SRC)/y.output $(BIN)/parse_utils.o $(BIN)/main.o $(BIN)/symtab_utils.o
 
 fileclean:
 	$(RM) $(BIN)/*.csv $(BIN)/*.out $(BIN)/*.dot $(BIN)/*.ps

@@ -14,57 +14,70 @@ int scope_num = 0;
 string curr_fun = "";
 
 void print_table(typtab* table){
+	string name = "";
+	if(scope_num == 0){
+		scope_num++;
+		name = curr_fun;
+	}
+	else{
+		name = curr_fun+"("+to_string(scope_num++)+")";
+	}
+
+	printf("Scope '%s':\n", name.c_str());
+
 	for(auto i = table->begin(); i != table->end(); i++){
 		tt_entry* temp = i->second;
-		cout << i->first << "\t\t\t" << temp->type << "\n";
+		cout << "\t\t" << i->first << "\t\t\t" << temp->type << "\n";
 		if(temp->mem_list!=NULL){
-			// cout<< "\t\tFunction Symbol Table Pointer: " << temp->sym_table<<endl;
-			cout<< "\t\tMembers: " << temp->mem_list << " " << temp->mem_list->size() << endl;
+			cout<< "\t\t\t" <<temp->mem_list->size()<< " members: " << endl;
 			for(auto i : *(temp->mem_list)){
-				cout<< "\t\t\t" << i.second << " (" << i.first << ")\n";/*arg_list not implemented yet*/
+				cout<< "\t\t\t\t" << i.second << " (" << i.first << ")\n";
 			}
 		}
 	}
 }
 
 void print_table(symtab* table){
+	string name = "";
 	if(scope_num == 0){
 		scope_num++;
-		string name = "bin/"+curr_fun+"_symtab.out";
-		freopen((const char*)name.c_str(), "w", stdout);
+		name = curr_fun;
 	}
 	else{
-		string name = "bin/"+curr_fun+"("+to_string(scope_num++)+")"+"_symtab.out";
-		freopen((const char*)name.c_str(), "w", stdout);
+		name = curr_fun+"("+to_string(scope_num++)+")";
 	}
+
+	printf("Scope '%s':\n", name.c_str());
+
 	for(auto i = table->begin(); i != table->end(); i++){
 		st_entry* temp = i->second;
-		cout << i->first << "\t\t\t" << temp->type << "\t\t\t" << temp->size << "\t\n";
+		cout << "\t\t" << i->first << "\t\t" << temp->size << "\t\t" << temp->type << "\n";
 		if(temp->type_name == IS_FUNC){
-			cout<< "\t\tFunction Symbol Table Pointer: " << temp->sym_table<<endl;
-			cout<< "\t\tArguments: " << temp->arg_list << " " << temp->arg_list->size() << endl;
+			cout<< "\t\t\t" << temp->arg_list->size() <<" arguments " << (temp->arg_list->size()? "{\n" : "\n");
 			for(auto i : *(temp->arg_list)){
-				cout<< "\t\t\t" << i.second << " (" << i.first << ")\n";/*arg_list not implemented yet*/
+				cout << "\t\t\t\t" << i.second << " (" << i.first << ")\n";
 			}
+			if(temp->arg_list->size()) cout << "\t\t\t" << "}\n";
 		}
 	}
+	cout<<"\n";
 }
 
 void dfs3(table_tree* u){
-	cout<< "In \'"<< u->name <<"\' scope: "<< u->types <<endl;
 	print_table(u->types);
-	cout<<endl;
 	for(auto i : u->v){
+		if(u == st_root) curr_fun = i->name, scope_num  = 0;
 		dfs3(i);
 	}
 }
 
 void dfs2(table_tree* u){
-	// cout<< "Symbol Table Pointer: "<< u->val<<endl;
 	print_table(u->val);
-	// cout<<endl;
+	if(u == st_root) cout<<'\n';
 	for(auto i : u->v){
+		if(u == st_root) curr_fun = i->name, scope_num  = 0;
 		dfs2(i);
+		if(u == st_root) cout<<'\n';
 	}
 }
 
@@ -169,17 +182,16 @@ int main(int argc, char const* argv[]){
 	dfs(root,0);
 	fprintf(out_file,"}");
 
-	freopen("bin/global_symtab.out", "w", stdout);
-	print_table(st_root->val);
-	for(auto x : (st_root->v)){
-		scope_num = 0;
-		// string name = "bin/"+x->name+"_symtab.out";
-		curr_fun = x->name;
-		// freopen((const char*)name.c_str(), "w", stdout);
-		dfs2(x);
-	}
+	string name = "bin/symtab.out";
+	freopen((const char*)name.c_str(), "w", stdout);
+
+	st_root->name = "global";
+	curr_fun = "global";
+	dfs2(st_root);
+
 	if(typ_file){
 		freopen("bin/typtab.out", "w", stdout);
+		curr_fun = "global";
 		dfs3(st_root);
 	}
 	return 0;
