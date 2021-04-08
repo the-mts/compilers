@@ -1596,8 +1596,6 @@ M5
 																		}
 																		check_mem_list(*(struct_entry->mem_list), string($<id>-4)+" "+string($<id>-3));
 																		struct_entry->is_init = 1;
-																		curr_width += get_size(string($<id>-4)+" "+string($<id>-3));
-																		offset.back() += get_size(string($<id>-4)+" "+string($<id>-3));
 																	}			
 	;
 

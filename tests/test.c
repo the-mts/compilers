@@ -1,19 +1,27 @@
-struct book {
-    int x;
+int x;
+
+struct x{
+	int y;
 };
+
 int main(){
-
-    int *ptr, *qtr;
-    char *ftr;
-    int a;
-
-    struct book *bh, bh2, bh3;
-
-
-    bh ? bh2 : bh3;
-
-
-
-
-      return 0;
+	int x;
+	{
+		struct x{
+			int x;
+			struct y{
+				int y;
+			}uu;
+		};
+		int y;
+		{
+			int x;
+			{
+				float x;
+			}
+		}
+	}
+	{
+		int y;
+	}
 }
