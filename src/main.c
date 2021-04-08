@@ -182,7 +182,7 @@ int main(int argc, char const* argv[]){
 	dfs(root,0);
 	fprintf(out_file,"}");
 
-	string name = "bin/symtab.out";
+	string name = "bin/symtab.csv";
 	freopen((const char*)name.c_str(), "w", stdout);
 
 	st_root->name = "global";
@@ -190,6 +190,7 @@ int main(int argc, char const* argv[]){
 	dfs2(st_root);
 
 	if(typ_file){
+		scope_num = 0;
 		freopen("bin/typtab.out", "w", stdout);
 		curr_fun = "global";
 		dfs3(st_root);

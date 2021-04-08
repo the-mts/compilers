@@ -1,31 +1,35 @@
-struct y{
-	int a;
+struct x {
+	int a,b;
+	char c,d,e;
 };
 
-int a;
-
-float fun(float x, int* d);
-
-float fun(float z, int* b){
-	int a;
-	float x;
-	struct y p;
+long double fun(long x, short unsigned y){
+	struct x {
+		float x,y,z;
+	} w;
 	{
-		char q;
+		int w;
+		{
+			char a,b,c;
+			{
+				int z,n;
+			}
+		}
 	}
+	
+	{
+		double lol;
+	}
+	return 0;
 }
 
 int main(){
-	int a;
-	a = 10 + 1.1;
+	int x, y;
+	float* z = 2;
 	{
-		int a = 1;
-		float *b;
-		char c;
-		int ***d = b;
-	}
-	while(a>1){
-		int a = 2;
-	}
+		struct x p;
+		struct x** q;
+		// p.x = 2;
+	}	
 	return 0;
 }

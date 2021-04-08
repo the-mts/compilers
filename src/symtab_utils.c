@@ -340,6 +340,7 @@ void new_scope(){
 void scope_cleanup(){
 	curr = curr->par;
 	table_scope.pop_back();
+	type_scope.pop_back();
 }
 
 unsigned long power(int x, int p){
