@@ -9,6 +9,9 @@ table_tree* st_root;
 table_tree* curr;
 unordered_map<string, string> equiv_types;
 
+vector<long> offset;
+int curr_width;
+
 void init_equiv_types(){
 	equiv_types.insert({"int","int"});
 	equiv_types.insert({"char", "char"});

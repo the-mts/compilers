@@ -13,7 +13,7 @@ int main(){
 				int y;
 			}uu;
 		};
-		int y;
+		int y,z;
 		{
 			int x;
 			{
