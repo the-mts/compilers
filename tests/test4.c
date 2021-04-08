@@ -7,7 +7,7 @@ struct s
 
 void main()
 {
-	const int x = 3;
+	int x = 3;
 	int x1 = 5, y = 8;
 	int z = x + x1;
     int p[10][5], q[5];

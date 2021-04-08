@@ -5,6 +5,8 @@
 #include <algorithm>
 using namespace std;
 extern int line;
+extern int curr_width;
+extern vector<long> offset; 
 enum sym_type {UNDEFINED, IS_FUNC, IS_STRUCT, IS_VAR, IS_TYPE};
 enum const_type {IS_INT, IS_LONG, IS_SHORT, IS_U_INT, IS_U_LONG, IS_U_SHORT, IS_FLOAT, IS_DOUBLE, IS_LONG_DOUBLE, IS_CHAR, IS_NON_CONST};
 enum val_type {LVALUE, RVALUE};

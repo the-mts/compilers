@@ -49,9 +49,18 @@ void print_table(symtab* table){
 
 	printf("Scope '%s':\n", name.c_str());
 
+	vector<pair<int, pair<st_entry*, string>>> order;
+
 	for(auto i = table->begin(); i != table->end(); i++){
 		st_entry* temp = i->second;
-		cout << "\t\t" << i->first << "\t\t" << temp->size << "\t\t" << temp->type << "\n";
+		order.push_back(make_pair(temp->offset,make_pair(temp, i->first)));
+	}
+
+	sort(order.begin(), order.end());
+
+	for(auto i : order){
+		st_entry* temp = i.second.first;
+		cout << "\t\t" << i.second.second << "\t\t" << temp->size << "\t\t" << temp->offset << "\t\t" << temp->type << "\n";
 		if(temp->type_name == IS_FUNC){
 			cout<< "\t\t\t" << temp->arg_list->size() <<" arguments " << (temp->arg_list->size()? "{\n" : "\n");
 			for(auto i : *(temp->arg_list)){
@@ -182,7 +191,7 @@ int main(int argc, char const* argv[]){
 	dfs(root,0);
 	fprintf(out_file,"}");
 
-	string name = "bin/symtab.csv";
+	string name = "bin/symtab.out";
 	freopen((const char*)name.c_str(), "w", stdout);
 
 	st_root->name = "global";
