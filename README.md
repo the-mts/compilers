@@ -8,7 +8,7 @@ The repository develops over the previously built parser. Additional files requi
 
 The makefile will generate `y.tab.c` parser file, the corresponding header file, and the `lex.yy.c` scanner file. It will then compile all the source files to generate the `parser` binary in the `bin` directory. Our sample testcases are given in the directory `tests` with the names as `test<num>.c` (where `num` is from 1 to 5).
 
-## Steps to build and run
+## Steps to Build and Run
 
 Go to the main directory. To build the binary, simply run the __make__ command.
 
@@ -48,3 +48,10 @@ We have currently provided two options for the purpose of debugging.
   ```console
   $ ./bin/parser ./tests/testfile.c -o dotname.dot -t
   ```
+
+## Makefile Clean Commands
+
+There are 3 clean options in the makefile.
+* The `make clean` command will remove all the intermediate compilation files for the final executable (including all the `.o` files).
+* The `make fileclean` command will clean all the output files created in the bin directory (including `symtab.csv`, `typtab.out` and other `.dot` and `.ps` files).
+* The `make realclean` command will perform the above two tasks along with deleting the created binary `parser` file.
