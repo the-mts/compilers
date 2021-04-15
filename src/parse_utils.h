@@ -2,6 +2,7 @@
 #include<vector>
 #include "symtab.h"
 using namespace std;
+
 typedef struct node{
 	vector<node*> v;
 	char * name;
@@ -13,6 +14,14 @@ typedef struct node{
 	enum val_type value_type;
 	string node_name = "";
 	string node_data = "";
+
+	// 3AC Attributes:
+	qi place;
+	list<int> nextlist;
+	list<int> truelist;
+	list<int> falselist;
+	list<int> contlist;
+	list<int> breaklist;
 }node;
 
 node* node_(int x, char * s, int token);
