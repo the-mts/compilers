@@ -1557,10 +1557,7 @@ inclusive_or_expression
 
 logical_and_expression
 	: inclusive_or_expression									{$$ = $1;}
-	| logical_and_expression AND_OP 							//{
-																	// int x = emit("IF_TRUE_GOTO", $1->place, {"", NULL}, {"", NULL});
-																//} 
-	inclusive_or_expression										{
+	| logical_and_expression AND_OP inclusive_or_expression		{
 																	if($1->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
@@ -1594,24 +1591,7 @@ logical_and_expression
 																		}
 
 																		$$->place = getNewTemp("int");
-																		if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.find("*")!=string::npos){
-																			int x = emit("&&", $1->place, $3->place, $$->place);
-																		}
-																		else {
-																			if($1->node_data.find("int")!=string::npos){
-																				auto tmp = getNewTemp(type);
-																				int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
-																				emit("&&", tmp, $3->place, $$->place);
-																			}
-																			else ($3->node_data.find("int")!=string::npos){
-																				auto tmp = getNewTemp(type);
-																				int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
-																				emit("&&", $1->place, tmp, $$->place);
-																			}
-																			else {
-																				emit("&&", $1->place, $3->place, $$->place);
-																			}
-																		}
+																		emit("&&", $1->place, $3->place, $$->place);
 																		/////////////////////////////////////
 																	}
 																	$$->node_data = "int";
@@ -1645,6 +1625,18 @@ logical_or_expression
 																		$$ = node_(2,$2,-1);
 																		$$->v[0] = $1;
 																		$$->v[1] = $3;
+
+																		//////////////// 3AC ////////////////
+																		if($1->token == CONSTANT){
+																			$1->place = emitConstant($1);
+																		}
+																		else if($3->token == CONSTANT){
+																			$3->place = emitConstant($3);
+																		}
+
+																		$$->place = getNewTemp("int");
+																		emit("||", $1->place, $3->place, $$->place);
+																		/////////////////////////////////////
 																	}
 																	$$->node_data = "int";
 																	$$->value_type = RVALUE;

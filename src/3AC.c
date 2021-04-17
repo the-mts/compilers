@@ -16,7 +16,7 @@ qi getNewTemp(string type){
     var_no++;
     qi q;
     q.first = var_name;
-    q.second = add_entry($$->place.first, $$->node_data, 0, offset.back(), IS_TEMP);
+    q.second = add_entry(q.first, type, 0, offset.back(), IS_TEMP);
     return q;
 }
 
