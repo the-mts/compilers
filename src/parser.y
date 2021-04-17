@@ -285,10 +285,6 @@ postfix_expression
 																		printf("\e[1;31mError [line %d]:\e[0m '->' operator applied on non-struct or non-union pointer type.\n",line);
 																		exit(-1);
 																	}
-<<<<<<< HEAD
-																	
-=======
->>>>>>> main
 																	int flag = 0;
 																	string type1 = type;
 																	string name = string((const char*)$3);
