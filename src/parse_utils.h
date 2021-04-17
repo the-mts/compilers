@@ -17,11 +17,11 @@ typedef struct node{
 
 	// 3AC Attributes:
 	qi place;
-	list<int> nextlist;
-	list<int> truelist;
-	list<int> falselist;
-	list<int> contlist;
-	list<int> breaklist;
+	vector<int> nextlist;
+	vector<int> truelist;
+	vector<int> falselist;
+	vector<int> contlist;
+	vector<int> breaklist;
 }node;
 
 node* node_(int x, char * s, int token);

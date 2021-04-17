@@ -2,6 +2,7 @@
 	#include<string.h>
 	#include<stdlib.h>
 	#include "parse_utils.h"
+	#include "3AC.h"
 	using namespace std;
 	struct node* root;
 	void yyerror(const char*s);
@@ -65,7 +66,12 @@ primary_expression
 																	$$->node_name = $1;
 																	$$->node_data = entry->type;
 																	$$->value_type = LVALUE;
+
+																	//////////////// 3AC ////////////////
+																	$$->place = { string((const char*)$1), entry };
+																	/////////////////////////////////////
 																}
+
 	| CONSTANT 													{
 																	$$ = node_(0,$1,CONSTANT);
 																	pair<constant, enum const_type> parsed = parse_constant(string((const char*)$1));
@@ -105,13 +111,25 @@ primary_expression
 																	}
 																	$$->val = parsed.first;
 																	$$->value_type = RVALUE;
+
+																	//////////////// 3AC ////////////////
+																	
+																	/////////////////////////////////////
 																}
-	| STRING_LITERAL											{$$ = node_(0,$1,STRING_LITERAL); $$->node_data = "char ["+to_string(strlen($1)+1)+"]";}
-	| '(' expression ')'										{$$ = $2;}
+
+	| STRING_LITERAL											{
+																	$$ = node_(0,$1,STRING_LITERAL); $$->node_data = "char ["+to_string(strlen($1)+1)+"]";
+																}
+
+	| '(' expression ')'										{
+																	$$ = $2;
+																}
 	;
 
 postfix_expression
-	: primary_expression										{$$ = $1;}
+	: primary_expression										{
+																	$$ = $1;
+																}
 	| postfix_expression '[' expression ']'						{
 																	$$ = node_(2, "[]", -1);
 																	$$->v[0] = $1; $$->v[1] = $3;
@@ -130,6 +148,13 @@ postfix_expression
 																		exit(-1);
 																	}
 																	$$->node_data = reduce_pointer_level($1->node_data);
+
+																	//////////////// 3AC ////////////////
+																	$$->place = getNewTemp();
+																	int x = emit("[]", $1->place, $3->place, $$->place);
+																	backpatch($3->truelist, x);		// Have to check
+																	backpatch($3->falselist, x);	// check
+																	/////////////////////////////////////
 																}
 	| postfix_expression '(' ')'								{
 																	$$ = node_(1, "()", -1);
@@ -157,6 +182,10 @@ postfix_expression
 																	}
 																	$$->node_data = entry->type;
 																	$$->value_type = RVALUE;
+
+																	//////////////// 3AC ////////////////
+
+																	/////////////////////////////////////
 																}
 	| postfix_expression '(' argument_expression_list ')'		{
 																	$$ = node_(2, "(args)", -1);
@@ -197,6 +226,10 @@ postfix_expression
 																	}
 																	$$->node_data = entry->type;
 																	$$->value_type = RVALUE;
+
+																	//////////////// 3AC ////////////////
+
+																	/////////////////////////////////////
 																}
 	| postfix_expression '.' IDENTIFIER							{
 																	$$ = node_(2,".",'.');
@@ -207,9 +240,7 @@ postfix_expression
 																		printf("\e[1;31mError [line %d]:\e[0m '.' operator applied on non-struct or non-union type.\n",line);
 																		exit(-1);
 																	}
-																	/*while(type_entry->is_typedef){
-																		type_entry = type_lookup(type_entry->type);
-																	}*/
+																	
 																	int flag = 0;
 																	string name = string((const char*)$3);
 																	string type;
@@ -228,6 +259,10 @@ postfix_expression
 																		$$->value_type = RVALUE;
 																	else
 																		$$->value_type = LVALUE;
+
+																	//////////////// 3AC ////////////////
+
+																	/////////////////////////////////////
 																}
 	| postfix_expression PTR_OP IDENTIFIER 						{
 																	$$ = node_(2,"->",PTR_OP);
@@ -246,9 +281,7 @@ postfix_expression
 																		printf("\e[1;31mError [line %d]:\e[0m '->' operator applied on non-struct or non-union pointer type.\n",line);
 																		exit(-1);
 																	}
-																	/*while(type_entry->is_typedef){
-																		type_entry = type_lookup(type_entry->type);
-																	}*/
+																	
 																	int flag = 0;
 																	string type1 = type;
 																	string name = string((const char*)$3);
@@ -267,6 +300,10 @@ postfix_expression
 																		$$->value_type = RVALUE;
 																	else
 																		$$->value_type = LVALUE;
+																	
+																	//////////////// 3AC ////////////////
+
+																	/////////////////////////////////////
 																}
 	| postfix_expression INC_OP									{
 																	$$ = node_(1, "exp++", -1);
@@ -282,6 +319,11 @@ postfix_expression
 																		exit(-1);
 																	}
 																	$$->value_type = RVALUE;
+
+																	//////////////// 3AC ////////////////
+																	$$->place = getNewTemp();
+																	int x = emit("x++", $1->place, {"", NULL}, $$->place);
+																	/////////////////////////////////////
 																}
 	| postfix_expression DEC_OP									{
 																	$$ = node_(1, "exp--", -1); $$->v[0] = $1;
@@ -296,12 +338,29 @@ postfix_expression
 																		exit(-1);
 																	}
 																	$$->value_type = RVALUE;
+
+																	//////////////// 3AC ////////////////
+																	$$->place = getNewTemp();
+																	int x = emit("x--", $1->place, {"", NULL}, $$->place);
+																	/////////////////////////////////////
 																}
 	;
 
 argument_expression_list
-	: assignment_expression										{$$ = node_(1,"arg_list",-1); $$->v[0] = $1;}
-	| argument_expression_list ',' assignment_expression		{$$ = $1; add_node($$,$3);}
+	: assignment_expression										{
+																	$$ = node_(1,"arg_list",-1); $$->v[0] = $1;
+
+																	//////////////// 3AC ////////////////
+																	
+																	/////////////////////////////////////
+																}
+	| argument_expression_list ',' assignment_expression		{
+																	$$ = $1; add_node($$,$3);
+
+																	//////////////// 3AC ////////////////
+																	
+																	/////////////////////////////////////
+																}
 	;
 
 unary_expression
@@ -320,6 +379,11 @@ unary_expression
 																		exit(-1);
 																	}
 																	$$->value_type = RVALUE;
+
+																	//////////////// 3AC ////////////////
+																	$$->place = getNewTemp();
+																	int x = emit("++x", $2->place, {"", NULL}, $$->place);
+																	/////////////////////////////////////
 																}
 	| DEC_OP unary_expression									{
 																	$$ = node_(1,"++exp",-1);
@@ -335,6 +399,11 @@ unary_expression
 																		exit(-1);
 																	}
 																	$$->value_type = RVALUE;
+
+																	//////////////// 3AC ////////////////
+																	$$->place = getNewTemp();
+																	int x = emit("--x", $2->place, {"", NULL}, $$->place);
+																	/////////////////////////////////////
 																}
 	| unary_operator cast_expression							{
 																	$$ = node_(1,$1,*($1));
@@ -358,6 +427,11 @@ unary_expression
 																				printf("\e[1;31mError [line %d]:\e[0m Address-of operator cannot be applied on rvalue.\n",line);
 																				exit(-1);
 																			}
+
+																			//////////////// 3AC ////////////////
+																			$$->place = getNewTemp();
+																			int x = emit(string((const char*) $1), $2->place, {"", NULL}, $$->place);
+																			/////////////////////////////////////																			
 																		}
 																		break;
 																		case '*':{
@@ -367,8 +441,12 @@ unary_expression
 																			}
 																			else{
 																				$$->node_data = reduce_pointer_level($2->node_data);
-																				//$$->node_data.pop_back();
 																				$$->value_type = LVALUE;
+
+																				//////////////// 3AC ////////////////
+																				$$->place = getNewTemp();
+																				int x = emit(string((const char*) $1), $2->place, {"", NULL}, $$->place);
+																				/////////////////////////////////////
 																			}
 																		}
 																		break;
@@ -394,6 +472,12 @@ unary_expression
 																			if(temp_data.back() == '*'){
 																				$$->value_type = RVALUE;
 																				$$->node_data = "int";
+
+																				//////////////// 3AC ////////////////
+																				$$->place = getNewTemp();
+																				int x = emit(string((const char*) $1), $2->place, {"", NULL}, $$->place);
+																				/////////////////////////////////////
+
 																				break;
 																			}
 																		}
@@ -444,6 +528,11 @@ unary_expression
 																				}
 																				$$->node_data = temp_data;
 																				$$->value_type = RVALUE;
+
+																				//////////////// 3AC ////////////////
+																				$$->place = getNewTemp();
+																				int x = emit(string((const char*) $1), $2->place, {"", NULL}, $$->place);
+																				/////////////////////////////////////
 																			}
 																		}
 																		break;
@@ -473,10 +562,15 @@ unary_expression
 																				}
 																				$$->node_data = temp_data;
 																				$$->value_type = RVALUE;
+
+																				//////////////// 3AC ////////////////
+																				$$->place = getNewTemp();
+																				int x = emit(string((const char*) $1), $2->place, {"", NULL}, $$->place);
+																				/////////////////////////////////////
+
 																			}
 																		}
 																	}
-
 																}
 	| SIZEOF unary_expression									{
 																	long unsigned sz = get_size($2->node_data);
