@@ -20,6 +20,7 @@
 %union {
 	struct node* nodes;
 	char * id;
+	int instr;
 }
 
 %token <id> IDENTIFIER CONSTANT STRING_LITERAL SIZEOF
@@ -50,6 +51,7 @@
 
 %type<id> M6
 %type <nodes> M1
+%type <instr> M7
 
 %start augment_state
 %define parse.error verbose
@@ -1643,61 +1645,89 @@ logical_or_expression
 																}
 	;
 
+M7
+	: /* empty */ 										{	
+															//////////////// 3AC ////////////////
+															node* tmp = $<nodes>-1;
+															int x = emit("=", tmp->place, {"", NULL}, {"", NULL}); /////// See this again after assignment
+															int y = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
+															tmp->nextlist.push_back(y);
+															backpatch($-3->falselist, nextquad);
+															$$ = x;
+															/////////////////////////////////////
+														}
+
 conditional_expression
 	: logical_or_expression												{$$ = $1;}
-	| logical_or_expression '?' expression ':' conditional_expression	{
-																			if($1->node_data == "void"){
-																				printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
-																				exit(-1);
-																			}
-																			pair<string,int> p1 = get_equivalent_pointer($1->node_data);
-																			pair<string,int> p2 = get_equivalent_pointer($3->node_data);
-																			pair<string,int> p3 = get_equivalent_pointer($5->node_data);
-																			if(p1.second != 0){
-																				arithmetic_type_upgrade(p1.first,"int", "ternary");
-																			}
-																			if((p2.second || p3.second) && (!p2.second || !p3.second)){
-																				printf("\e[1;31mError [line %d]:\e[0m Incompatible types for ternary operator.\n",line);
-																				exit(-1);
-																			}
-																			if($1->token == CONSTANT){
-																				int tmp;
-																				switch($1->val_dt){
-																					case IS_INT: tmp = $1->val.int_const; break;
-																					case IS_LONG: tmp = $1->val.long_const; break;
-																					case IS_SHORT: tmp = $1->val.short_const; break;
-																					case IS_U_INT: tmp = $1->val.u_int_const; break;
-																					case IS_U_LONG: tmp = $1->val.u_long_const; break;
-																					case IS_U_SHORT: tmp = $1->val.u_short_const; break;
-																					case IS_FLOAT: tmp = $1->val.float_const; break;
-																					case IS_DOUBLE: tmp = $1->val.double_const; break;
-																					case IS_LONG_DOUBLE: tmp = $1->val.long_double_const; break;
-																					case IS_CHAR: tmp = $1->val.char_const; break;
-																				}
-																				if(tmp){
-																					$$ = $3;
-																				}
-																				else{
-																					$$ = $5;
-																				}
-																				$$->value_type = RVALUE;
-																			}
-																			else{
-																				$$ = node_(3,"ternary",-1);
-																				$$->v[0] = $1;
-																				$$->v[1] = $3;
-																				$$->v[2] = $5;
-																				if(p3.second && p2.second){
-																					$$->node_data = "void *";
-																				}
-																				else if(p2.first == p3.first){
-																					$$->node_data = p3.first;
-																				}else{
-																					$$->node_data = arithmetic_type_upgrade(p1.first,p2.first, "ternary");
-																				}
-																				$$->value_type = RVALUE;
-																			}
-																		}
+	| logical_or_expression '?'	 						{
+															//////////////// 3AC ////////////////
+															int x = emit("IF_TRUE_GOTO", $1->place, {"", NULL}, {"", NULL});
+															int y = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
+															$1->truelist.push_back(x);
+															$1->falselist.push_back(y);
+															backpatch($1->truelist, nextquad);
+															/////////////////////////////////////
+														}
+	expression ':' M7 conditional_expression					{
+																	if($1->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
+																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
+																	pair<string,int> p2 = get_equivalent_pointer($4->node_data);
+																	pair<string,int> p3 = get_equivalent_pointer($7->node_data);
+																	if(p1.second != 0){
+																		arithmetic_type_upgrade(p1.first,"int", "ternary");
+																	}
+																	if((p2.second || p3.second) && (!p2.second || !p3.second)){
+																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for ternary operator.\n",line);
+																		exit(-1);
+																	}
+																	/* // if($1->token == CONSTANT){
+																	// 	int tmp;
+																	// 	switch($1->val_dt){
+																	// 		case IS_INT: tmp = $1->val.int_const; break;
+																	// 		case IS_LONG: tmp = $1->val.long_const; break;
+																	// 		case IS_SHORT: tmp = $1->val.short_const; break;
+																	// 		case IS_U_INT: tmp = $1->val.u_int_const; break;
+																	// 		case IS_U_LONG: tmp = $1->val.u_long_const; break;
+																	// 		case IS_U_SHORT: tmp = $1->val.u_short_const; break;
+																	// 		case IS_FLOAT: tmp = $1->val.float_const; break;
+																	// 		case IS_DOUBLE: tmp = $1->val.double_const; break;
+																	// 		case IS_LONG_DOUBLE: tmp = $1->val.long_double_const; break;
+																	// 		case IS_CHAR: tmp = $1->val.char_const; break;
+																	// 	}
+																	// 	if(tmp){
+																	// 		$$ = $4;
+																	// 	}
+																	// 	else{
+																	// 		$$ = $7;
+																	// 	}
+																	// 	$$->value_type = RVALUE;
+																	// }
+																	// else{ */
+																	$$ = node_(3,"ternary",-1);
+																	$$->v[0] = $1;
+																	$$->v[1] = $4;
+																	$$->v[2] = $7;
+																	if(p3.second && p2.second){
+																		$$->node_data = "void *";
+																	}
+																	else if(p2.first == p3.first){
+																		$$->node_data = p3.first;
+																	}else{
+																		$$->node_data = arithmetic_type_upgrade(p2.first, p3.first, "ternary");
+																	}
+																	$$->value_type = RVALUE;
+																	// }
+
+																	//////////////// 3AC ////////////////
+																	$$->place = getNewTemp($$->node_data);
+																	code_array[$6].res = $$->place;
+																	$$->nextlist.insert($$->nextlist.end(), $4->nextlist.begin(), $4->nextlist.end());
+																	$$->nextlist.insert($$->nextlist.end(), $7->nextlist.begin(), $7->nextlist.end());
+																	/////////////////////////////////////
+																}
 	;
 
 assignment_expression
