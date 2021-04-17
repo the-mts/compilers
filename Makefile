@@ -6,7 +6,7 @@ SRC=src
 .PHONY: all clean realclean fileclean
 all: $(BIN)/parser
 
-$(BIN)/parser: $(SRC)/lex.yy.c $(SRC)/y.tab.c $(BIN)/main.o $(BIN)/parse_utils.o $(BIN)/symtab_utils.o
+$(BIN)/parser: $(SRC)/lex.yy.c $(SRC)/y.tab.c $(BIN)/main.o $(BIN)/parse_utils.o $(BIN)/symtab_utils.o $(BIN)/3AC.o
 	$(CC) -Wno-write-strings -Wno-abi $^ -o $@
 
 $(SRC)/lex.yy.c: $(SRC)/scanner.l $(SRC)/y.tab.h $(SRC)/y.tab.c $(SRC)/symtab.h $(SRC)/parse_utils.h
@@ -18,14 +18,17 @@ $(SRC)/y.tab.c $(SRC)/y.tab.h: $(SRC)/parser.y $(SRC)/parse_utils.h $(SRC)/symta
 $(BIN)/main.o: $(SRC)/main.c $(SRC)/parse_utils.h $(SRC)/symtab.h
 	$(CC) -c $< -o $@
 
-$(BIN)/parse_utils.o: $(SRC)/parse_utils.c $(SRC)/parse_utils.h
+$(BIN)/parse_utils.o: $(SRC)/parse_utils.c $(SRC)/parse_utils.h $(SRC)/3AC.h
 	$(CC) -c $< -o $@
 
 $(BIN)/symtab_utils.o: $(SRC)/symtab_utils.c $(SRC)/symtab.h
 	$(CC) -c -Wno-abi $< -o $@
 
+$(BIN)/3AC.o: $(SRC)/3AC.c $(SRC)/3AC.h
+	$(CC) -c $< -o $@
+
 clean:
-	$(RM) $(SRC)/lex.yy.c $(SRC)/y.tab.c $(SRC)/y.tab.h $(SRC)/y.output $(BIN)/parse_utils.o $(BIN)/main.o $(BIN)/symtab_utils.o
+	$(RM) $(SRC)/lex.yy.c $(SRC)/y.tab.c $(SRC)/y.tab.h $(SRC)/y.output $(BIN)/*.o
 
 fileclean:
 	$(RM) $(BIN)/*.csv $(BIN)/*.out $(BIN)/*.dot $(BIN)/*.ps

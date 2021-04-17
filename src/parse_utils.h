@@ -1,6 +1,8 @@
 #include<string>
 #include<vector>
 #include "symtab.h"
+#include "3AC.h"
+
 using namespace std;
 
 typedef struct node{

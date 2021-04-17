@@ -10,13 +10,13 @@ int emit(string op, qi op1, qi op2, qi res, int goto_addr){
     return nextquad - 1;
 }
 
-qi getNewTemp(){
+qi getNewTemp(string type){
     static int var_no = 0;
     string var_name = to_string(var_no) + "_tmp";
     var_no++;
     qi q;
     q.first = var_name;
-    q.second = NULL;
+    q.second = add_entry($$->place.first, $$->node_data, 0, offset.back(), IS_TEMP);
     return q;
 }
 
@@ -25,7 +25,7 @@ void backpatch(vector<int> list, int addr){
         code_array[i].goto_addr = addr;
 }
 
-
+/*
 // For debugging purposes
 // Have to rewrite
 void print_quad(quad q){
@@ -40,3 +40,4 @@ void print_code(){
         cout<<endl;
     }
 }
+*/

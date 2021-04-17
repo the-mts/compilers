@@ -2,7 +2,7 @@
 	#include<string.h>
 	#include<stdlib.h>
 	#include "parse_utils.h"
-	#include "3AC.h"
+	// #include "3AC.h"
 	using namespace std;
 	struct node* root;
 	void yyerror(const char*s);
@@ -154,7 +154,9 @@ postfix_expression
 																	$$->node_data = reduce_pointer_level($1->node_data);
 
 																	//////////////// 3AC ////////////////
-																	$$->place = getNewTemp();
+																	$$->place = getNewTemp($$->node_data);
+																	// st_entry* new_entry = add_entry($$->place.first, $$->node_data, 0, offset.back(), IS_TEMP);
+																	// $$->place.second = new_entry;
 																	int x = emit("[]", $1->place, $3->place, $$->place);
 																	backpatch($3->truelist, x);		// Have to check
 																	backpatch($3->falselist, x);	// check
@@ -328,7 +330,9 @@ postfix_expression
 																	$$->value_type = RVALUE;
 
 																	//////////////// 3AC ////////////////
-																	$$->place = getNewTemp();
+																	$$->place = getNewTemp($$->node_data);
+																	// st_entry* new_entry = add_entry($$->place.first, $$->node_data, 0, offset.back(), IS_TEMP);
+																	// $$->place.second = new_entry;
 																	int x = emit("x++", $1->place, {"", NULL}, $$->place);
 																	/////////////////////////////////////
 																}
@@ -351,7 +355,7 @@ postfix_expression
 																	$$->value_type = RVALUE;
 
 																	//////////////// 3AC ////////////////
-																	$$->place = getNewTemp();
+																	$$->place = getNewTemp($$->node_data);
 																	int x = emit("x--", $1->place, {"", NULL}, $$->place);
 																	/////////////////////////////////////
 																}
@@ -396,7 +400,7 @@ unary_expression
 																	$$->value_type = RVALUE;
 
 																	//////////////// 3AC ////////////////
-																	$$->place = getNewTemp();
+																	$$->place = getNewTemp($$->node_data);
 																	int x = emit("++x", $2->place, {"", NULL}, $$->place);
 																	/////////////////////////////////////
 																}
@@ -420,7 +424,7 @@ unary_expression
 																	$$->value_type = RVALUE;
 
 																	//////////////// 3AC ////////////////
-																	$$->place = getNewTemp();
+																	$$->place = getNewTemp($$->node_data);
 																	int x = emit("--x", $2->place, {"", NULL}, $$->place);
 																	/////////////////////////////////////
 																}
@@ -452,8 +456,8 @@ unary_expression
 																			}
 
 																			//////////////// 3AC ////////////////
-																			$$->place = getNewTemp();
-																			int x = emit(string((const char*) $1), $2->place, {"", NULL}, $$->place);
+																			$$->place = getNewTemp($$->node_data);
+																			int x = emit("unary" + (const char*) $1, $2->place, {"", NULL}, $$->place);
 																			/////////////////////////////////////																			
 																		}
 																		break;
@@ -467,7 +471,7 @@ unary_expression
 																				$$->value_type = LVALUE;
 
 																				//////////////// 3AC ////////////////
-																				$$->place = getNewTemp();
+																				$$->place = getNewTemp($$->node_data);
 																				int x = emit(string((const char*) $1), $2->place, {"", NULL}, $$->place);
 																				/////////////////////////////////////
 																			}
@@ -497,7 +501,7 @@ unary_expression
 																				$$->node_data = "int";
 
 																				//////////////// 3AC ////////////////
-																				$$->place = getNewTemp();
+																				$$->place = getNewTemp($$->node_data);
 																				int x = emit(string((const char*) $1), $2->place, {"", NULL}, $$->place);
 																				/////////////////////////////////////
 
@@ -553,7 +557,7 @@ unary_expression
 																				$$->value_type = RVALUE;
 
 																				//////////////// 3AC ////////////////
-																				$$->place = getNewTemp();
+																				$$->place = getNewTemp($$->node_data);
 																				int x = emit(string((const char*) $1), $2->place, {"", NULL}, $$->place);
 																				/////////////////////////////////////
 																			}
@@ -587,7 +591,7 @@ unary_expression
 																				$$->value_type = RVALUE;
 
 																				//////////////// 3AC ////////////////
-																				$$->place = getNewTemp();
+																				$$->place = getNewTemp($$->node_data);
 																				int x = emit(string((const char*) $1), $2->place, {"", NULL}, $$->place);
 																				/////////////////////////////////////
 
@@ -655,6 +659,12 @@ cast_expression
 																		printf("\e[1;35mWarning [line %d]:\e[0m Cast from '%s' to incompatible type '%s'.\n",line, $4->node_data.c_str(), $2->node_data.c_str());
 																	}
 																	$$->node_data = $2->node_data;
+
+																	//////////////// 3AC ////////////////
+																	$$->place = getNewTemp($$->node_data);
+																	string operator = p1.first + "to" + p2.first; // Modify
+																	int x = emit(operator, $4->place, {"", NULL}, $$->place);
+																	/////////////////////////////////////
 																}
 	;
 
@@ -682,6 +692,35 @@ multiplicative_expression
 																		$$ = node_(2,"*",-1);
 																		$$->v[0] = $1;
 																		$$->v[1] = $3;
+																		
+																		//////////////// 3AC ////////////////
+																		if($1->token == CONSTANT){
+																			$1->place = emitConstant($1);
+																		}
+																		else if($3->token == CONSTANT){
+																			$3->place = emitConstant($3);
+																		}
+
+																		$$->place = getNewTemp(type);
+																		if(type.find("int")!=string::npos || type.find("char")!=string::npos){
+																			int x = emit("*int", $1->place, $3->place, $$->place);
+																		}
+																		else {
+																			if($1->node_data.find("int")!=string::npos){
+																				auto tmp = getNewTemp(type);
+																				int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
+																				emit("*real", tmp, $3->place, $$->place);
+																			}
+																			else ($3->node_data.find("int")!=string::npos){
+																				auto tmp = getNewTemp(type);
+																				int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
+																				emit("*real", $1->place, tmp, $$->place);
+																			}
+																			else {
+																				emit("*real", $1->place, $3->place, $$->place);
+																			}
+																		}
+																		/////////////////////////////////////
 																	}
 																	$$->node_data = type;
 																	$$->value_type = RVALUE;
@@ -708,6 +747,35 @@ multiplicative_expression
 																		$$ = node_(2,"/",-1);
 																		$$->v[0] = $1;
 																		$$->v[1] = $3;
+
+																		//////////////// 3AC ////////////////
+																		if($1->token == CONSTANT){
+																			$1->place = emitConstant($1);
+																		}
+																		else if($3->token == CONSTANT){
+																			$3->place = emitConstant($3);
+																		}
+
+																		$$->place = getNewTemp(type);
+																		if(type.find("int")!=string::npos || type.find("char")!=string::npos){
+																			int x = emit("/int", $1->place, $3->place, $$->place);
+																		}
+																		else {
+																			if($1->node_data.find("int")!=string::npos){
+																				auto tmp = getNewTemp(type);
+																				int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
+																				emit("/real", tmp, $3->place, $$->place);
+																			}
+																			else ($3->node_data.find("int")!=string::npos){
+																				auto tmp = getNewTemp(type);
+																				int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
+																				emit("/real", $1->place, tmp, $$->place);
+																			}
+																			else {
+																				emit("/real", $1->place, $3->place, $$->place);
+																			}
+																		}
+																		/////////////////////////////////////
 																	}
 																	$$->node_data = type;
 																	$$->value_type = RVALUE;
@@ -738,6 +806,19 @@ multiplicative_expression
 																		$$ = node_(2,"%",-1);
 																		$$->v[0] = $1;
 																		$$->v[1] = $3;
+
+																		//////////////// 3AC ////////////////
+																		if($1->token == CONSTANT){
+																			$1->place = emitConstant($1);
+																		}
+																		else if($3->token == CONSTANT){
+																			$3->place = emitConstant($3);
+																		}
+
+																		$$->place = getNewTemp(type);
+																		int x = emit("%", $1->place, $3->place, $$->place);
+																		/////////////////////////////////////
+																		
 																	}
 																	$$->node_data = type;
 																	$$->value_type = RVALUE;
@@ -764,6 +845,35 @@ additive_expression
 																		$$ = node_(2,"+",-1);
 																		$$->v[0] = $1;
 																		$$->v[1] = $3;
+
+																		//////////////// 3AC ////////////////
+																		if($1->token == CONSTANT){
+																			$1->place = emitConstant($1);
+																		}
+																		else if($3->token == CONSTANT){
+																			$3->place = emitConstant($3);
+																		}
+
+																		$$->place = getNewTemp(type);
+																		if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.find("*")!=string::npos){
+																			int x = emit("+int", $1->place, $3->place, $$->place);
+																		}
+																		else {
+																			if($1->node_data.find("int")!=string::npos){
+																				auto tmp = getNewTemp(type);
+																				int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
+																				emit("+real", tmp, $3->place, $$->place);
+																			}
+																			else ($3->node_data.find("int")!=string::npos){
+																				auto tmp = getNewTemp(type);
+																				int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
+																				emit("+real", $1->place, tmp, $$->place);
+																			}
+																			else {
+																				emit("+real", $1->place, $3->place, $$->place);
+																			}
+																		}
+																		/////////////////////////////////////
 																	}
 																	$$->node_data = type;
 																	$$->value_type = RVALUE;
@@ -786,6 +896,35 @@ additive_expression
 																		$$ = node_(2,"-",-1);
 																		$$->v[0] = $1;
 																		$$->v[1] = $3;
+
+																		//////////////// 3AC ////////////////
+																		if($1->token == CONSTANT){
+																			$1->place = emitConstant($1);
+																		}
+																		else if($3->token == CONSTANT){
+																			$3->place = emitConstant($3);
+																		}
+
+																		$$->place = getNewTemp(type);
+																		if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.find("*")!=string::npos){
+																			int x = emit("-int", $1->place, $3->place, $$->place);
+																		}
+																		else {
+																			if($1->node_data.find("int")!=string::npos){
+																				auto tmp = getNewTemp(type);
+																				int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
+																				emit("-real", tmp, $3->place, $$->place);
+																			}
+																			else ($3->node_data.find("int")!=string::npos){
+																				auto tmp = getNewTemp(type);
+																				int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
+																				emit("-real", $1->place, tmp, $$->place);
+																			}
+																			else {
+																				emit("-real", $1->place, $3->place, $$->place);
+																			}
+																		}
+																		/////////////////////////////////////
 																	}
 																	$$->node_data = type;
 																	$$->value_type = RVALUE;
@@ -821,6 +960,18 @@ shift_expression
 																		$$ = node_(2,"<<",-1);
 																		$$->v[0] = $1;
 																		$$->v[1] = $3;
+
+																		//////////////// 3AC ////////////////
+																		if($1->token == CONSTANT){
+																			$1->place = emitConstant($1);
+																		}
+																		else if($3->token == CONSTANT){
+																			$3->place = emitConstant($3);
+																		}
+
+																		$$->place = getNewTemp(type);
+																		int x = emit("<<", $1->place, $3->place, $$->place);
+																		/////////////////////////////////////
 																	}
 																	$$->node_data = $1->node_data;
 																	$$->value_type = RVALUE;
@@ -851,6 +1002,18 @@ shift_expression
 																		$$ = node_(2,">>",-1);
 																		$$->v[0] = $1;
 																		$$->v[1] = $3;
+
+																		//////////////// 3AC ////////////////
+																		if($1->token == CONSTANT){
+																			$1->place = emitConstant($1);
+																		}
+																		else if($3->token == CONSTANT){
+																			$3->place = emitConstant($3);
+																		}
+
+																		$$->place = getNewTemp(type);
+																		int x = emit(">>", $1->place, $3->place, $$->place);
+																		/////////////////////////////////////
 																	}
 																	$$->node_data = $1->node_data;
 																	$$->value_type = RVALUE;
@@ -874,8 +1037,10 @@ relational_expression
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																		exit(-1);
 																	}
+
+																	string type;
 																	if(!(p1.second && p2.second))
-																		arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
+																		type = arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
 																	else{
 																		if($1->node_data != $3->node_data){
 																			printf("\e[1;35mWarning [line %d]:\e[0m Comparison of pointers or types '%s' and '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
@@ -889,6 +1054,35 @@ relational_expression
 																		$$ = node_(2,"<",-1);
 																		$$->v[0] = $1;
 																		$$->v[1] = $3;
+
+																		//////////////// 3AC ////////////////
+																		if($1->token == CONSTANT){
+																			$1->place = emitConstant($1);
+																		}
+																		else if($3->token == CONSTANT){
+																			$3->place = emitConstant($3);
+																		}
+
+																		$$->place = getNewTemp("int");
+																		if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.find("*")!=string::npos){
+																			int x = emit("<int", $1->place, $3->place, $$->place);
+																		}
+																		else {
+																			if($1->node_data.find("int")!=string::npos){
+																				auto tmp = getNewTemp(type);
+																				int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
+																				emit("<real", tmp, $3->place, $$->place);
+																			}
+																			else ($3->node_data.find("int")!=string::npos){
+																				auto tmp = getNewTemp(type);
+																				int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
+																				emit("<real", $1->place, tmp, $$->place);
+																			}
+																			else {
+																				emit("<real", $1->place, $3->place, $$->place);
+																			}
+																		}
+																		/////////////////////////////////////
 																	}
 																	$$->node_data = "int";
 																	$$->value_type = RVALUE;
@@ -908,8 +1102,10 @@ relational_expression
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																		exit(-1);
 																	}
+
+																	string type;
 																	if(!(p1.second && p2.second))
-																		arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
+																		type = arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
 																	else{
 																		if($1->node_data != $3->node_data){
 																			printf("\e[1;35mWarning [line %d]:\e[0m Comparison of pointers or types '%s' and '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
@@ -923,6 +1119,35 @@ relational_expression
 																		$$ = node_(2,">",-1);
 																		$$->v[0] = $1;
 																		$$->v[1] = $3;
+
+																		//////////////// 3AC ////////////////
+																		if($1->token == CONSTANT){
+																			$1->place = emitConstant($1);
+																		}
+																		else if($3->token == CONSTANT){
+																			$3->place = emitConstant($3);
+																		}
+
+																		$$->place = getNewTemp("int");
+																		if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.find("*")!=string::npos){
+																			int x = emit("<int", $1->place, $3->place, $$->place);
+																		}
+																		else {
+																			if($1->node_data.find("int")!=string::npos){
+																				auto tmp = getNewTemp(type);
+																				int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
+																				emit("<real", tmp, $3->place, $$->place);
+																			}
+																			else ($3->node_data.find("int")!=string::npos){
+																				auto tmp = getNewTemp(type);
+																				int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
+																				emit("<real", $1->place, tmp, $$->place);
+																			}
+																			else {
+																				emit("<real", $1->place, $3->place, $$->place);
+																			}
+																		}
+																		/////////////////////////////////////
 																	}
 																	$$->node_data = "int";
 																	$$->value_type = RVALUE;
@@ -942,8 +1167,10 @@ relational_expression
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																		exit(-1);
 																	}
+
+																	string type;
 																	if(!(p1.second && p2.second))
-																		arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
+																		type = arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
 																	else{
 																		if($1->node_data != $3->node_data){
 																			printf("\e[1;35mWarning [line %d]:\e[0m Comparison of pointers or types '%s' and '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
@@ -957,6 +1184,35 @@ relational_expression
 																		$$ = node_(2,"<=",-1);
 																		$$->v[0] = $1;
 																		$$->v[1] = $3;
+
+																		//////////////// 3AC ////////////////
+																		if($1->token == CONSTANT){
+																			$1->place = emitConstant($1);
+																		}
+																		else if($3->token == CONSTANT){
+																			$3->place = emitConstant($3);
+																		}
+
+																		$$->place = getNewTemp("int");
+																		if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.find("*")!=string::npos){
+																			int x = emit("<=int", $1->place, $3->place, $$->place);
+																		}
+																		else {
+																			if($1->node_data.find("int")!=string::npos){
+																				auto tmp = getNewTemp(type);
+																				int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
+																				emit("<=real", tmp, $3->place, $$->place);
+																			}
+																			else ($3->node_data.find("int")!=string::npos){
+																				auto tmp = getNewTemp(type);
+																				int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
+																				emit("<=real", $1->place, tmp, $$->place);
+																			}
+																			else {
+																				emit("<=real", $1->place, $3->place, $$->place);
+																			}
+																		}
+																		/////////////////////////////////////
 																	}
 																	$$->node_data = "int";
 																	$$->value_type = RVALUE;
@@ -976,8 +1232,10 @@ relational_expression
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																		exit(-1);
 																	}
+
+																	string type;
 																	if(!(p1.second && p2.second))
-																		arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
+																		type = arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
 																	else{
 																		if($1->node_data != $3->node_data){
 																			printf("\e[1;35mWarning [line %d]:\e[0m Comparison of pointers or types '%s' and '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
@@ -991,6 +1249,35 @@ relational_expression
 																		$$ = node_(2,">=",-1);
 																		$$->v[0] = $1;
 																		$$->v[1] = $3;
+
+																		//////////////// 3AC ////////////////
+																		if($1->token == CONSTANT){
+																			$1->place = emitConstant($1);
+																		}
+																		else if($3->token == CONSTANT){
+																			$3->place = emitConstant($3);
+																		}
+
+																		$$->place = getNewTemp("int");
+																		if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.find("*")!=string::npos){
+																			int x = emit(">=int", $1->place, $3->place, $$->place);
+																		}
+																		else {
+																			if($1->node_data.find("int")!=string::npos){
+																				auto tmp = getNewTemp(type);
+																				int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
+																				emit(">=real", tmp, $3->place, $$->place);
+																			}
+																			else ($3->node_data.find("int")!=string::npos){
+																				auto tmp = getNewTemp(type);
+																				int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
+																				emit(">=real", $1->place, tmp, $$->place);
+																			}
+																			else {
+																				emit(">=real", $1->place, $3->place, $$->place);
+																			}
+																		}
+																		/////////////////////////////////////
 																	}
 																	$$->node_data = "int";
 																	$$->value_type = RVALUE;
@@ -1014,8 +1301,10 @@ equality_expression
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																		exit(-1);
 																	}
+
+																	string type;
 																	if(!(p1.second && p2.second))
-																		arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
+																		type = arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
 																	else{
 																		if($1->node_data != $3->node_data){
 																			printf("\e[1;35mWarning [line %d]:\e[0m Comparison of pointers or types '%s' and '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
@@ -1029,6 +1318,35 @@ equality_expression
 																		$$ = node_(2,$2,-1);
 																		$$->v[0] = $1;
 																		$$->v[1] = $3;
+
+																		//////////////// 3AC ////////////////
+																		if($1->token == CONSTANT){
+																			$1->place = emitConstant($1);
+																		}
+																		else if($3->token == CONSTANT){
+																			$3->place = emitConstant($3);
+																		}
+
+																		$$->place = getNewTemp("int");
+																		if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.find("*")!=string::npos){
+																			int x = emit(">=int", $1->place, $3->place, $$->place);
+																		}
+																		else {
+																			if($1->node_data.find("int")!=string::npos){
+																				auto tmp = getNewTemp(type);
+																				int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
+																				emit(">=real", tmp, $3->place, $$->place);
+																			}
+																			else ($3->node_data.find("int")!=string::npos){
+																				auto tmp = getNewTemp(type);
+																				int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
+																				emit(">=real", $1->place, tmp, $$->place);
+																			}
+																			else {
+																				emit(">=real", $1->place, $3->place, $$->place);
+																			}
+																		}
+																		/////////////////////////////////////
 																	}
 																	$$->node_data = "int";
 																	$$->value_type = RVALUE;
@@ -1048,8 +1366,10 @@ equality_expression
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																		exit(-1);
 																	}
+
+																	string type;
 																	if(!(p1.second && p2.second))
-																		arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
+																		type = arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
 																	else{
 																		if($1->node_data != $3->node_data){
 																			printf("\e[1;35mWarning [line %d]:\e[0m Comparison of pointers or types '%s' and '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
@@ -1063,6 +1383,35 @@ equality_expression
 																		$$ = node_(2,$2,-1);
 																		$$->v[0] = $1;
 																		$$->v[1] = $3;
+
+																		//////////////// 3AC ////////////////
+																		if($1->token == CONSTANT){
+																			$1->place = emitConstant($1);
+																		}
+																		else if($3->token == CONSTANT){
+																			$3->place = emitConstant($3);
+																		}
+
+																		$$->place = getNewTemp("int");
+																		if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.find("*")!=string::npos){
+																			int x = emit(">=int", $1->place, $3->place, $$->place);
+																		}
+																		else {
+																			if($1->node_data.find("int")!=string::npos){
+																				auto tmp = getNewTemp(type);
+																				int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
+																				emit(">=real", tmp, $3->place, $$->place);
+																			}
+																			else ($3->node_data.find("int")!=string::npos){
+																				auto tmp = getNewTemp(type);
+																				int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
+																				emit(">=real", $1->place, tmp, $$->place);
+																			}
+																			else {
+																				emit(">=real", $1->place, $3->place, $$->place);
+																			}
+																		}
+																		/////////////////////////////////////
 																	}
 																	$$->node_data = "int";
 																	$$->value_type = RVALUE;
@@ -1097,6 +1446,18 @@ and_expression
 																		$$ = node_(2,$2,-1);
 																		$$->v[0] = $1;
 																		$$->v[1] = $3;
+
+																		//////////////// 3AC ////////////////
+																		if($1->token == CONSTANT){
+																			$1->place = emitConstant($1);
+																		}
+																		else if($3->token == CONSTANT){
+																			$3->place = emitConstant($3);
+																		}
+
+																		$$->place = getNewTemp(type);
+																		int x = emit("&", $1->place, $3->place, $$->place);
+																		/////////////////////////////////////
 																	}
 																	$$->node_data = type;
 																	$$->value_type = RVALUE;
@@ -1130,6 +1491,18 @@ exclusive_or_expression
 																	else{	$$ = node_(2,$2,-1);
 																		$$->v[0] = $1;
 																		$$->v[1] = $3;
+
+																		//////////////// 3AC ////////////////
+																		if($1->token == CONSTANT){
+																			$1->place = emitConstant($1);
+																		}
+																		else if($3->token == CONSTANT){
+																			$3->place = emitConstant($3);
+																		}
+
+																		$$->place = getNewTemp(type);
+																		int x = emit("^", $1->place, $3->place, $$->place);
+																		/////////////////////////////////////
 																	}
 																	$$->node_data = type;
 																	$$->value_type = RVALUE;
@@ -1164,6 +1537,18 @@ inclusive_or_expression
 																		$$ = node_(2,$2,-1);
 																		$$->v[0] = $1;
 																		$$->v[1] = $3;
+
+																		//////////////// 3AC ////////////////
+																		if($1->token == CONSTANT){
+																			$1->place = emitConstant($1);
+																		}
+																		else if($3->token == CONSTANT){
+																			$3->place = emitConstant($3);
+																		}
+
+																		$$->place = getNewTemp(type);
+																		int x = emit("|", $1->place, $3->place, $$->place);
+																		/////////////////////////////////////
 																	}
 																	$$->node_data = type;
 																	$$->value_type = RVALUE;
@@ -1172,7 +1557,10 @@ inclusive_or_expression
 
 logical_and_expression
 	: inclusive_or_expression									{$$ = $1;}
-	| logical_and_expression AND_OP inclusive_or_expression		{
+	| logical_and_expression AND_OP 							//{
+																	// int x = emit("IF_TRUE_GOTO", $1->place, {"", NULL}, {"", NULL});
+																//} 
+	inclusive_or_expression										{
 																	if($1->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
@@ -1196,6 +1584,35 @@ logical_and_expression
 																		$$ = node_(2,$2,-1);
 																		$$->v[0] = $1;
 																		$$->v[1] = $3;
+
+																		//////////////// 3AC ////////////////
+																		if($1->token == CONSTANT){
+																			$1->place = emitConstant($1);
+																		}
+																		else if($3->token == CONSTANT){
+																			$3->place = emitConstant($3);
+																		}
+
+																		$$->place = getNewTemp("int");
+																		if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.find("*")!=string::npos){
+																			int x = emit("&&", $1->place, $3->place, $$->place);
+																		}
+																		else {
+																			if($1->node_data.find("int")!=string::npos){
+																				auto tmp = getNewTemp(type);
+																				int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
+																				emit("&&", tmp, $3->place, $$->place);
+																			}
+																			else ($3->node_data.find("int")!=string::npos){
+																				auto tmp = getNewTemp(type);
+																				int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
+																				emit("&&", $1->place, tmp, $$->place);
+																			}
+																			else {
+																				emit("&&", $1->place, $3->place, $$->place);
+																			}
+																		}
+																		/////////////////////////////////////
 																	}
 																	$$->node_data = "int";
 																	$$->value_type = RVALUE;
@@ -2084,7 +2501,7 @@ statement
 
 labeled_statement
 	: IDENTIFIER ':' statement									{$$ = node_(1,$1,-1); $$->v[0] = $3;}
-	| CASE constant_expression ':' {break_level++;} statement {break_level--;}
+	| CASE constant_expression ':' {/*break_level++;*/} statement {/*break_level--;*/}
 																{$$ = node_(2,$1,-1); $$->v[0] = $2; $$->v[1] = $5;}
 	| DEFAULT ':' statement										{$$ = node_(1,$1,-1); $$->v[0] = $3;}
 	;
@@ -2164,7 +2581,7 @@ expression_statement
 selection_statement
 	: IF '(' expression ')' statement							{$$ = node_(2,$1,-1); $$->v[0] = $3; $$->v[1] = $5;}
 	| IF '(' expression ')' statement ELSE statement			{$$ = node_(3, "if-else", -1); $$->v[0] = $3; $$->v[1] = $5; $$->v[2] = $7;}
-	| SWITCH '(' expression ')' statement						{$$ = node_(2, $1, -1); $$->v[0] = $3; $$->v[1] = $5;}
+	| SWITCH '(' expression ')' {break_level++;} statement						{$$ = node_(2, $1, -1); $$->v[0] = $3; $$->v[1] = $6; break_level--;}
 	;
 
 iteration_statement

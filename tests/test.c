@@ -1,27 +1,10 @@
-int x;
-
-struct x{
-	int y;
-};
+void f(){
+	return;
+}
 
 int main(){
-	int x;
-	{
-		struct x{
-			int x;
-			struct y{
-				int y;
-			}uu;
-		};
-		int y,z;
-		{
-			int x;
-			{
-				float x;
-			}
-		}
-	}
-	{
-		int y;
-	}
+	int x = 1;
+	float y = 2;
+	/* float z = 2.0; */
+	return (x<=y);
 }
