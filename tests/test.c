@@ -1,35 +1,27 @@
-struct x {
-	int a,b;
-	char c,d,e;
+int x;
+
+struct x{
+	int y;
 };
 
-long double fun(long x, short unsigned y){
-	struct x {
-		float x,y,z;
-	} w;
+int main(){
+	int x;
 	{
-		int w;
+		struct x{
+			int x;
+			struct y{
+				int y;
+			}uu;
+		};
+		int y,z;
 		{
-			char a,b,c;
+			int x;
 			{
-				int z,n;
+				float x;
 			}
 		}
 	}
-	
 	{
-		double lol;
+		int y;
 	}
-	return 0;
-}
-
-int main(){
-	int x, y;
-	float* z = 2;
-	{
-		struct x p;
-		struct x** q;
-		// p.x = 2;
-	}	
-	return 0;
 }

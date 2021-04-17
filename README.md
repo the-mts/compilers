@@ -4,7 +4,7 @@ This is a standalone parser and semantic analyser for our CS335 Compilers projec
 
 ## Description
 
-The repository develops over the previously built parser. Additional files required for semantic analysis have been created. The file `parser.y` in `src` directory is a yacc file that specifies the grammar and actions that construct the AST. The directory also contains `symtab_utils.c` and `symtab.h` that provide basic utility functions to create and modify the symbol table and types table. The file `main.c` contains the driver code that takes the input file, calls the parser over it and stores the generated AST in a `DOT` file. It also dumps the symbol table in the file `symtab.csv`. The output consists of three columns - the name of the variable, its size and its type. Each scope/function is demarcated into separate sections, named by the function name, with the scopes inside the function numbered from 1 in the depth-first order as they appear in the input program. If types table dump is enabled, the output is dumped in the file `typtab.out` in the `bin` directory.
+The repository develops over the previously built parser. Additional files required for semantic analysis have been created. The file `parser.y` in `src` directory is a yacc file that specifies the grammar and actions that construct the AST. The directory also contains `symtab_utils.c` and `symtab.h` that provide basic utility functions to create and modify the symbol table and types table. The file `main.c` contains the driver code that takes the input file, calls the parser over it and stores the generated AST in a `DOT` file. It also dumps the symbol table in the file `symtab.csv`. The output consists of four columns - the name of the variable, its size, its offset in its scope, and its type. (Note that for now, there is no significance to the size of functions and offsets for global symbols. In further milestones, we will refine the use and implementation of offsets.) Each scope/function is demarcated into separate sections, named by the function name, with the scopes inside the function numbered from 1 in the depth-first order as they appear in the input program. If types table dump is enabled, the output is dumped in the file `typtab.csv` in the `bin` directory.
 
 The makefile will generate `y.tab.c` parser file, the corresponding header file, and the `lex.yy.c` scanner file. It will then compile all the source files to generate the `parser` binary in the `bin` directory. Our sample testcases are given in the directory `tests` with the names as `test<num>.c` (where `num` is from 1 to 5).
 
@@ -44,7 +44,7 @@ We have currently provided two options for the purpose of debugging.
   $ ./bin/parser ./tests/testfile.c -o dotname.dot -g
   ```
 
-* To dump the table containing all the type definitions within each scope, add the `-t` option. This will generate the type table in the file `./bin/typtab.out` similar to the symbol table.
+* To dump the table containing all the type definitions within each scope, add the `-t` option. This will generate the type table in the file `./bin/typtab.csv similar to the symbol table.
   ```console
   $ ./bin/parser ./tests/testfile.c -o dotname.dot -t
   ```
@@ -53,5 +53,5 @@ We have currently provided two options for the purpose of debugging.
 
 There are 3 clean options in the makefile.
 * The `make clean` command will remove all the intermediate compilation files for the final executable (including all the `.o` files).
-* The `make fileclean` command will clean all the output files created in the bin directory (including `symtab.csv`, `typtab.out` and other `.dot` and `.ps` files).
+* The `make fileclean` command will clean all the output files created in the bin directory (including `symtab.csv`, `typtab.csv` and other `.dot` and `.ps` files).
 * The `make realclean` command will perform the above two tasks along with deleting the created binary `parser` file.

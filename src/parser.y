@@ -131,6 +131,10 @@ postfix_expression
 																	$$ = $1;
 																}
 	| postfix_expression '[' expression ']'						{
+																	if($3->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m Array subscript is not an integer.\n",line);
+																		exit(-1);
+																	}
 																	$$ = node_(2, "[]", -1);
 																	$$->v[0] = $1; $$->v[1] = $3;
 																	pair<string,int> p = get_equivalent_pointer($1->node_data);
@@ -281,7 +285,10 @@ postfix_expression
 																		printf("\e[1;31mError [line %d]:\e[0m '->' operator applied on non-struct or non-union pointer type.\n",line);
 																		exit(-1);
 																	}
+<<<<<<< HEAD
 																	
+=======
+>>>>>>> main
 																	int flag = 0;
 																	string type1 = type;
 																	string name = string((const char*)$3);
@@ -306,6 +313,10 @@ postfix_expression
 																	/////////////////////////////////////
 																}
 	| postfix_expression INC_OP									{
+																	if($1->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
 																	$$ = node_(1, "exp++", -1);
 																	$$->v[0] = $1;
 																	$$->node_data = $1->node_data;
@@ -326,6 +337,10 @@ postfix_expression
 																	/////////////////////////////////////
 																}
 	| postfix_expression DEC_OP									{
+																	if($1->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
 																	$$ = node_(1, "exp--", -1); $$->v[0] = $1;
 																	$$->node_data = $1->node_data;
 																	tt_entry* type_entry = type_lookup($1->node_data);
@@ -366,6 +381,10 @@ argument_expression_list
 unary_expression
 	: postfix_expression										{$$ = $1;}
 	| INC_OP unary_expression									{
+																	if($2->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
 																	$$ = node_(1,"++exp",-1);
 																	$$->v[0] = $2;
 																	$$->node_data = $2->node_data;
@@ -386,6 +405,10 @@ unary_expression
 																	/////////////////////////////////////
 																}
 	| DEC_OP unary_expression									{
+																	if($2->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
 																	$$ = node_(1,"++exp",-1);
 																	$$->v[0] = $2;
 																	$$->node_data = $2->node_data;
@@ -406,6 +429,10 @@ unary_expression
 																	/////////////////////////////////////
 																}
 	| unary_operator cast_expression							{
+																	if($2->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
 																	$$ = node_(1,$1,*($1));
 																	$$->v[0] = $2;
 																	string temp_data = get_equivalent_pointer($2->node_data).first;
@@ -638,6 +665,14 @@ cast_expression
 multiplicative_expression
 	: cast_expression											{$$ = $1;}
 	| multiplicative_expression '*' cast_expression				{
+																	if($1->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
+																	if($3->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
 																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2));
 																	if(type.back() == '*'){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
@@ -656,6 +691,14 @@ multiplicative_expression
 																	$$->value_type = RVALUE;
 																}
 	| multiplicative_expression '/' cast_expression				{
+																	if($1->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
+																	if($3->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
 																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2));
 																	if(type.back() == '*'){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
@@ -674,6 +717,14 @@ multiplicative_expression
 																	$$->value_type = RVALUE;
 																}
 	| multiplicative_expression '%' cast_expression				{
+																	if($1->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
+																	if($3->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
 																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2));
 																	if(type.back() == '*'){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
@@ -700,6 +751,14 @@ multiplicative_expression
 additive_expression
 	: multiplicative_expression									{$$ = $1;}
 	| additive_expression '+' multiplicative_expression			{
+																	if($1->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
+																	if($3->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
 																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2));
 																	if($1->token == CONSTANT && $3->token == CONSTANT){
 																		evaluate_const($1, $3, *($2), type);
@@ -714,6 +773,14 @@ additive_expression
 																	$$->value_type = RVALUE;
 																}
 	| additive_expression '-' multiplicative_expression			{
+																	if($1->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
+																	if($3->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
 																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2));
 																	if($1->token == CONSTANT && $3->token == CONSTANT){
 																		evaluate_const($1, $3, *($2), type);
@@ -732,6 +799,14 @@ additive_expression
 shift_expression
 	: additive_expression										{$$ = $1;}
 	| shift_expression LEFT_OP additive_expression				{
+																	if($1->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
+																	if($3->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
 																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2));
 																	// printf("TYPE: %s\n", type.c_str());
 																	if(type.back() == '*'){
@@ -755,6 +830,14 @@ shift_expression
 																	$$->value_type = RVALUE;
 																}
 	| shift_expression RIGHT_OP additive_expression				{
+																	if($1->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
+																	if($3->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
 																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2));
 																	if(type.back() == '*'){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
@@ -781,13 +864,27 @@ shift_expression
 relational_expression
 	: shift_expression											{$$ = $1;}
 	| relational_expression '<' shift_expression				{
+																	if($1->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
+																	if($3->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
 																	pair<string,int> p2 = get_equivalent_pointer($3->node_data);
 																	if((p1.second || p2.second) && (!p1.second || !p2.second)){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																		exit(-1);
 																	}
-																	arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
+																	if(!(p1.second && p2.second))
+																		arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
+																	else{
+																		if($1->node_data != $3->node_data){
+																			printf("\e[1;35mWarning [line %d]:\e[0m Comparison of pointers or types '%s' and '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
+																		}
+																	}
 																	if($1->token == CONSTANT && $3->token == CONSTANT){
 																		evaluate_const($1, $3, *($2), "int");
 																		$$ = $1;
@@ -801,13 +898,27 @@ relational_expression
 																	$$->value_type = RVALUE;
 																}
 	| relational_expression '>' shift_expression				{
+																	if($1->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
+																	if($3->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
 																	pair<string,int> p2 = get_equivalent_pointer($3->node_data);
 																	if((p1.second || p2.second) && (!p1.second || !p2.second)){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																		exit(-1);
 																	}
-																	arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
+																	if(!(p1.second && p2.second))
+																		arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
+																	else{
+																		if($1->node_data != $3->node_data){
+																			printf("\e[1;35mWarning [line %d]:\e[0m Comparison of pointers or types '%s' and '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
+																		}
+																	}
 																	if($1->token == CONSTANT && $3->token == CONSTANT){
 																		evaluate_const($1, $3, *($2), "int");
 																		$$ = $1;
@@ -821,13 +932,27 @@ relational_expression
 																	$$->value_type = RVALUE;
 																}
 	| relational_expression LE_OP shift_expression				{
+																	if($1->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
+																	if($3->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
 																	pair<string,int> p2 = get_equivalent_pointer($3->node_data);
 																	if((p1.second || p2.second) && (!p1.second || !p2.second)){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																		exit(-1);
 																	}
-																	arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
+																	if(!(p1.second && p2.second))
+																		arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
+																	else{
+																		if($1->node_data != $3->node_data){
+																			printf("\e[1;35mWarning [line %d]:\e[0m Comparison of pointers or types '%s' and '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
+																		}
+																	}
 																	if($1->token == CONSTANT && $3->token == CONSTANT){
 																		evaluate_const($1, $3, LE_OP, "int");
 																		$$ = $1;
@@ -841,13 +966,27 @@ relational_expression
 																	$$->value_type = RVALUE;
 																}
 	| relational_expression GE_OP shift_expression				{
+																	if($1->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
+																	if($3->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
 																	pair<string,int> p2 = get_equivalent_pointer($3->node_data);
 																	if((p1.second || p2.second) && (!p1.second || !p2.second)){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																		exit(-1);
 																	}
-																	arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
+																	if(!(p1.second && p2.second))
+																		arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
+																	else{
+																		if($1->node_data != $3->node_data){
+																			printf("\e[1;35mWarning [line %d]:\e[0m Comparison of pointers or types '%s' and '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
+																		}
+																	}
 																	if($1->token == CONSTANT && $3->token == CONSTANT){
 																		evaluate_const($1, $3, GE_OP, "int");
 																		$$ = $1;
@@ -865,13 +1004,27 @@ relational_expression
 equality_expression
 	: relational_expression										{$$ = $1;}
 	| equality_expression EQ_OP relational_expression			{
+																	if($1->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
+																	if($3->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
 																	pair<string,int> p2 = get_equivalent_pointer($3->node_data);
 																	if((p1.second || p2.second) && (!p1.second || !p2.second)){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																		exit(-1);
 																	}
-																	arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
+																	if(!(p1.second && p2.second))
+																		arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
+																	else{
+																		if($1->node_data != $3->node_data){
+																			printf("\e[1;35mWarning [line %d]:\e[0m Comparison of pointers or types '%s' and '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
+																		}
+																	}
 																	if($1->token == CONSTANT && $3->token == CONSTANT){
 																		evaluate_const($1, $3, EQ_OP, "int");
 																		$$ = $1;
@@ -885,13 +1038,27 @@ equality_expression
 																	$$->value_type = RVALUE;
 																}
 	| equality_expression NE_OP relational_expression			{
+																	if($1->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
+																	if($3->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
 																	pair<string,int> p2 = get_equivalent_pointer($3->node_data);
 																	if((p1.second || p2.second) && (!p1.second || !p2.second)){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																		exit(-1);
 																	}
-																	arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
+																	if(!(p1.second && p2.second))
+																		arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
+																	else{
+																		if($1->node_data != $3->node_data){
+																			printf("\e[1;35mWarning [line %d]:\e[0m Comparison of pointers or types '%s' and '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
+																		}
+																	}
 																	if($1->token == CONSTANT && $3->token == CONSTANT){
 																		evaluate_const($1, $3, NE_OP, "int");
 																		$$ = $1;
@@ -909,6 +1076,14 @@ equality_expression
 and_expression
 	: equality_expression										{$$ = $1;}
 	| and_expression '&' equality_expression					{
+																	if($1->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
+																	if($3->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
 																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2));
 																	if(type.back() == '*'){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
@@ -935,6 +1110,14 @@ and_expression
 exclusive_or_expression
 	: and_expression											{$$ = $1;}
 	| exclusive_or_expression '^' and_expression				{
+																	if($1->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
+																	if($3->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
 																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2));
 																	if(type.back() == '*'){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
@@ -960,6 +1143,14 @@ exclusive_or_expression
 inclusive_or_expression
 	: exclusive_or_expression									{$$ = $1;}
 	| inclusive_or_expression '|' exclusive_or_expression		{
+																	if($1->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
+																	if($3->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
 																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2));
 																	if(type.back() == '*'){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
@@ -986,6 +1177,14 @@ inclusive_or_expression
 logical_and_expression
 	: inclusive_or_expression									{$$ = $1;}
 	| logical_and_expression AND_OP inclusive_or_expression		{
+																	if($1->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
+																	if($3->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
 																	pair<string,int> p2 = get_equivalent_pointer($3->node_data);
 																	if((p1.second || p2.second) && (!p1.second || !p2.second)){
@@ -1010,6 +1209,14 @@ logical_and_expression
 logical_or_expression
 	: logical_and_expression									{$$ = $1;}
 	| logical_or_expression OR_OP logical_and_expression		{
+																	if($1->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
+																	if($3->node_data == "void"){
+																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
 																	pair<string,int> p2 = get_equivalent_pointer($3->node_data);
 																	if((p1.second || p2.second) && (!p1.second || !p2.second)){
@@ -1034,6 +1241,10 @@ logical_or_expression
 conditional_expression
 	: logical_or_expression												{$$ = $1;}
 	| logical_or_expression '?' expression ':' conditional_expression	{
+																			if($1->node_data == "void"){
+																				printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																				exit(-1);
+																			}
 																			pair<string,int> p1 = get_equivalent_pointer($1->node_data);
 																			pair<string,int> p2 = get_equivalent_pointer($3->node_data);
 																			pair<string,int> p3 = get_equivalent_pointer($5->node_data);
@@ -1087,6 +1298,14 @@ conditional_expression
 assignment_expression
 	: conditional_expression										{$$ = $1;}
 	| unary_expression assignment_operator assignment_expression	{
+																			if($1->node_data == "void"){
+																				printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																				exit(-1);
+																			}
+																			if($3->node_data == "void"){
+																				printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																				exit(-1);
+																			}
 																			$$ = $2;
 																			add_node($$, $1);
 																			add_node($$, $3);
@@ -1307,14 +1526,18 @@ init_declarator
 																	}
 																	check_valid_array(data_type_);
 																	if($1->node_type == 1){
-																		st_entry* tmp = add_entry($1->node_name, data_type_,0,0,IS_FUNC);
+																		st_entry* tmp = add_entry($1->node_name, data_type_,0,offset.back(),IS_FUNC);
 																		tmp->type_name = IS_FUNC;
 																		check_param_list(func_params);
 																		vector<pair<string, string>> *temp = new vector<pair<string, string>>(func_params);
 																		tmp->arg_list = temp;
 																	}
 																	else{
-																		st_entry* tmp = add_entry($1->node_name, data_type_,0,0,IS_VAR);
+																		st_entry* tmp = add_entry($1->node_name, data_type_,0,offset.back(),IS_VAR);
+																		if(data_type_ == "void"){
+																			printf("\e[1;31mError [line %d]:\e[0m Variable or field '%s' declared void.\n", line, $1->node_name.c_str());
+																			exit(-1);
+																		}
 																		tmp->type_name = IS_VAR;
 																	}
 																	$$ = NULL; free($1);
@@ -1336,7 +1559,11 @@ init_declarator
 																			printf("\e[1;31mError [line %d]:\e[0m Redeclaration of '%s'.\n", line, $1->node_name.c_str());
 																			exit(-1);
 																		}
-																		st_entry* tmp = add_entry($1->name, data_type_, 0, 0, IS_VAR);/*change IS_VAR*/
+																		st_entry* tmp = add_entry($1->name, data_type_, 0, offset.back(), IS_VAR);/*change IS_VAR*/
+																		if(data_type_ == "void"){
+																			printf("\e[1;31mError [line %d]:\e[0m Variable or field '%s' declared void.\n", line, $1->node_name.c_str());
+																			exit(-1);
+																		}
 																		string type;
 																		string type1, type2;
 																		pair<string, int> p1 = get_equivalent_pointer(data_type_);
@@ -1528,11 +1755,11 @@ struct_declarator
 	;
 
 enum_specifier
-	: ENUM '{' enumerator_list '}'					{$$ = node_(0,"enum",-1);}
-	| ENUM IDENTIFIER '{' enumerator_list '}'		{char * ch = (char*)malloc((strlen($1)+strlen($2)+2)*sizeof(char));
+	: ENUM '{' enumerator_list '}'					{printf("Enumerators are not supported\n"); exit(-1); $$ = node_(0,"enum",-1);}
+	| ENUM IDENTIFIER '{' enumerator_list '}'		{printf("Enumerators are not supported\n"); exit(-1); char * ch = (char*)malloc((strlen($1)+strlen($2)+2)*sizeof(char));
 													strcpy(ch,$1), strcat(ch," "), strcat(ch,$2);
 													$$ = node_(0,ch,-1);}
-	| ENUM IDENTIFIER								{char * ch = (char*)malloc((strlen($1)+strlen($2)+2)*sizeof(char));
+	| ENUM IDENTIFIER								{printf("Enumerators are not supported\n"); exit(-1); char * ch = (char*)malloc((strlen($1)+strlen($2)+2)*sizeof(char));
 													strcpy(ch,$1), strcat(ch," "), strcat(ch,$2);
 													$$ = node_(0,ch,-1);}
 	;
@@ -1548,8 +1775,8 @@ enumerator
 	;
 
 type_qualifier
-	: CONST											{$$ = node_(0,$1,CONST);}
-	| VOLATILE										{$$ = node_(0,$1,VOLATILE);}
+	: CONST											{$$ = node_(0,$1,CONST);printf("type qualifiers are not supported\n"); exit(-1);}
+	| VOLATILE										{$$ = node_(0,$1,VOLATILE);printf("type qualifiers are not supported\n"); exit(-1);}
 	;
 
 declarator /**/
@@ -1686,6 +1913,7 @@ parameter_declaration
 															data_type_ = increase_array_level(data_type_);
 														}
 														func_params.push_back({data_type_,$2->node_name});
+														check_param_list(func_params);
 													}
 	| declaration_specifiers abstract_declarator	{
 														$1->node_data = get_eqtype($1->node_data);
@@ -1701,6 +1929,7 @@ parameter_declaration
 															data_type_ = increase_array_level(data_type_);
 														}
 														func_params.push_back({data_type_,""});
+														check_param_list(func_params);
 														//$$ = $1;
 														//if($2->node_data != ""){
 														//	$$->node_data += " "+ $2->node_data;
@@ -1886,8 +2115,9 @@ M1
 	: 	/* empty */	 											{	
 																	new_scope();
 																	check_param_list(func_params);
+																	offset.push_back(0);
 																	for(auto p: func_params){
-																		add_entry(p.second, p.first, 0, 0, IS_VAR);    //IS_VAR to be changed
+																		add_entry(p.second, p.first, 0, offset.back(), IS_VAR);    //IS_VAR to be changed
 																	}
 																	func_params.clear();
 																}
@@ -1896,6 +2126,9 @@ M1
 M2
 	: 	/* empty */												{
 																	scope_cleanup();
+																	long long temp = offset.back();
+																	offset.pop_back();
+																	offset.back()+=temp;
 																}
 	;
 
@@ -1998,6 +2231,7 @@ external_declaration
 
 function_definition
 	: declaration_specifiers M3 declarator {	
+												curr_width = 0;
 												$1->node_data = get_eqtype($1->node_data);
 												st_entry* tmp = lookup($3->node_name);
 												for(auto p : func_params){
@@ -2034,11 +2268,12 @@ function_definition
 														(*(tmp->arg_list))[i].second = func_params[i].second;
 													}
 													tmp->is_init = 1;
+													tmp->offset = offset.back();
 													next_name = $1->node_name;
 												}
 												else{
 													check_param_list(func_params);
-													st_entry* func_entry = add_entry($3->node_name, get_eqtype($1->node_data), 0, 0, IS_FUNC);
+													st_entry* func_entry = add_entry($3->node_name, get_eqtype($1->node_data), 0, offset.back(), IS_FUNC);
 													if(!func_params.empty() && func_params[0].first == ""){
 														printf("\e[1;35mWarning [line %d]:\e[0m Function parameter type defaults to \"int\"\n", line);
 													}
@@ -2060,10 +2295,11 @@ function_definition
 											$$ = node_(2,"fun_def",-1); $$->v[0] = $3; $$->v[1] = $5;
 											st_entry* tmp = lookup($3->node_name); 
 											tmp->sym_table = curr->v.back()->val;
+											tmp->size = curr_width;
 										}
 
 	| declarator 						{
-
+											curr_width = 0;
 											for(auto p : func_params){
 												if(p.second == ""){
 													printf("\e[1;31mError [line %d]:\e[0m Parameter name omitted\n", line);
@@ -2095,11 +2331,12 @@ function_definition
 													(*(tmp->arg_list))[i].second = func_params[i].second;
 												}
 												tmp->is_init = 1;
+												tmp->offset = offset.back();
 												next_name = $1->node_name;
 											}
 											else{
 												check_param_list(func_params);
-												st_entry* func_entry = add_entry($1->node_name, "int", 0, 0, IS_FUNC);
+												st_entry* func_entry = add_entry($1->node_name, "int", 0, offset.back(), IS_FUNC);
 												printf("\e[1;35mWarning [line %d]:\e[0m Function return type defaults to \"int\"\n", line);
 												if(!func_params.empty() && func_params[0].first == ""){
 													printf("\e[1;35mWarning [line %d]:\e[0m Function parameter type defaults to \"int\"\n", line);
@@ -2121,6 +2358,7 @@ function_definition
 											$$ = node_(2,"fun_def",-1); $$->v[0] = $1; $$->v[1] = $3; 
 											st_entry* tmp = lookup($1->node_name); 
 											tmp->sym_table = curr->v.back()->val;
+											tmp->size = curr_width;
 										}
 	| declaration_specifiers M3 declarator declaration_list compound_statement		{$$ = node_(1,$3->name,-1); $$->v[0] = $5;/*not used*/}
 	| declarator declaration_list compound_statement							{$$ = node_(1,$1->name,-1); $$->v[0] = $3;/*not used*/}

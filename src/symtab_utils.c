@@ -9,6 +9,9 @@ table_tree* st_root;
 table_tree* curr;
 unordered_map<string, string> equiv_types;
 
+vector<long> offset;
+int curr_width;
+
 void init_equiv_types(){
 	equiv_types.insert({"int","int"});
 	equiv_types.insert({"char", "char"});
@@ -197,6 +200,10 @@ string get_eqtype(string type, int is_only_type){
 void check_param_list(vector<pair<string, string>> v){
 	map<string, int> m;
 	for(auto p: v){
+		if(p.first == "void"){
+			printf("\e[1;31mError [line %d]:\e[0m Parameter '%s' has incomplete type.\n", line, p.second.c_str());
+			exit(-1);
+		}
 		if(p.second=="")
 			continue;
 		if(m.find(p.second)!=m.end()){
@@ -211,6 +218,10 @@ void check_param_list(vector<pair<string, string>> v){
 void check_mem_list(vector<pair<string, string>> v, string s){
 	map<string, int> m;
 	for(auto p: v){
+		if(p.first == "void"){
+			printf("\e[1;31mError [line %d]:\e[0m Parameter '%s' has incomplete type in '%s'.\n", line, p.second.c_str(), s.c_str());
+			exit(-1);
+		}
 		if(p.second=="")
 			continue;
 		if(m.find(p.second)!=m.end()){
@@ -268,6 +279,8 @@ void struct_init_check(string type){
 }
 
 void init_symtab(){
+	offset.push_back(0);
+	curr_width = 0;
 	table_scope.push_back(&global);
 	type_scope.push_back(&types_table);
 	st_root = new table_tree(&global, &types_table);
@@ -279,7 +292,12 @@ void init_symtab(){
 st_entry* add_entry(string key, string type, unsigned long size, long offset, enum sym_type type_name){
 	if(type_name != IS_FUNC)
 		size = get_size(type);
+	else
+		size = 0;
 	st_entry * new_entry = new st_entry(type, size, offset, type_name);
+	if(type_name != IS_FUNC)
+		::offset.back() += size;
+	curr_width += size;
 	symtab * temp = table_scope.back();
 	temp->insert({key, new_entry});
 	return new_entry;
