@@ -1,4 +1,5 @@
 #include "3AC.h"
+#include "parse_utils.h"
 
 vector<quad> code_array;
 int nextquad = 0;
@@ -20,24 +21,29 @@ qi getNewTemp(string type){
     return q;
 }
 
-void backpatch(vector<int> list, int addr){
+void backpatch(vector<int>& list, int addr){
     for(auto i : list) 
         code_array[i].goto_addr = addr;
+    list.clear();
 }
 
-/*
-// For debugging purposes
-// Have to rewrite
-void print_quad(quad q){
-    cout<<q.op<<' '<<q.op1.first<<' '<<q.op2.first<<' '<<q.res.first<<' '<<q.goto_addr;
-}
+qi emitConstant(node* tmp){
+    qi temp = getNewTemp(tmp->node_data);
+    qi temp1 = {"", NULL};
 
-// For debugging purposes
-// Have to rewrite
-void print_code(){
-    for(auto i: code_array){
-        print_quad(i);
-        cout<<endl;
+    switch(tmp->val_dt){
+        case IS_INT:        temp1.first = to_string(tmp->val.int_const); break;
+        case IS_LONG:       temp1.first = to_string(tmp->val.long_const); break;
+        case IS_SHORT:      temp1.first = to_string(tmp->val.short_const); break;
+        case IS_U_INT:      temp1.first = to_string(tmp->val.u_int_const); break;
+        case IS_U_LONG:     temp1.first = to_string(tmp->val.u_long_const); break;
+        case IS_U_SHORT:    temp1.first = to_string(tmp->val.u_short_const); break;
+        case IS_FLOAT:      temp1.first = to_string(tmp->val.float_const); break;
+        case IS_DOUBLE:     temp1.first = to_string(tmp->val.double_const); break;
+        case IS_LONG_DOUBLE: temp1.first = to_string(tmp->val.long_double_const); break;
+        case IS_CHAR:       temp1.first = "'" + to_string(tmp->val.char_const) + "'"; break;
     }
+
+    emit("=", temp1, {"", NULL}, temp);
+    return temp;
 }
-*/

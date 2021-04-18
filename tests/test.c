@@ -1,7 +1,8 @@
-// #include<stdio.h>
+/* // #include<stdio.h> */
 int main(){
-	float x = 1;
-	int a;
-	double* b;
-	int z = sizeof (x?b:a);
+	
+	int a,b,c, big;
+	// a= 1, b=2, c=3;
+	big = a>b ?  a>c?a:c : b>c?b:c ;
+	return big;
 }
