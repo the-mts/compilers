@@ -2,6 +2,7 @@
 #include <iostream>
 #include "y.tab.h"
 #include "parse_utils.h"
+#include "3AC.h"
 using namespace std;
 extern FILE* yyin;
 extern char yytext[];
@@ -12,6 +13,29 @@ FILE* out_file;
 int typ_file = 0;
 int scope_num = 0;
 string curr_fun = "";
+
+// For debugging purposes
+// Have to rewrite
+void print_quad(quad q){
+    cout<<q.op<<' '<<(q.op1.first!=""? q.op1.first: "-")<<' '<<(q.op2.first!=""? q.op2.first: "-")<<' '<<(q.res.first!=""? q.res.first: "-")<<' '<<(q.goto_addr);
+}
+
+// For debugging purposes
+// Have to rewrite
+void print_code(){
+	int j=0;
+    for(auto i: code_array){
+		cout<<j<<"\t\t";
+        if(i.op.find("unary")!= string::npos) cout<<i.res.first<< " = " << i.op<< ' '<<i.op1.first;
+		else if(i.op == "IF_TRUE_GOTO") cout<<"IF "<< i.op1.first << " IS TRUE GOTO " << i.goto_addr;
+		else if(i.op == "GOTO") cout<<"GOTO " << i.goto_addr;
+		else if(i.op1.first!="" && i.op2.first!="") cout<<i.res.first<< " = " << i.op1.first <<' '<< i.op<<' ' << i.op2.first;
+		else if(i.op2.first == "" && i.op[0]=='=') cout<<i.res.first<< ' '<<i.op << ' '<<i.op1.first;
+		else if(i.op2.first == "") cout<<i.res.first<< " = "<< i.op << ' '<<i.op1.first;
+        cout<<endl;
+		j++;
+    }
+}
 
 void print_table(typtab* table){
 	string name = "";
@@ -204,5 +228,9 @@ int main(int argc, char const* argv[]){
 		curr_fun = "global";
 		dfs3(st_root);
 	}
+
+	freopen("bin/tac.txt", "w", stdout);
+	print_code();
+
 	return 0;
 }

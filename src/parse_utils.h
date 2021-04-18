@@ -1,9 +1,14 @@
+#ifndef PARSE_UTILS_H
+#define PARSE_UTILS_H
+
 #include<string>
 #include<vector>
 #include "symtab.h"
-#include "3AC.h"
+// #include "3AC.h"
 
 using namespace std;
+
+typedef pair<string, st_entry*> qi; // This is needed for 3ac
 
 typedef struct node{
 	vector<node*> v;
@@ -30,3 +35,5 @@ node* node_(int x, char * s, int token);
 void add_node(node* par, node* add);
 void push_front(node* par, node* add);
 void evaluate_const(node* par, node* child, int op, string type);
+
+#endif

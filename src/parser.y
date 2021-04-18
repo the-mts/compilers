@@ -2,7 +2,7 @@
 	#include<string.h>
 	#include<stdlib.h>
 	#include "parse_utils.h"
-	// #include "3AC.h"
+	#include "3AC.h"
 	using namespace std;
 	struct node* root;
 	void yyerror(const char*s);
@@ -125,6 +125,7 @@ primary_expression
 
 	| '(' expression ')'										{
 																	$$ = $2;
+																	backpatch($$->nextlist, nextquad);
 																}
 	;
 
@@ -156,12 +157,14 @@ postfix_expression
 																	$$->node_data = reduce_pointer_level($1->node_data);
 
 																	//////////////// 3AC ////////////////
+																	if($3->token == CONSTANT){
+																		$3->place = emitConstant($3);
+																	}
 																	$$->place = getNewTemp($$->node_data);
-																	// st_entry* new_entry = add_entry($$->place.first, $$->node_data, 0, offset.back(), IS_TEMP);
-																	// $$->place.second = new_entry;
+																	backpatch($3->nextlist, nextquad);
 																	int x = emit("[]", $1->place, $3->place, $$->place);
-																	backpatch($3->truelist, x);		// Have to check
-																	backpatch($3->falselist, x);	// check
+																	// backpatch($3->truelist, x);		// Have to check
+																	// backpatch($3->falselist, x);	// check
 																	/////////////////////////////////////
 																}
 	| postfix_expression '(' ')'								{
@@ -459,7 +462,7 @@ unary_expression
 
 																			//////////////// 3AC ////////////////
 																			$$->place = getNewTemp($$->node_data);
-																			int x = emit("unary" + (const char*) $1, $2->place, {"", NULL}, $$->place);
+																			int x = emit("unary" + string((const char*)$1), $2->place, {"", NULL}, $$->place);
 																			/////////////////////////////////////																			
 																		}
 																		break;
@@ -664,8 +667,8 @@ cast_expression
 
 																	//////////////// 3AC ////////////////
 																	$$->place = getNewTemp($$->node_data);
-																	string operator = p1.first + "to" + p2.first; // Modify
-																	int x = emit(operator, $4->place, {"", NULL}, $$->place);
+																	string op2 = "("+p2.first + "-to-" + p1.first+")"; // Modify
+																	int x = emit(op2, $4->place, {"", NULL}, $$->place);
 																	/////////////////////////////////////
 																}
 	;
@@ -713,7 +716,7 @@ multiplicative_expression
 																				int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
 																				emit("*real", tmp, $3->place, $$->place);
 																			}
-																			else ($3->node_data.find("int")!=string::npos){
+																			else if ($3->node_data.find("int")!=string::npos){
 																				auto tmp = getNewTemp(type);
 																				int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
 																				emit("*real", $1->place, tmp, $$->place);
@@ -768,7 +771,7 @@ multiplicative_expression
 																				int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
 																				emit("/real", tmp, $3->place, $$->place);
 																			}
-																			else ($3->node_data.find("int")!=string::npos){
+																			else if ($3->node_data.find("int")!=string::npos){
 																				auto tmp = getNewTemp(type);
 																				int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
 																				emit("/real", $1->place, tmp, $$->place);
@@ -866,7 +869,7 @@ additive_expression
 																				int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
 																				emit("+real", tmp, $3->place, $$->place);
 																			}
-																			else ($3->node_data.find("int")!=string::npos){
+																			else if ($3->node_data.find("int")!=string::npos){
 																				auto tmp = getNewTemp(type);
 																				int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
 																				emit("+real", $1->place, tmp, $$->place);
@@ -917,7 +920,7 @@ additive_expression
 																				int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
 																				emit("-real", tmp, $3->place, $$->place);
 																			}
-																			else ($3->node_data.find("int")!=string::npos){
+																			else if ($3->node_data.find("int")!=string::npos){
 																				auto tmp = getNewTemp(type);
 																				int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
 																				emit("-real", $1->place, tmp, $$->place);
@@ -1132,21 +1135,21 @@ relational_expression
 
 																		$$->place = getNewTemp("int");
 																		if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.find("*")!=string::npos){
-																			int x = emit("<int", $1->place, $3->place, $$->place);
+																			int x = emit(">int", $1->place, $3->place, $$->place);
 																		}
 																		else {
 																			if($1->node_data.find("int")!=string::npos){
 																				auto tmp = getNewTemp(type);
 																				int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
-																				emit("<real", tmp, $3->place, $$->place);
+																				emit(">real", tmp, $3->place, $$->place);
 																			}
 																			else if ($3->node_data.find("int")!=string::npos){
 																				auto tmp = getNewTemp(type);
 																				int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
-																				emit("<real", $1->place, tmp, $$->place);
+																				emit(">real", $1->place, tmp, $$->place);
 																			}
 																			else {
-																				emit("<real", $1->place, $3->place, $$->place);
+																				emit(">real", $1->place, $3->place, $$->place);
 																			}
 																		}
 																		/////////////////////////////////////
@@ -1331,21 +1334,21 @@ equality_expression
 
 																		$$->place = getNewTemp("int");
 																		if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.find("*")!=string::npos){
-																			int x = emit(">=int", $1->place, $3->place, $$->place);
+																			int x = emit("==int", $1->place, $3->place, $$->place);
 																		}
 																		else {
 																			if($1->node_data.find("int")!=string::npos){
 																				auto tmp = getNewTemp(type);
 																				int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
-																				emit(">=real", tmp, $3->place, $$->place);
+																				emit("==real", tmp, $3->place, $$->place);
 																			}
 																			else if ($3->node_data.find("int")!=string::npos){
 																				auto tmp = getNewTemp(type);
 																				int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
-																				emit(">=real", $1->place, tmp, $$->place);
+																				emit("==real", $1->place, tmp, $$->place);
 																			}
 																			else {
-																				emit(">=real", $1->place, $3->place, $$->place);
+																				emit("==real", $1->place, $3->place, $$->place);
 																			}
 																		}
 																		/////////////////////////////////////
@@ -1396,21 +1399,21 @@ equality_expression
 
 																		$$->place = getNewTemp("int");
 																		if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.find("*")!=string::npos){
-																			int x = emit(">=int", $1->place, $3->place, $$->place);
+																			int x = emit("!=int", $1->place, $3->place, $$->place);
 																		}
 																		else {
 																			if($1->node_data.find("int")!=string::npos){
 																				auto tmp = getNewTemp(type);
 																				int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
-																				emit(">=real", tmp, $3->place, $$->place);
+																				emit("!=real", tmp, $3->place, $$->place);
 																			}
 																			else if ($3->node_data.find("int")!=string::npos){
 																				auto tmp = getNewTemp(type);
 																				int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
-																				emit(">=real", $1->place, tmp, $$->place);
+																				emit("!=real", $1->place, tmp, $$->place);
 																			}
 																			else {
-																				emit(">=real", $1->place, $3->place, $$->place);
+																				emit("!=real", $1->place, $3->place, $$->place);
 																			}
 																		}
 																		/////////////////////////////////////
@@ -1560,8 +1563,11 @@ inclusive_or_expression
 logical_and_expression
 	: inclusive_or_expression									{$$ = $1;}
 	| logical_and_expression AND_OP 							{
-																	if ($1->truelist.empty()){
-																		int x = emit("IF_TRUE_GOTO", $1->place, {"", NULL}, {"", NULL}, nextquad);
+																	if ($1->truelist.empty() && $1->falselist.empty()){
+																	    if($1->token == CONSTANT){
+																			$1->place = emitConstant($1);
+																		}
+																		int x = emit("IF_TRUE_GOTO", $1->place, {"", NULL}, {"", NULL}, nextquad+2);
 																		int y = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
 																		$1->falselist.push_back(y);
 																	}
@@ -1587,20 +1593,13 @@ logical_and_expression
 																		exit(-1);
 																	}
 																	arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
-																	if($1->token == CONSTANT && $4->token == CONSTANT){
-																		evaluate_const($1, $4, AND_OP, "int");
-																		$$ = $1;
-																	}
-																	else{
-																		$$ = node_(2,$2,-1);
+																																			$$ = node_(2,$2,-1);
 																		$$->v[0] = $1;
 																		$$->v[1] = $4;
 
 																		//////////////// 3AC ////////////////
-																		if($1->token == CONSTANT){
-																			$1->place = emitConstant($1);
-																		}
-																		else if($4->token == CONSTANT){
+																		
+																		 if($4->token == CONSTANT){
 																			$4->place = emitConstant($4);
 																		}
 
@@ -1614,7 +1613,7 @@ logical_and_expression
 																		$$->falselist.insert($$->falselist.end(), $1->falselist.begin(), $1->falselist.end());
 
 																		/////////////////////////////////////
-																	}
+																	
 																	$$->node_data = "int";
 																	$$->value_type = RVALUE;
 																}
@@ -1623,9 +1622,12 @@ logical_and_expression
 logical_or_expression
 	: logical_and_expression									{$$ = $1;}
 	| logical_or_expression OR_OP								{
-																	if ($1->falselist.empty()){
+																	if ($1->falselist.empty() && $1->truelist.empty()){
+																		if($1->token == CONSTANT){
+																			$1->place = emitConstant($1);
+																		}
 																		int x = emit("IF_TRUE_GOTO", $1->place, {"", NULL}, {"", NULL});
-																		int y = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL}, nextquad);
+																		//int y = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL}, nextquad+1);
 																		$1->truelist.push_back(x);
 																	}
 																	else {
@@ -1651,20 +1653,13 @@ logical_or_expression
 																		exit(-1);
 																	}
 																	arithmetic_type_upgrade(p1.first,p2.first,string((const char*)$2));
-																	if($1->token == CONSTANT && $4->token == CONSTANT){
-																		evaluate_const($1, $4, OR_OP, "int");
-																		$$ = $1;
-																	}
-																	else{
-																		$$ = node_(2,$2,-1);
+																																			$$ = node_(2,$2,-1);
 																		$$->v[0] = $1;
 																		$$->v[1] = $4;
 
 																		//////////////// 3AC ////////////////
-																		if($1->token == CONSTANT){
-																			$1->place = emitConstant($1);
-																		}
-																		else if($4->token == CONSTANT){
+																		
+																		if($4->token == CONSTANT){
 																			$4->place = emitConstant($4);
 																		}
 
@@ -1682,7 +1677,7 @@ logical_or_expression
 																		$$->truelist.insert($$->truelist.end(), $4->truelist.begin(), $4->truelist.end());
 
 																		/////////////////////////////////////
-																	}
+																	
 																	$$->node_data = "int";
 																	$$->value_type = RVALUE;
 																}
@@ -1692,10 +1687,14 @@ M7
 	: /* empty */ 										{	
 															//////////////// 3AC ////////////////
 															node* tmp = $<nodes>-1;
+															if(tmp->token == CONSTANT){
+																tmp->place = emitConstant(tmp);
+															}
 															int x = emit("=", tmp->place, {"", NULL}, {"", NULL}); /////// See this again after assignment
 															int y = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
 															tmp->nextlist.push_back(y);
 															//backpatch($-4->falselist, nextquad);
+															//backpatch($<nodes>-4->falselist, nextquad);
 															$$ = x;
 															/////////////////////////////////////
 														}
@@ -1705,9 +1704,9 @@ conditional_expression
 															if ($1->truelist.empty()) $$ = $1;
 															else {
 																$$->place = getNewTemp("int");
-																int x = emit("=", emitConstant(1), {"", NULL}, $$->place);
+																int x = emit("=", {to_string(1), NULL}, {"", NULL}, $$->place);
 																emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL}, nextquad+2);
-																int y = emit("=", emitConstant(0), {"", NULL}, $$->place);
+																int y = emit("=", {to_string(0), NULL}, {"", NULL}, $$->place);
 																backpatch($1->truelist, x);
 																backpatch($1->falselist, y);
 															}
@@ -1715,10 +1714,14 @@ conditional_expression
 														}
 	| logical_or_expression '?'	 						{
 															//////////////// 3AC ////////////////
-															//int x = emit("IF_TRUE_GOTO", $1->place, {"", NULL}, {"", NULL});
-															//int y = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
-															//$1->truelist.push_back(x);
-															//$1->falselist.push_back(y);
+															if($1->token == CONSTANT){
+																$1->place = emitConstant($1);
+																// printf("Ternary condition constant. %s %d\n", $1->place.first.c_str(), $1->val.int_const);
+															}
+															int x = emit("IF_TRUE_GOTO", $1->place, {"", NULL}, {"", NULL});
+															int y = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
+															$1->truelist.push_back(x);
+															$1->falselist.push_back(y);
 															backpatch($1->truelist, nextquad);
 															/////////////////////////////////////
 														}
@@ -1760,6 +1763,7 @@ conditional_expression
 																	// 	$$->value_type = RVALUE;
 																	// }
 																	// else{ */
+																	
 																	$$ = node_(3,"ternary",-1);
 																	$$->v[0] = $1;
 																	$$->v[1] = $4;
@@ -1776,9 +1780,14 @@ conditional_expression
 																	// }
 
 																	//////////////// 3AC ////////////////
+																	if($7->token == CONSTANT){
+																		$7->place = emitConstant($7);
+																	}
 																	$$->place = getNewTemp($$->node_data);
+																	emit("=", $7->place, {"", NULL}, $$->place);
 																	code_array[$6].res = $$->place;
-																	$$->nextlist.insert($$->nextlist.end(), $4->nextlist.begin(), $4->nextlist.end());
+																	// $$->nextlist.insert($$->nextlist.end(), $4->nextlist.begin(), $4->nextlist.end());
+																	backpatch($4->nextlist, nextquad);
 																	$$->nextlist.insert($$->nextlist.end(), $7->nextlist.begin(), $7->nextlist.end());
 																	/////////////////////////////////////
 																}
@@ -1810,7 +1819,7 @@ assignment_expression
 																			tt_entry* entry1 = type_lookup(type1);
 																			tt_entry* entry2 = type_lookup(type2);
 																			if(entry1 && entry2){
-																				if(entry1 != entry2){
+																				if(entry1 != entry2 || $2->name[0] != '='){
 																					printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2->name);
 																					exit(-1);
 																				}
@@ -1824,6 +1833,7 @@ assignment_expression
 																				printf("\e[1;31mError [line %d]:\e[0m Array variables cannot be reassigned.\n",line);
 																				exit(-1);
 																			}
+																			string op;
 																			switch($2->token){
 																			case '=':
 																				if(p1.second && p2.second){
@@ -1860,6 +1870,17 @@ assignment_expression
 																						printf("\e[1;35mWarning [line %d]:\e[0m Assignment is without a cast for operator '%s'.\n",line, $2->name);
 																					}
 																				}*/
+																				
+																				//////////////// 3AC ////////////////
+																				backpatch($3->nextlist, nextquad); // CHECK THIS!!!!!
+																				if($3->token == CONSTANT){
+																					$3->place = emitConstant($3);
+																				}
+																				
+																				emit("=", $3->place, {"", NULL}, $1->place);
+																				$$->place = $1->place;
+																				$$->nextlist.insert($$->nextlist.end(), $3->nextlist.begin(), $3->nextlist.end());
+																				/////////////////////////////////////
 																			break;
 																			case MUL_ASSIGN:
 																			case DIV_ASSIGN:
@@ -1868,10 +1889,67 @@ assignment_expression
 																					printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2->name);
 																					exit(-1);
 																				}
+																				//////////////// 3AC ////////////////
+																				if($3->token == CONSTANT){
+																					$3->place = emitConstant($3);
+																				}
+
+																				$$->place = $1->place;
+																				op = "" + $2->name[0];
+																				if(type.find("int")!=string::npos || type.find("char")!=string::npos){
+																					int x = emit(op+"int", $1->place, $3->place, $1->place);
+																				}
+																				else {
+																					if($1->node_data.find("int")!=string::npos){
+																						auto tmp = getNewTemp(type);
+																						auto tmp2 = getNewTemp(type);
+																						int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
+																						emit(op+"real", tmp, $3->place, tmp2);
+																						emit("=", tmp2, {"", NULL}, $1->place);
+																					}
+																					else if ($3->node_data.find("int")!=string::npos){
+																						auto tmp = getNewTemp(type);
+																						int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
+																						emit(op+"real", $1->place, tmp, $1->place);
+																					}
+																					else {
+																						emit(op+"real", $1->place, $3->place, $1->place);
+																					}
+																				}
+																				/////////////////////////////////////
 																			break;
 																			case ADD_ASSIGN:
 																			case SUB_ASSIGN:
 																				type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2->name));
+																				
+																				//////////////// 3AC ////////////////
+																				if($3->token == CONSTANT){
+																					$3->place = emitConstant($3);
+																				}
+
+																				$$->place = $1->place;
+																				op = "" + $2->name[0];
+																				if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.find("*")!=string::npos){
+																					int x = emit(op+"int", $1->place, $3->place, $1->place);
+																				}
+																				else {
+																					if($1->node_data.find("int")!=string::npos){
+																						auto tmp = getNewTemp(type);
+																						auto tmp2 = getNewTemp(type);
+																						int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
+																						emit(op+"real", tmp, $3->place, tmp2);
+																						emit("=", tmp2, {"", NULL}, $1->place);
+																					}
+																					else if ($3->node_data.find("int")!=string::npos){
+																						auto tmp = getNewTemp(type);
+																						int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
+																						emit(op+"real", $1->place, tmp, $1->place);
+																					}
+																					else {
+																						emit(op+"real", $1->place, $3->place, $1->place);
+																					}
+																				}
+																				/////////////////////////////////////
 																			break;
 																			case MOD_ASSIGN:
 																			case LEFT_ASSIGN:
@@ -1888,6 +1966,17 @@ assignment_expression
 																					printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2->name);
 																					exit(-1);
 																				}
+
+																				//////////////// 3AC ////////////////
+																				else if($3->token == CONSTANT){
+																					$3->place = emitConstant($3);
+																				}
+
+																				$$->place = $1->place;
+																				op = string((const char*) $2->name);
+																				op.pop_back();
+																				int x = emit(op, $1->place, $3->place, $1->place);
+																				/////////////////////////////////////
 																			}
 																		}
 																		$$->node_data = $1->node_data;
@@ -1911,16 +2000,26 @@ assignment_operator
 
 expression
 	: assignment_expression										{$$ = $1;}
-	| expression ',' assignment_expression						{
-																	$$ = node_(2,$2,-1);
-																	$$->v[0] = $1;
-																	$$->v[1] = $3;
-																	$$->node_data = $3->node_data;
-																	$$->value_type = $3->value_type;
-																	$$->val = $3->val;
-																	$$->val_dt = $3->val_dt;
-																	$$->token = $3->token;
-																}
+	| expression ',' 							{
+													//////////////// 3AC ////////////////
+													backpatch($1->nextlist, nextquad);
+													/////////////////////////////////////
+												}
+	assignment_expression						{
+													$$ = node_(2,$2,-1);
+													$$->v[0] = $1;
+													$$->v[1] = $4;
+													$$->node_data = $4->node_data;
+													$$->value_type = $4->value_type;
+													$$->val = $4->val;
+													$$->val_dt = $4->val_dt;
+													$$->token = $4->token;
+
+													//////////////// 3AC ////////////////
+													$$->nextlist = $4->nextlist;
+													$$->place = $4->place;
+													/////////////////////////////////////
+												}
 	;
 
 constant_expression
@@ -1979,32 +2078,38 @@ declaration_specifiers
 	;
 
 init_declarator_list
-	: init_declarator											{if($1){$$ = node_(1,"init_list",-1); $$->v[0] = $1;}}
-	| init_declarator_list ',' init_declarator					{if($3 == NULL) $$ = $1;
-																else if($1 == NULL){
-																	$1 = node_(1,"init_list",-1);
-																	$1->v[0] = $3;
-																	$$ = $1;
-																}
-																else{
-																	add_node($1,$3);
-																	$$ = $1;
-																}}
+	: init_declarator											{if($1){$$ = node_(1,"init_list",-1); $$->v[0] = $1; $$->nextlist = $1->nextlist;}}
+	| init_declarator_list ',' 					{
+													//////////////// 3AC ////////////////
+													// printf("%d\n", $1->nextlist.size());
+													if ($1) backpatch($1->nextlist, nextquad);
+													/////////////////////////////////////
+												}
+	init_declarator								{
+													if($4 == NULL) $$ = $1;
+													else if($1 == NULL){
+														$1 = node_(1,"init_list",-1);
+														$1->v[0] = $4;
+														$$ = $1;
+													}
+													else{
+														add_node($1,$4);
+														$$ = $1;
+													}
+
+													//////////////// 3AC ////////////////
+													if ($$ && $4){
+														$$->nextlist = $4->nextlist;
+														$$->place = $4->place; // IS THIS NEEDED?
+													}
+													/////////////////////////////////////
+												}
 	;
 
 init_declarator
 	: declarator												{
 																	string data_type_ = data_type;
-																	// string cmp;
-																	// if($1->sz)
-																	// 	cmp = $1->v[$1->sz-1]->name;
-																	// else
-																	// 	cmp = "";
-																	// if( cmp == "pointer"){
-																	// 	data_type_+=" ";
-																	// 	for(int i = 0; i < $1->v[$1->sz-1]->node_type; i++)
-																	// 		data_type_+="*";
-																	// }
+																	
 																	if($1->node_data!=""){
 																		data_type_ += " ";
 																		data_type_ += $1->node_data;
@@ -2049,6 +2154,7 @@ init_declarator
 																			exit(-1);
 																		}
 																		st_entry* tmp = add_entry($1->name, data_type_, 0, offset.back(), IS_VAR);/*change IS_VAR*/
+																		$1->place = {$1->node_name, tmp};
 																		if(data_type_ == "void"){
 																			printf("\e[1;31mError [line %d]:\e[0m Variable or field '%s' declared void.\n", line, $1->node_name.c_str());
 																			exit(-1);
@@ -2096,6 +2202,16 @@ init_declarator
 																		}
 																		$$->node_data = data_type_;
 																		$$->value_type = RVALUE;
+
+																		//////////////// 3AC ////////////////
+																		if($3->token == CONSTANT){
+																			$3->place = emitConstant($3);
+																		}
+																		
+																		int x = emit("=", $3->place, {"", NULL}, $1->place);
+																		$$->place = $1->place;
+																		$$->nextlist.insert($$->nextlist.end(), $3->nextlist.begin(), $3->nextlist.end());
+																		/////////////////////////////////////
 																	}
 
 																}
@@ -2557,8 +2673,16 @@ direct_abstract_declarator
 
 initializer
 	: assignment_expression										{$$ = $1;}
-/*	| '{' initializer_list '}'									{$$ = $2;}
-	| '{' initializer_list ',' '}'								{$$ = $2;}*//*Not Supported*/
+	| '{' initializer_list '}'									{
+																	$$ = $2;
+																	printf("\e[1;31mError [line %d]:\e[0m Array initialization not supported.\n", line);
+																	exit(-1);
+																}
+	| '{' initializer_list ',' '}'								{
+																	$$ = $2;
+																	printf("\e[1;31mError [line %d]:\e[0m Array initialization not supported.\n", line);
+																	exit(-1);
+																}
 	;
 
 initializer_list

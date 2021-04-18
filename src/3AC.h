@@ -1,10 +1,13 @@
+#ifndef THREE_AC_H
+#define THREE_AC_H
+
 #include<vector>
 #include<string>
 #include "symtab.h"
+#include "parse_utils.h"
+
 
 using namespace std;
-
-typedef pair<string, st_entry*> qi;
 
 typedef struct quad {
     string op;
@@ -25,5 +28,8 @@ extern vector<quad> code_array;
 extern int nextquad;
 
 extern int emit(string op, qi op1, qi op2, qi res, int goto_addr = -1);
-extern void backpatch(vector<int> list, int addr);
+extern void backpatch(vector<int>& list, int addr);
 extern qi getNewTemp(string type);
+extern qi emitConstant(node* tmp);
+
+#endif
