@@ -1,14 +1,14 @@
-# CS335 Parser
+# CS335 Milestone 3
 
-This is a standalone parser for our CS335 Compilers project. It parses a given program (with the source language C) and generates a DOT file of the Abstract Syntax Tree, which can be viewed using a graph visualizer like Graphviz.
+This is a standalone parser and semantic analyser for our CS335 Compilers project. It parses a given program (with the source language C) and generates a DOT file of the Abstract Syntax Tree. It also dumps the symbol table and can also dump the types table if the option is enabled.
 
 ## Description
 
-The repository develops over the previously built lexer. Additional files for parser have been created. The file `parser.y` in `src` directory is a yacc file that specifies the grammar and actions that construct the AST. The directory also contains `parse_utils.c` and `parse_utils.h` that provide basic utility functions to create and modify the tree nodes. The file `main.c` contains the driver code that takes the input file, calls the parser over it, prints the tree in the DOT specification format, and finally stores it in a DOT file.
+The repository develops over the previously built parser. Additional files required for semantic analysis have been created. The file `parser.y` in `src` directory is a yacc file that specifies the grammar and actions that construct the AST. The directory also contains `symtab_utils.c` and `symtab.h` that provide basic utility functions to create and modify the symbol table and types table. The file `main.c` contains the driver code that takes the input file, calls the parser over it and stores the generated AST in a `DOT` file. It also dumps the symbol table in the file `symtab.csv`. The output consists of four columns - the name of the variable, its size, its offset in its scope, and its type. (Note that for now, there is no significance to the size of functions and offsets for global symbols. In further milestones, we will refine the use and implementation of offsets.) Each scope/function is demarcated into separate sections, named by the function name, with the scopes inside the function numbered from 1 in the depth-first order as they appear in the input program. If types table dump is enabled, the output is dumped in the file `typtab.csv` in the `bin` directory.
 
 The makefile will generate `y.tab.c` parser file, the corresponding header file, and the `lex.yy.c` scanner file. It will then compile all the source files to generate the `parser` binary in the `bin` directory. Our sample testcases are given in the directory `tests` with the names as `test<num>.c` (where `num` is from 1 to 5).
 
-## Steps to build and run
+## Steps to Build and Run
 
 Go to the main directory. To build the binary, simply run the __make__ command.
 
@@ -21,12 +21,7 @@ To run a given test program, run the binary file, with the test file path specif
 ```console
 $ ./bin/parser ./tests/testfile.c -o dotname.dot
 ```
-
-To view the entire parsing process, add the `-g` option as follows. This will dump the parse log in `STDERR`.
-
-```console
-$ ./bin/parser ./tests/testfile.c -o dotname.dot -g
-```
+This will generate the `DOT` file with the given name. Also, this will dump the symbol table for the program in the file `./bin/symtab.csv`.
 
 To visualize the AST graph, use the `dot` package and give the generated `DOT` file as input. This will generate a PostScript file of the graph.
 
@@ -39,3 +34,24 @@ To view the generated PostScript file of the graph, use any PS viewer such as Ev
 ```console
 $ evince a.ps 
 ```
+
+## Options
+
+We have currently provided two options for the purpose of debugging.
+
+* To view the entire parsing process (the rules used in reduction of the input), add the `-g` option as follows. This will dump the parse log in `STDERR`.
+  ```console
+  $ ./bin/parser ./tests/testfile.c -o dotname.dot -g
+  ```
+
+* To dump the table containing all the type definitions within each scope, add the `-t` option. This will generate the type table in the file `./bin/typtab.csv similar to the symbol table.
+  ```console
+  $ ./bin/parser ./tests/testfile.c -o dotname.dot -t
+  ```
+
+## Makefile Clean Commands
+
+There are 3 clean options in the makefile.
+* The `make clean` command will remove all the intermediate compilation files for the final executable (including all the `.o` files).
+* The `make fileclean` command will clean all the output files created in the bin directory (including `symtab.csv`, `typtab.csv` and other `.dot` and `.ps` files).
+* The `make realclean` command will perform the above two tasks along with deleting the created binary `parser` file.

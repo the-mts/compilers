@@ -9,60 +9,84 @@ extern node* root;
 extern int column;
 extern int yydebug;
 FILE* out_file;
-
-/*  
-	string type;
-	unsigned long size;
-	long offset;
-	int is_init;
-	enum sym_type type_name;
-	symtab* sym_table;
-	vector<pair<string, string>> *arg_list;
-*/
+int typ_file = 0;
+int scope_num = 0;
+string curr_fun = "";
 
 void print_table(typtab* table){
+	string name = "";
+	if(scope_num == 0){
+		scope_num++;
+		name = curr_fun;
+	}
+	else{
+		name = curr_fun+"("+to_string(scope_num++)+")";
+	}
+
+	printf("Scope '%s':\n", name.c_str());
+
 	for(auto i = table->begin(); i != table->end(); i++){
 		tt_entry* temp = i->second;
-		cout << i->first << "\t\t\t" << temp->type << "\n";
+		cout << "\t\t" << i->first << "\t\t\t" << temp->type << "\n";
 		if(temp->mem_list!=NULL){
-			// cout<< "\t\tFunction Symbol Table Pointer: " << temp->sym_table<<endl;
-			cout<< "\t\tMembers: " << temp->mem_list << " " << temp->mem_list->size() << endl;
+			cout<< "\t\t\t" <<temp->mem_list->size()<< " members: " << endl;
 			for(auto i : *(temp->mem_list)){
-				cout<< "\t\t\t" << i.second << " (" << i.first << ")\n";/*arg_list not implemented yet*/
+				cout<< "\t\t\t\t" << i.second << " (" << i.first << ")\n";
 			}
 		}
 	}
 }
 
 void print_table(symtab* table){
+	string name = "";
+	if(scope_num == 0){
+		scope_num++;
+		name = curr_fun;
+	}
+	else{
+		name = curr_fun+"("+to_string(scope_num++)+")";
+	}
+
+	printf("Scope '%s':\n", name.c_str());
+
+	vector<pair<int, pair<st_entry*, string>>> order;
+
 	for(auto i = table->begin(); i != table->end(); i++){
 		st_entry* temp = i->second;
-		cout << i->first << "\t\t\t" << temp->type << "\t\t\t" << temp->size << "\t\n";
+		order.push_back(make_pair(temp->offset,make_pair(temp, i->first)));
+	}
+
+	sort(order.begin(), order.end());
+
+	for(auto i : order){
+		st_entry* temp = i.second.first;
+		cout << "\t\t" << i.second.second << "\t\t" << temp->size << "\t\t" << temp->offset << "\t\t" << temp->type << "\n";
 		if(temp->type_name == IS_FUNC){
-			cout<< "\t\tFunction Symbol Table Pointer: " << temp->sym_table<<endl;
-			cout<< "\t\tArguments: " << temp->arg_list << " " << temp->arg_list->size() << endl;
+			cout<< "\t\t\t" << temp->arg_list->size() <<" arguments " << (temp->arg_list->size()? "{\n" : "\n");
 			for(auto i : *(temp->arg_list)){
-				cout<< "\t\t\t" << i.second << " (" << i.first << ")\n";/*arg_list not implemented yet*/
+				cout << "\t\t\t\t" << i.second << " (" << i.first << ")\n";
 			}
+			if(temp->arg_list->size()) cout << "\t\t\t" << "}\n";
 		}
 	}
+	cout<<"\n";
 }
 
 void dfs3(table_tree* u){
-	cout<< "Scope Type Pointer: "<< u->types << " " << u->val <<endl;
 	print_table(u->types);
-	cout<<endl;
 	for(auto i : u->v){
+		if(u == st_root) curr_fun = i->name, scope_num  = 0;
 		dfs3(i);
 	}
 }
 
 void dfs2(table_tree* u){
-	cout<< "Symbol Table Pointer: "<< u->val<<endl;
 	print_table(u->val);
-	cout<<endl;
+	if(u == st_root) cout<<'\n';
 	for(auto i : u->v){
+		if(u == st_root) curr_fun = i->name, scope_num  = 0;
 		dfs2(i);
+		if(u == st_root) cout<<'\n';
 	}
 }
 
@@ -86,7 +110,7 @@ int dfs(node* u, int num){
 			case IS_FLOAT: u->name = (char*)(to_string(u->val.float_const)).c_str(); break;
 			case IS_DOUBLE: u->name = (char*)(to_string(u->val.double_const)).c_str(); break;
 			case IS_LONG_DOUBLE: u->name = (char*)(to_string(u->val.long_double_const)).c_str(); break;
-			case IS_CHAR: ch = u->val.char_const; ch += '\0'; u->name = (char*)(ch).c_str(); break;
+			case IS_CHAR: ch = "'"; ch += u->val.char_const; ch += "'"; u->name = (char*)(ch).c_str(); break;
 			default: printf("Main.c not a constant\n");exit(-1);
 		}
 		// u->name = (char*)(to_string(tmp)).c_str();
@@ -119,12 +143,20 @@ int main(int argc, char const* argv[]){
 		return 1;
 	}
 	out_file = stdout;
+	int skipnext = 0;
 	for(int i = 2; i < argc; i++){
-		if(argv[i][0] != '-')
+		if(skipnext){
+			skipnext = 0;
 			continue;
+		}
+		if(argv[i][0] != '-'){
+			printf("Invalid option format.\n");
+			return 1;
+			continue;
+		}
 		int j = 1;
 		while(argv[i][j]!='\0'){
-			if(argv[i][j] != 'g' && argv[i][j] != 'o'){
+			if(argv[i][j] != 'g' && argv[i][j] != 'o' && argv[i][j] != 't'){
 				fprintf(stderr,"Invalid Option\n");
 				return 1;
 			}
@@ -136,11 +168,15 @@ int main(int argc, char const* argv[]){
 					fprintf(stderr, "Output file not specified\n");
 					return 1;
 				}
+				skipnext = 1;
 				out_file = fopen(argv[i+1],"w+");
 				if(out_file == NULL){
 					fprintf(stderr,"Can't Open Output File\n");
 					return 1;
 				}
+			}
+			if(argv[i][j] == 't'){
+				typ_file = 1;
 			}
 			j++;
 		}
@@ -155,11 +191,18 @@ int main(int argc, char const* argv[]){
 	dfs(root,0);
 	fprintf(out_file,"}");
 
-	freopen("symtab.out", "w", stdout);
+	string name = "bin/symtab.csv";
+	freopen((const char*)name.c_str(), "w", stdout);
+
+	st_root->name = "global";
+	curr_fun = "global";
 	dfs2(st_root);
 
-	freopen("typtab.out", "w", stdout);
-	dfs3(st_root);
-	
+	if(typ_file){
+		scope_num = 0;
+		freopen("bin/typtab.csv", "w", stdout);
+		curr_fun = "global";
+		dfs3(st_root);
+	}
 	return 0;
 }

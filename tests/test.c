@@ -1,4 +1,7 @@
+// #include<stdio.h>
 int main(){
-	char ch = 'dc';
-	return;
+	float x = 1;
+	int a;
+	double* b;
+	int z = sizeof (x?b:a);
 }

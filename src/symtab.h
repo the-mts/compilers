@@ -1,3 +1,6 @@
+#ifndef SYMTAB_H
+#define SYMTAB_H
+
 #include <string>
 #include <unordered_map>
 #include <map>
@@ -5,7 +8,9 @@
 #include <algorithm>
 using namespace std;
 extern int line;
-enum sym_type {UNDEFINED, IS_FUNC, IS_STRUCT, IS_VAR, IS_TYPE};
+extern int curr_width;
+extern vector<long> offset; 
+enum sym_type {UNDEFINED, IS_FUNC, IS_STRUCT, IS_VAR, IS_TYPE, IS_TEMP};
 enum const_type {IS_INT, IS_LONG, IS_SHORT, IS_U_INT, IS_U_LONG, IS_U_SHORT, IS_FLOAT, IS_DOUBLE, IS_LONG_DOUBLE, IS_CHAR, IS_NON_CONST};
 enum val_type {LVALUE, RVALUE};
 
@@ -57,6 +62,7 @@ struct table_tree{
 	typtab* types;
 	vector<table_tree*> v;
 	table_tree * par;
+	string name = "";
 	table_tree(symtab* val, typtab* types, table_tree* par = NULL){
 		this->val = val;
 		this->types = types;
@@ -96,3 +102,6 @@ extern st_entry* current_lookup(string key);
 extern void struct_init_check(string type);
 extern tt_entry* current_type_lookup(string key);
 extern unsigned long get_size(string s);
+extern void check_mem_list(vector<pair<string, string>> v, string s);
+
+#endif
