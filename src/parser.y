@@ -51,7 +51,7 @@
 
 %type<id> M6 M8
 %type <nodes> M1
-%type <instr> M7 M9
+%type <instr> M7 M9 M11
 
 %start augment_state
 %define parse.error verbose
@@ -1981,7 +1981,11 @@ expression
 
 constant_expression
 	: conditional_expression									{
-																	$$ = $1;/*check if constant*/
+																	$$ = $1;
+																	if($$->token != CONSTANT){
+																		printf("\e[1;31mError [line %d]:\e[0m Expression used here must be a constant.\n", line);
+																		exit(-1);
+																	}
 																}
 	;
 
@@ -2658,9 +2662,20 @@ statement
 
 labeled_statement
 	: IDENTIFIER ':' statement									{$$ = node_(1,$1,-1); $$->v[0] = $3;}
-	| CASE constant_expression ':' {/*break_level++;*/} statement {/*break_level--;*/}
-																{$$ = node_(2,$1,-1); $$->v[0] = $2; $$->v[1] = $5;}
-	| DEFAULT ':' statement										{$$ = node_(1,$1,-1); $$->v[0] = $3;}
+	| CASE constant_expression ':' M9 statement					{
+																	$$ = node_(2,$1,-1); $$->v[0] = $2; $$->v[1] = $5;
+																	$$->caselist.push_back({$4, $2});
+																	$$->nextlist = $5->nextlist;
+																	$$->contlist = $5->contlist;
+																	$$->breaklist = $5->breaklist;
+																}
+	| DEFAULT ':' M9 statement									{
+																	$$ = node_(1,$1,-1); $$->v[0] = $4;
+																	$$->defaultlist.push_back({$3, NULL});
+																	$$->nextlist = $4->nextlist;
+																	$$->contlist = $4->contlist;
+																	$$->breaklist = $4->breaklist;
+																}
 	;
 
 compound_statement
@@ -2691,8 +2706,9 @@ compound_statement
 																		$$->contlist = $4->contlist;
 																		$$->breaklist.insert($$->breaklist.end(), $3->breaklist.begin(), $3->breaklist.end());
 																		$$->contlist.insert($$->contlist.end(), $3->contlist.begin(), $3->contlist.end());
-
-
+																		
+																		$$->caselist = $4->caselist;
+																		$$->defaultlist = $4->defaultlist;
 																	}
 																	// backpatch($4->nextlist, nextquad);
 																}
@@ -2748,6 +2764,8 @@ statement_list
 							$$->nextlist = $1->nextlist;
 							$$->breaklist = $1->breaklist;
 							$$->contlist = $1->contlist;
+							$$->caselist = $1->caselist;
+							$$->defaultlist = $1->defaultlist;
 						}
 	| statement_list 	{
 							backpatch($1->nextlist, nextquad);
@@ -2757,8 +2775,12 @@ statement_list
 							$$->nextlist = $3->nextlist;
 							$$->breaklist = $1->breaklist;
 							$$->contlist = $1->contlist;
+							$$->caselist = $1->caselist;
+							$$->defaultlist = $1->defaultlist;
 							$$->breaklist.insert($$->breaklist.end(), $3->breaklist.begin(), $3->breaklist.end());
 							$$->contlist.insert($$->contlist.end(), $3->contlist.begin(), $3->contlist.end());
+							$$->caselist.insert($$->caselist.end(), $3->caselist.begin(), $3->caselist.end());
+							$$->defaultlist.insert($$->defaultlist.end(), $3->defaultlist.begin(), $3->defaultlist.end());
 						}
 	;
 
@@ -2791,8 +2813,67 @@ selection_statement
 							$$->breaklist.insert($$->breaklist.end(), $9->breaklist.begin(), $9->breaklist.end());
 							$$->contlist.insert($$->contlist.end(), $9->contlist.begin(), $9->contlist.end());
 						}
-	| SWITCH '(' expression ')' {break_level++;} statement		{$$ = node_(2, $1, -1); $$->v[0] = $3; $$->v[1] = $6; break_level--;}
+	| SWITCH '(' expression ')' M11 /* {break_level++;} */ 
+	statement			{
+							$$ = node_(2, $1, -1); $$->v[0] = $3; $$->v[1] = $6; break_level--;
+
+							if($6->defaultlist.size()>1){
+								printf("\e[1;31mError [line %d]:\e[0m Multiple default statements in switch.\n", line);
+								exit(-1);
+							}
+
+							qi tmp2 = getNewTemp("int");
+							int x = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
+							$$->nextlist.push_back(x);
+
+							code_array[$5].goto_addr = nextquad;
+
+							for(auto i : $6->caselist){
+								pair<string,int> p1 = get_equivalent_pointer($3->node_data);
+								pair<string,int> p2 = get_equivalent_pointer(i.second->node_data);
+								string type = arithmetic_type_upgrade(p1.first,p2.first, "==");
+								qi tmp = emitConstant(i.second);
+								if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.find("*")!=string::npos){
+									int x = emit("==int", $3->place, tmp, tmp2);
+								}
+								else {
+									if($3->node_data.find("int")!=string::npos){
+										auto tmp3 = getNewTemp(type);
+										int x = emit("inttoreal", $3->place, {"", NULL}, tmp3);
+										emit("==real", tmp3, tmp, tmp2);
+									}
+									else if (i.second->node_data.find("int")!=string::npos){
+										auto tmp3 = getNewTemp(type);
+										int x = emit("inttoreal", tmp, {"", NULL}, tmp3);
+										emit("==real", $3->place, tmp3, tmp2);
+									}
+									else {
+										emit("==real", $3->place, tmp, tmp2);
+									}
+								}
+
+								emit("IF_TRUE_GOTO", tmp2, {"", NULL}, {"", NULL}, i.first);
+							}
+
+							for(auto i : $6->defaultlist){
+								emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL}, i.first);
+							}
+
+							$6->caselist.clear();
+							$6->defaultlist.clear();
+							
+							$$->nextlist.insert($$->nextlist.end(), $6->nextlist.begin(), $6->nextlist.end());
+							$$->nextlist.insert($$->nextlist.end(), $6->breaklist.begin(), $6->breaklist.end());
+							$$->contlist = $6->contlist;
+						}
 	;
+
+M11
+	: /* empty */		{	
+							break_level++;
+							int x = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
+							$$ = x;
+						}
 
 M8
 	: /* empty */		{
