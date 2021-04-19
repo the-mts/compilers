@@ -1,27 +1,8 @@
-// #include<stdio.h>
-
-int printf(){
-	;
+int fun(int a, int b, long int c){
+	return 0;
 }
-
 int main(){
 	int x = 5;
-	int y;
-	for(x=1;x<5;x-=1){
-	switch(x){
-		default:{y = 0;}
-		case 2: y = 2;
-		break;
-		case 3: y = 3;
-		continue;
-	}
-	y++;
-	}
-	// for(x; x>3;){
-	// 	if(y) break;
-	// 	else {break;}
-	// 	x++;
-	// 	break;
-	// }
-	x++;
+	int k = fun(x, x*x+2, (long int) (x+x));
+	return 0;
 }

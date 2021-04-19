@@ -195,7 +195,7 @@ postfix_expression
 																	$$->value_type = RVALUE;
 
 																	//////////////// 3AC ////////////////
-
+																	emit("CALL", $1->place, {"", NULL}, {"", NULL});
 																	/////////////////////////////////////
 																}
 	| postfix_expression '(' argument_expression_list ')'		{
@@ -230,6 +230,60 @@ postfix_expression
 																			type = increase_array_level(reduce_pointer_level($3->v[i]->node_data));
 																		else
 																			type = $3->v[i]->node_data;
+
+																		//string type;
+																		//string type1, type2;
+																		//pair<string, int> p1 = get_equivalent_pointer($1->node_data);
+																		//pair<string, int> p2 = get_equivalent_pointer($3->node_data);
+																		//type1 = p1.first, type2 = p2.first;
+																		//tt_entry* entry1 = type_lookup(type1);
+																		//tt_entry* entry2 = type_lookup(type2);
+																		//if(entry1 && entry2){
+																		//	if(entry1 != entry2 || $2->name[0] != '='){
+																		//		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2->name);
+																		//		exit(-1);
+																		//	}
+																		//	break;
+																		//}
+																		//if(entry1 || entry2){
+																		//	printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2->name);
+																		//	exit(-1);
+																		//}
+																		//if(($1->node_data.find("[") != string::npos && $1->node_data.find("[]") == string::npos)){
+																		//	printf("\e[1;31mError [line %d]:\e[0m Array variables cannot be reassigned.\n",line);
+																		//	exit(-1);
+																		//}
+																		//if(p1.second && p2.second){
+																		//	if(p1.first != p2.first){
+																		//		printf("\e[1;35mWarning [line %d]:\e[0m Assignment to '%s' from incompatible pointer type '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
+																		//	}
+																		//}
+																		//else if(p1.second){
+																		//	if($3->node_data == "float" || $3->node_data == "double" || $3->node_data == "long double"){
+																		//		printf("\e[1;31mError [line %d]:\e[0m Cannot assign floating point values to pointers.\n",line);
+																		//		exit(-1);
+																		//	}
+																		//	printf("\e[1;35mWarning [line %d]:\e[0m Assignment to '%s' from incompatible type '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
+																		//}
+																		//else if(p2.second){
+																		//	if($1->node_data == "float" || $1->node_data == "double" || $1->node_data == "long double"){
+																		//		printf("\e[1;31mError [line %d]:\e[0m Cannot assign pointers to floating point values.\n",line);
+																		//		exit(-1);
+																		//	}
+																		//	printf("\e[1;35mWarning [line %d]:\e[0m Assignment to '%s' from incompatible type '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
+																		//}
+																		////////////////// 3AC ////////////////
+																		//backpatch($3->nextlist, nextquad); // CHECK THIS!!!!!
+																		//if($3->token == CONSTANT){
+																		//	$3->place = emitConstant($3);
+																		//}
+																		
+																		//emit("=", $3->place, {"", NULL}, $1->place);
+																		//$$->place = $1->place;
+																		//$$->nextlist.insert($$->nextlist.end(), $3->nextlist.begin(), $3->nextlist.end());
+																		///////////////////////////////////////
+
+
 																		if(type != arg_list[i].first){
 																			printf("\e[1;31mError [line %d]:\e[0m For function '%s', argument %d should be of type '%s', '%s' provided.\n",line,$1->name,i+1,arg_list[i].first.c_str(),type.c_str());
 																			exit(-1);
@@ -239,7 +293,10 @@ postfix_expression
 																	$$->value_type = RVALUE;
 
 																	//////////////// 3AC ////////////////
-
+																	for(auto i: $3->v){
+																		emit("PARAM", i->place, {"", NULL}, {"", NULL});
+																	}
+																	emit("CALL", $1->place, {"", NULL}, {"", NULL});
 																	/////////////////////////////////////
 																}
 	| postfix_expression '.' IDENTIFIER							{
@@ -371,14 +428,18 @@ argument_expression_list
 																	$$ = node_(1,"arg_list",-1); $$->v[0] = $1;
 
 																	//////////////// 3AC ////////////////
-																	
+																	if($1->token == CONSTANT){
+																		$1->place = emitConstant($1);
+																	}
 																	/////////////////////////////////////
 																}
 	| argument_expression_list ',' assignment_expression		{
 																	$$ = $1; add_node($$,$3);
 
 																	//////////////// 3AC ////////////////
-																	
+																	if($3->token == CONSTANT){
+																		$3->place = emitConstant($3);
+																	}
 																	/////////////////////////////////////
 																}
 	;
@@ -1808,22 +1869,6 @@ assignment_expression
 																					}
 																					printf("\e[1;35mWarning [line %d]:\e[0m Assignment to '%s' from incompatible type '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
 																				}
-																				/*if(type1.back()=='*' && type2.back()=='*') break;
-																				type = arithmetic_type_upgrade(type1, type2, string((const char*)$2->name));
-																				if(type.back() == '*'){
-																					else if(type1.back()=='*' && (type2.find("float") != string::npos || type2.find("double")!=string::npos)){
-																						printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2->name);
-																						exit(-1);
-																					}
-																					else if(type2.back()=='*' && (type1.find("float") != string::npos || type1.find("double")!=string::npos)){
-																						printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2->name);
-																						exit(-1);
-																					}
-																					else{
-																						printf("\e[1;35mWarning [line %d]:\e[0m Assignment is without a cast for operator '%s'.\n",line, $2->name);
-																					}
-																				}*/
-																				
 																				//////////////// 3AC ////////////////
 																				backpatch($3->nextlist, nextquad); // CHECK THIS!!!!!
 																				if($3->token == CONSTANT){
