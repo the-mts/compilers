@@ -1701,7 +1701,7 @@ M7
 
 conditional_expression
 	: logical_or_expression								{
-															if ($1->truelist.empty()) $$ = $1;
+															if ($1->truelist.empty() && $1->falselist.empty()) $$ = $1;
 															else {
 																$$->place = getNewTemp("int");
 																int x = emit("=", {to_string(1), NULL}, {"", NULL}, $$->place);
