@@ -29,6 +29,9 @@ typedef struct node{
 	vector<int> falselist;
 	vector<int> contlist;
 	vector<int> breaklist;
+
+	vector<pair<int, node*>> caselist;
+	vector<pair<int, node*>> defaultlist;
 }node;
 
 node* node_(int x, char * s, int token);

@@ -49,9 +49,9 @@
 %type <nodes> statement_list expression_statement selection_statement iteration_statement jump_statement 
 %type <nodes> translation_unit external_declaration function_definition augment_state
 
-%type<id> M6
+%type<id> M6 M8
 %type <nodes> M1
-%type <instr> M7
+%type <instr> M7 M9 M11
 
 %start augment_state
 %define parse.error verbose
@@ -1693,7 +1693,7 @@ M7
 															int x = emit("=", tmp->place, {"", NULL}, {"", NULL}); /////// See this again after assignment
 															int y = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
 															tmp->nextlist.push_back(y);
-															//backpatch($-4->falselist, nextquad);
+															backpatch($<nodes>-4->falselist, nextquad);
 															//backpatch($<nodes>-4->falselist, nextquad);
 															$$ = x;
 															/////////////////////////////////////
@@ -1714,6 +1714,8 @@ conditional_expression
 														}
 	| logical_or_expression '?'	 						{
 															//////////////// 3AC ////////////////
+															if ($1->truelist.empty() && $1->falselist.empty())
+															{
 															if($1->token == CONSTANT){
 																$1->place = emitConstant($1);
 																// printf("Ternary condition constant. %s %d\n", $1->place.first.c_str(), $1->val.int_const);
@@ -1722,6 +1724,7 @@ conditional_expression
 															int y = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
 															$1->truelist.push_back(x);
 															$1->falselist.push_back(y);
+															}
 															backpatch($1->truelist, nextquad);
 															/////////////////////////////////////
 														}
@@ -1890,12 +1893,14 @@ assignment_expression
 																					exit(-1);
 																				}
 																				//////////////// 3AC ////////////////
+																				backpatch($3->nextlist, nextquad); // CHECK THIS!!!!!
 																				if($3->token == CONSTANT){
 																					$3->place = emitConstant($3);
 																				}
 
 																				$$->place = $1->place;
-																				op = "" + $2->name[0];
+																				op = string((const char*) $2->name);
+																				op.pop_back();
 																				if(type.find("int")!=string::npos || type.find("char")!=string::npos){
 																					int x = emit(op+"int", $1->place, $3->place, $1->place);
 																				}
@@ -1923,12 +1928,14 @@ assignment_expression
 																				type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2->name));
 																				
 																				//////////////// 3AC ////////////////
+																				backpatch($3->nextlist, nextquad); // CHECK THIS!!!!!
 																				if($3->token == CONSTANT){
 																					$3->place = emitConstant($3);
 																				}
 
 																				$$->place = $1->place;
-																				op = "" + $2->name[0];
+																				op = string((const char*) $2->name);
+																				op.pop_back();
 																				if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.find("*")!=string::npos){
 																					int x = emit(op+"int", $1->place, $3->place, $1->place);
 																				}
@@ -2024,7 +2031,11 @@ expression
 
 constant_expression
 	: conditional_expression									{
-																	$$ = $1;/*check if constant*/
+																	$$ = $1;
+																	if($$->token != CONSTANT){
+																		printf("\e[1;31mError [line %d]:\e[0m Expression used here must be a constant.\n", line);
+																		exit(-1);
+																	}
 																}
 	;
 
@@ -2139,7 +2150,7 @@ init_declarator
 	| declarator '=' initializer								{
 																	$$ = node_(2,"=",-1); $$->v[0] = $1; $$->v[1] = $3;
 																	if($1->node_type == 1){
-																		printf("Funtion pointers not supported\n");
+																		printf("Function pointers not supported\n");
 																		exit(-1);
 																	}
 																	else{
@@ -2355,8 +2366,8 @@ struct_declarator_list
 
 struct_declarator
 	: declarator 									{$$ = $1;}
-	| ':' constant_expression						{$$ = node_(2,"bit_field",-1); $$->v[0]=node_(0,$1,-1); $$->v[1]=$2;}
-	| declarator ':' constant_expression			{$$ = node_(3,"bit_field",-1); $$->v[0]=$1; $$->v[1]=node_(0,$2,-1); $$->v[2]=$3;}
+	| ':' constant_expression						{$$ = node_(2,"bit_field",-1); $$->v[0]=node_(0,$1,-1); $$->v[1]=$2; printf("Bit-fields are not supported\n"); exit(-1);}
+	| declarator ':' constant_expression			{$$ = node_(3,"bit_field",-1); $$->v[0]=$1; $$->v[1]=node_(0,$2,-1); $$->v[2]=$3; printf("Bit-fields are not supported\n"); exit(-1);}
 	;
 
 enum_specifier
@@ -2380,8 +2391,8 @@ enumerator
 	;
 
 type_qualifier
-	: CONST											{$$ = node_(0,$1,CONST);printf("type qualifiers are not supported\n"); exit(-1);}
-	| VOLATILE										{$$ = node_(0,$1,VOLATILE);printf("type qualifiers are not supported\n"); exit(-1);}
+	: CONST											{$$ = node_(0,$1,CONST); printf("type qualifiers are not supported\n"); exit(-1);}
+	| VOLATILE										{$$ = node_(0,$1,VOLATILE); printf("type qualifiers are not supported\n"); exit(-1);}
 	;
 
 declarator /**/
@@ -2701,27 +2712,56 @@ statement
 
 labeled_statement
 	: IDENTIFIER ':' statement									{$$ = node_(1,$1,-1); $$->v[0] = $3;}
-	| CASE constant_expression ':' {/*break_level++;*/} statement {/*break_level--;*/}
-																{$$ = node_(2,$1,-1); $$->v[0] = $2; $$->v[1] = $5;}
-	| DEFAULT ':' statement										{$$ = node_(1,$1,-1); $$->v[0] = $3;}
+	| CASE constant_expression ':' M9 statement					{
+																	$$ = node_(2,$1,-1); $$->v[0] = $2; $$->v[1] = $5;
+																	$$->caselist.push_back({$4, $2});
+																	$$->nextlist = $5->nextlist;
+																	$$->contlist = $5->contlist;
+																	$$->breaklist = $5->breaklist;
+																}
+	| DEFAULT ':' M9 statement									{
+																	$$ = node_(1,$1,-1); $$->v[0] = $4;
+																	$$->defaultlist.push_back({$3, NULL});
+																	$$->nextlist = $4->nextlist;
+																	$$->contlist = $4->contlist;
+																	$$->breaklist = $4->breaklist;
+																}
 	;
 
 compound_statement
 	: M1 '{' '}' M2												{$$ = node_(0,"{}",-1);}
-	| M1 '{' statement_list '}' M2								{$$ = $3;}
-	| M1 '{' declaration_list '}' M2							{if($3 == NULL)
-																	$$ = node_(0,"{}",-1);
-																else{
-																	//$$ = node_(1,"{}",-1);
+	| M1 '{' statement_list '}' M2								{
 																	$$ = $3;
-																}}
-	| M1 '{' declaration_list statement_list '}' M2				{if($3 == NULL)
-																	$$ = $4;
-																else{
-																	$$ = node_(2,"{}",-1);
-																	$$->v[0] = $3;
-																	$$->v[1] = $4;
-																}}
+																	// backpatch($3->nextlist, nextquad);
+																}
+																
+	| M1 '{' declaration_list '}' M2							{
+																	if($3 == NULL)
+																		$$ = node_(0,"{}",-1);
+																	else{
+																		//$$ = node_(1,"{}",-1);
+																		$$ = $3;
+																	}
+																}
+																
+	| M1 '{' declaration_list statement_list '}' M2				{
+																	if($3 == NULL)
+																		$$ = $4;
+																	else{
+																		$$ = node_(2,"{}",-1);
+																		$$->v[0] = $3;
+																		$$->v[1] = $4;
+																		$$->nextlist = $4->nextlist;
+																		$$->breaklist = $4->breaklist;
+																		$$->contlist = $4->contlist;
+																		$$->breaklist.insert($$->breaklist.end(), $3->breaklist.begin(), $3->breaklist.end());
+																		$$->contlist.insert($$->contlist.end(), $3->contlist.begin(), $3->contlist.end());
+																		
+																		$$->caselist = $4->caselist;
+																		$$->defaultlist = $4->defaultlist;
+																	}
+																	// backpatch($4->nextlist, nextquad);
+																}
 	;
 
 M1
@@ -2769,8 +2809,29 @@ declaration_list
 	;
 
 statement_list
-	: statement													{$$ = node_(1,"stmt_list",-1); $$->v[0] = $1;}
-	| statement_list statement									{$$ = $1; add_node($$,$2);}
+	: statement			{
+							$$ = node_(1,"stmt_list",-1); $$->v[0] = $1;
+							$$->nextlist = $1->nextlist;
+							$$->breaklist = $1->breaklist;
+							$$->contlist = $1->contlist;
+							$$->caselist = $1->caselist;
+							$$->defaultlist = $1->defaultlist;
+						}
+	| statement_list 	{
+							backpatch($1->nextlist, nextquad);
+						}
+	statement			{
+							$$ = $1; add_node($$,$3);
+							$$->nextlist = $3->nextlist;
+							$$->breaklist = $1->breaklist;
+							$$->contlist = $1->contlist;
+							$$->caselist = $1->caselist;
+							$$->defaultlist = $1->defaultlist;
+							$$->breaklist.insert($$->breaklist.end(), $3->breaklist.begin(), $3->breaklist.end());
+							$$->contlist.insert($$->contlist.end(), $3->contlist.begin(), $3->contlist.end());
+							$$->caselist.insert($$->caselist.end(), $3->caselist.begin(), $3->caselist.end());
+							$$->defaultlist.insert($$->defaultlist.end(), $3->defaultlist.begin(), $3->defaultlist.end());
+						}
 	;
 
 expression_statement
@@ -2779,21 +2840,245 @@ expression_statement
 	;
 
 selection_statement
-	: IF '(' expression ')' statement							{$$ = node_(2,$1,-1); $$->v[0] = $3; $$->v[1] = $5;}
-	| IF '(' expression ')' statement ELSE statement			{$$ = node_(3, "if-else", -1); $$->v[0] = $3; $$->v[1] = $5; $$->v[2] = $7;}
-	| SWITCH '(' expression ')' {break_level++;} statement						{$$ = node_(2, $1, -1); $$->v[0] = $3; $$->v[1] = $6; break_level--;}
+	: IF '(' expression ')' M8 statement				{
+															$$ = node_(2,$1,-1); $$->v[0] = $3; $$->v[1] = $6;
+															$$->nextlist = $3->falselist;
+															$$->nextlist.insert($$->nextlist.end(), $6->nextlist.begin(), $6->nextlist.end());
+															$$->breaklist = $6->breaklist;
+															$$->contlist = $6->contlist;
+
+														}
+
+	| IF '(' expression ')' M8 statement ELSE 			{
+															int x = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
+															$6->nextlist.push_back(x);
+															backpatch($3->falselist, nextquad);
+														}
+	statement			{
+							$$ = node_(3, "if-else", -1); $$->v[0] = $3; $$->v[1] = $6; $$->v[2] = $9;
+							$$->nextlist.insert($$->nextlist.end(), $6->nextlist.begin(), $6->nextlist.end());
+							$$->nextlist.insert($$->nextlist.end(), $9->nextlist.begin(), $9->nextlist.end());
+							$$->breaklist = $6->breaklist;
+							$$->contlist = $6->contlist;
+							$$->breaklist.insert($$->breaklist.end(), $9->breaklist.begin(), $9->breaklist.end());
+							$$->contlist.insert($$->contlist.end(), $9->contlist.begin(), $9->contlist.end());
+						}
+	| SWITCH '(' expression ')' M11 /* {break_level++;} */ 
+	statement			{
+							$$ = node_(2, $1, -1); $$->v[0] = $3; $$->v[1] = $6; break_level--;
+
+							if($6->defaultlist.size()>1){
+								printf("\e[1;31mError [line %d]:\e[0m Multiple default statements in switch.\n", line);
+								exit(-1);
+							}
+
+							qi tmp2 = getNewTemp("int");
+							int x = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
+							$$->nextlist.push_back(x);
+
+							code_array[$5].goto_addr = nextquad;
+
+							for(auto i : $6->caselist){
+								pair<string,int> p1 = get_equivalent_pointer($3->node_data);
+								pair<string,int> p2 = get_equivalent_pointer(i.second->node_data);
+								string type = arithmetic_type_upgrade(p1.first,p2.first, "==");
+								qi tmp = emitConstant(i.second);
+								if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.find("*")!=string::npos){
+									int x = emit("==int", $3->place, tmp, tmp2);
+								}
+								else {
+									if($3->node_data.find("int")!=string::npos){
+										auto tmp3 = getNewTemp(type);
+										int x = emit("inttoreal", $3->place, {"", NULL}, tmp3);
+										emit("==real", tmp3, tmp, tmp2);
+									}
+									else if (i.second->node_data.find("int")!=string::npos){
+										auto tmp3 = getNewTemp(type);
+										int x = emit("inttoreal", tmp, {"", NULL}, tmp3);
+										emit("==real", $3->place, tmp3, tmp2);
+									}
+									else {
+										emit("==real", $3->place, tmp, tmp2);
+									}
+								}
+
+								emit("IF_TRUE_GOTO", tmp2, {"", NULL}, {"", NULL}, i.first);
+							}
+
+							for(auto i : $6->defaultlist){
+								emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL}, i.first);
+							}
+
+							$6->caselist.clear();
+							$6->defaultlist.clear();
+							
+							$$->nextlist.insert($$->nextlist.end(), $6->nextlist.begin(), $6->nextlist.end());
+							$$->nextlist.insert($$->nextlist.end(), $6->breaklist.begin(), $6->breaklist.end());
+							$$->contlist = $6->contlist;
+						}
 	;
 
+M11
+	: /* empty */		{	
+							break_level++;
+							int x = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
+							$$ = x;
+						}
+
+M8
+	: /* empty */		{
+							//////////////// 3AC ////////////////
+							node* tmp = $<nodes>-1;
+							if(tmp->token == CONSTANT){
+								tmp->place = emitConstant(tmp);
+								// printf("Ternary condition constant. %s %d\n", tmp->place.first.c_str(), tmp->val.int_const);
+							}
+							int x = emit("IF_TRUE_GOTO", tmp->place, {"", NULL}, {"", NULL});
+							int y = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
+							tmp->truelist.push_back(x);
+							tmp->falselist.push_back(y);
+							backpatch(tmp->truelist, nextquad);
+							/////////////////////////////////////
+						}
+
 iteration_statement
-	: WHILE '(' expression ')' {break_level++, continue_level++;} statement {break_level--, continue_level--;}											
-																					{$$ = node_(2,$1,-1); $$->v[0] = $3; $$->v[1] = $6;}
-	| DO {break_level++, continue_level++;} statement {break_level--, continue_level--;} WHILE '(' expression ')' ';'										
-																					{$$ = node_(2,"do-while",-1); $$->v[0] = $3; $$->v[1] = $7;}
-	| FOR '(' expression_statement expression_statement ')' {break_level++, continue_level++;} statement {break_level--, continue_level--;}
-																					{$$ = node_(3,"for-w/o-update",-1); $$->v[0] = $3; $$->v[1] = $4; $$->v[2] = $7;}
-	| FOR '(' expression_statement expression_statement expression ')' {break_level++, continue_level++;} statement {break_level--, continue_level--;}	
-																					{$$ = node_(4,"for",-1); $$->v[0] = $3; $$->v[1] = $4; $$->v[2] = $5; $$->v[3] = $8;}
+	: WHILE '(' M9 expression ')' 			{
+												break_level++, continue_level++;
+
+												//////////////// 3AC ////////////////
+												if($4->token == CONSTANT){
+													$4->place = emitConstant($4);
+												}
+
+												int x = emit("IF_TRUE_GOTO", $4->place, {"", NULL}, {"", NULL});
+												int y = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
+												$4->truelist.push_back(x);
+												$4->falselist.push_back(y);
+												backpatch($4->truelist, nextquad);
+												/////////////////////////////////////
+											} 
+	statement 								{
+												break_level--, continue_level--;
+												$$ = node_(2,$1,-1); $$->v[0] = $4; $$->v[1] = $7;
+
+												//////////////// 3AC ////////////////
+												backpatch($7->nextlist, $3);
+												backpatch($7->contlist, $3);
+												$$->nextlist = $4->falselist;
+												$$->nextlist.insert($$->nextlist.end(), $7->breaklist.begin(), $7->breaklist.end());
+												emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL}, $3);
+												/////////////////////////////////////
+											}
+	
+	| DO 							{break_level++, continue_level++;}
+	M9 statement		 			{
+										break_level--, continue_level--;
+										
+										//////////////// 3AC ////////////////
+										backpatch($4->nextlist, nextquad);
+										backpatch($4->contlist, nextquad);
+										/////////////////////////////////////
+									}
+	WHILE '(' expression ')' ';'	{
+										$$ = node_(2,"do-while",-1); $$->v[0] = $4; $$->v[1] = $8;
+
+										//////////////// 3AC ////////////////
+										if($4->token == CONSTANT){
+											$4->place = emitConstant($4);
+										}
+
+										int x = emit("IF_TRUE_GOTO", $8->place, {"", NULL}, {"", NULL});
+										// int y = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
+										// $4->falselist.push_back(y);
+										$4->truelist.push_back(x);
+										backpatch($4->truelist, $3);
+										$$->nextlist = $4->breaklist;
+										$$->nextlist.insert($$->nextlist.end(), $8->falselist.begin(), $8->falselist.end());
+										/////////////////////////////////////
+									}
+
+	| FOR '(' expression_statement 	M10
+	M9 expression_statement ')' 	{
+										break_level++, continue_level++;
+
+										//////////////// 3AC ////////////////
+										if($6->token == CONSTANT){
+											$6->place = emitConstant($6);
+										}
+
+										int x = emit("IF_TRUE_GOTO", $6->place, {"", NULL}, {"", NULL});
+										int y = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
+										$6->truelist.push_back(x);
+										$6->falselist.push_back(y);
+										backpatch($6->truelist, nextquad);
+										/////////////////////////////////////
+									}
+	statement 						{
+										break_level--, continue_level--;
+										$$ = node_(3,"for-w/o-update",-1); $$->v[0] = $3; $$->v[1] = $6; $$->v[2] = $9;
+
+										//////////////// 3AC ////////////////
+										backpatch($9->nextlist, $5);
+										backpatch($9->contlist, $5);
+										$$->nextlist = $6->falselist;
+										$$->nextlist.insert($$->nextlist.end(), $9->breaklist.begin(), $9->breaklist.end());
+										emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL}, $5);
+										/////////////////////////////////////
+									}
+
+	| FOR '(' expression_statement 	M10
+	M9 expression_statement 		{
+										//////////////// 3AC ////////////////
+										if($6->token == CONSTANT){
+											$6->place = emitConstant($6);
+										}
+
+										int x = emit("IF_TRUE_GOTO", $6->place, {"", NULL}, {"", NULL});
+										int y = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
+										$6->truelist.push_back(x);
+										$6->falselist.push_back(y);
+										/////////////////////////////////////
+									}
+	M9 expression ')' 				{
+										break_level++, continue_level++;
+
+										//////////////// 3AC ////////////////
+										backpatch($9->truelist, $5);
+										backpatch($9->falselist, $5);
+										emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL}, $5);
+										backpatch($6->truelist, nextquad);
+										/////////////////////////////////////
+									}
+	statement 						{
+										break_level--, continue_level--;
+										$$ = node_(4,"for",-1); $$->v[0] = $3; $$->v[1] = $6; $$->v[2] = $9; $$->v[3] = $12;
+
+										//////////////// 3AC ////////////////
+										backpatch($12->nextlist, $8);
+										backpatch($12->contlist, $8);
+										$$->nextlist = $6->falselist;
+										$$->nextlist.insert($$->nextlist.end(), $12->breaklist.begin(), $12->breaklist.end());
+										emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL}, $8);
+										/////////////////////////////////////
+									}
 	;
+
+M9
+	: /* empty */			{
+								$$ = nextquad;
+							}
+
+M10
+	: /* empty */			{
+								node* tmp = $<nodes>0;
+								if(tmp->token == CONSTANT){
+									tmp->place = emitConstant(tmp);
+								}
+
+								backpatch(tmp->truelist, nextquad);
+								backpatch(tmp->falselist, nextquad);
+								backpatch(tmp->nextlist, nextquad);
+							}
 
 jump_statement
 	: GOTO IDENTIFIER ';'										{$$ = node_(1,$1,-1); $$->v[0] = node_(0,$2,IDENTIFIER);}
@@ -2803,6 +3088,11 @@ jump_statement
 																		printf("\e[1;31mError [line %d]:\e[0m Continue statement not within loop.\n", line);
 																		exit(-1);
 																	}
+
+																	//////////////// 3AC ////////////////
+																	int x = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
+																	$$->contlist.push_back(x);
+																	/////////////////////////////////////
 																}
 	| BREAK ';'													{
 																	$$ = node_(0,$1,-1); 
@@ -2810,6 +3100,11 @@ jump_statement
 																		printf("\e[1;31mError [line %d]:\e[0m Break statement not within loop or switch.\n", line);
 																		exit(-1);
 																	}
+
+																	//////////////// 3AC ////////////////
+																	int x = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
+																	$$->breaklist.push_back(x);
+																	/////////////////////////////////////
 																}
 	| RETURN ';'												{
 																	$$ = node_(0,$1,-1);
@@ -2909,6 +3204,8 @@ function_definition
 											st_entry* tmp = lookup($3->node_name); 
 											tmp->sym_table = curr->v.back()->val;
 											tmp->size = curr_width;
+
+											backpatch($5->nextlist, nextquad);
 										}
 
 	| declarator 						{
@@ -2972,6 +3269,8 @@ function_definition
 											st_entry* tmp = lookup($1->node_name); 
 											tmp->sym_table = curr->v.back()->val;
 											tmp->size = curr_width;
+
+											backpatch($3->nextlist, nextquad);
 										}
 	| declaration_specifiers M3 declarator declaration_list compound_statement		{$$ = node_(1,$3->name,-1); $$->v[0] = $5;/*not used*/}
 	| declarator declaration_list compound_statement							{$$ = node_(1,$1->name,-1); $$->v[0] = $3;/*not used*/}
