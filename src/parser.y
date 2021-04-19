@@ -2686,6 +2686,13 @@ compound_statement
 																		$$ = node_(2,"{}",-1);
 																		$$->v[0] = $3;
 																		$$->v[1] = $4;
+																		$$->nextlist = $4->nextlist;
+																		$$->breaklist = $4->breaklist;
+																		$$->contlist = $4->contlist;
+																		$$->breaklist.insert($$->breaklist.end(), $3->breaklist.begin(), $3->breaklist.end());
+																		$$->contlist.insert($$->contlist.end(), $3->contlist.begin(), $3->contlist.end());
+
+
 																	}
 																	// backpatch($4->nextlist, nextquad);
 																}
@@ -2739,6 +2746,8 @@ statement_list
 	: statement			{
 							$$ = node_(1,"stmt_list",-1); $$->v[0] = $1;
 							$$->nextlist = $1->nextlist;
+							$$->breaklist = $1->breaklist;
+							$$->contlist = $1->contlist;
 						}
 	| statement_list 	{
 							backpatch($1->nextlist, nextquad);
@@ -2746,6 +2755,10 @@ statement_list
 	statement			{
 							$$ = $1; add_node($$,$3);
 							$$->nextlist = $3->nextlist;
+							$$->breaklist = $1->breaklist;
+							$$->contlist = $1->contlist;
+							$$->breaklist.insert($$->breaklist.end(), $3->breaklist.begin(), $3->breaklist.end());
+							$$->contlist.insert($$->contlist.end(), $3->contlist.begin(), $3->contlist.end());
 						}
 	;
 
@@ -2759,6 +2772,9 @@ selection_statement
 															$$ = node_(2,$1,-1); $$->v[0] = $3; $$->v[1] = $6;
 															$$->nextlist = $3->falselist;
 															$$->nextlist.insert($$->nextlist.end(), $6->nextlist.begin(), $6->nextlist.end());
+															$$->breaklist = $6->breaklist;
+															$$->contlist = $6->contlist;
+
 														}
 
 	| IF '(' expression ')' M8 statement ELSE 			{
@@ -2770,6 +2786,10 @@ selection_statement
 							$$ = node_(3, "if-else", -1); $$->v[0] = $3; $$->v[1] = $6; $$->v[2] = $9;
 							$$->nextlist.insert($$->nextlist.end(), $6->nextlist.begin(), $6->nextlist.end());
 							$$->nextlist.insert($$->nextlist.end(), $9->nextlist.begin(), $9->nextlist.end());
+							$$->breaklist = $6->breaklist;
+							$$->contlist = $6->contlist;
+							$$->breaklist.insert($$->breaklist.end(), $9->breaklist.begin(), $9->breaklist.end());
+							$$->contlist.insert($$->contlist.end(), $9->contlist.begin(), $9->contlist.end());
 						}
 	| SWITCH '(' expression ')' {break_level++;} statement		{$$ = node_(2, $1, -1); $$->v[0] = $3; $$->v[1] = $6; break_level--;}
 	;
@@ -3053,6 +3073,8 @@ function_definition
 											st_entry* tmp = lookup($3->node_name); 
 											tmp->sym_table = curr->v.back()->val;
 											tmp->size = curr_width;
+
+											backpatch($5->nextlist, nextquad);
 										}
 
 	| declarator 						{
@@ -3116,6 +3138,8 @@ function_definition
 											st_entry* tmp = lookup($1->node_name); 
 											tmp->sym_table = curr->v.back()->val;
 											tmp->size = curr_width;
+
+											backpatch($3->nextlist, nextquad);
 										}
 	| declaration_specifiers M3 declarator declaration_list compound_statement		{$$ = node_(1,$3->name,-1); $$->v[0] = $5;/*not used*/}
 	| declarator declaration_list compound_statement							{$$ = node_(1,$1->name,-1); $$->v[0] = $3;/*not used*/}
