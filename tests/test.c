@@ -1,8 +1,9 @@
-int fun(int a, int b, long int c){
-	return 0;
+void fun(int z[4][5], int aa, int * b, long int c){
+	return 1;
 }
 int main(){
-	int x = 5;
-	int k = fun(x, x*x+2, (long int) (x+x));
+	int a = 3;
+	int z[3][5];
+	fun(z, a, a*a+2, (a+a));
 	return 0;
 }

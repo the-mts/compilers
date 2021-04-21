@@ -195,7 +195,8 @@ postfix_expression
 																	$$->value_type = RVALUE;
 
 																	//////////////// 3AC ////////////////
-																	emit("CALL", $1->place, {"", NULL}, {"", NULL});
+																	$$->place = getNewTemp($$->node_data);
+																	emit("CALL", $1->place, {"", NULL}, $$->place);
 																	/////////////////////////////////////
 																}
 	| postfix_expression '(' argument_expression_list ')'		{
@@ -224,70 +225,81 @@ postfix_expression
 																		exit(-1);
 																	}
 																	auto arg_list = *(entry->arg_list);
+																	vector<qi> arg_names;
 																	for(int i = 0; i < $3->sz; i++){
-																		string type;
-																		if($3->v[i]->node_data.back() == ']')
+																		string type = $3->v[i]->node_data;
+
+																		if(arg_list[i].first.back() == ']'){
+																			if($3->v[i]->node_data.back() != ']'){
+																				printf("\e[1;31mError [line %d]:\e[0m For function '%s', argument %d should be of type '%s', '%s' provided.\n",line,$1->name,i+1,arg_list[i].first.c_str(),type.c_str());
+																				exit(-1);
+																			}
 																			type = increase_array_level(reduce_pointer_level($3->v[i]->node_data));
-																		else
-																			type = $3->v[i]->node_data;
-
-																		//string type;
-																		//string type1, type2;
-																		//pair<string, int> p1 = get_equivalent_pointer($1->node_data);
-																		//pair<string, int> p2 = get_equivalent_pointer($3->node_data);
-																		//type1 = p1.first, type2 = p2.first;
-																		//tt_entry* entry1 = type_lookup(type1);
-																		//tt_entry* entry2 = type_lookup(type2);
-																		//if(entry1 && entry2){
-																		//	if(entry1 != entry2 || $2->name[0] != '='){
-																		//		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2->name);
-																		//		exit(-1);
-																		//	}
-																		//	break;
-																		//}
-																		//if(entry1 || entry2){
-																		//	printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2->name);
-																		//	exit(-1);
-																		//}
-																		//if(($1->node_data.find("[") != string::npos && $1->node_data.find("[]") == string::npos)){
-																		//	printf("\e[1;31mError [line %d]:\e[0m Array variables cannot be reassigned.\n",line);
-																		//	exit(-1);
-																		//}
-																		//if(p1.second && p2.second){
-																		//	if(p1.first != p2.first){
-																		//		printf("\e[1;35mWarning [line %d]:\e[0m Assignment to '%s' from incompatible pointer type '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
-																		//	}
-																		//}
-																		//else if(p1.second){
-																		//	if($3->node_data == "float" || $3->node_data == "double" || $3->node_data == "long double"){
-																		//		printf("\e[1;31mError [line %d]:\e[0m Cannot assign floating point values to pointers.\n",line);
-																		//		exit(-1);
-																		//	}
-																		//	printf("\e[1;35mWarning [line %d]:\e[0m Assignment to '%s' from incompatible type '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
-																		//}
-																		//else if(p2.second){
-																		//	if($1->node_data == "float" || $1->node_data == "double" || $1->node_data == "long double"){
-																		//		printf("\e[1;31mError [line %d]:\e[0m Cannot assign pointers to floating point values.\n",line);
-																		//		exit(-1);
-																		//	}
-																		//	printf("\e[1;35mWarning [line %d]:\e[0m Assignment to '%s' from incompatible type '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
-																		//}
-																		////////////////// 3AC ////////////////
-																		//backpatch($3->nextlist, nextquad); // CHECK THIS!!!!!
-																		//if($3->token == CONSTANT){
-																		//	$3->place = emitConstant($3);
-																		//}
-																		
-																		//emit("=", $3->place, {"", NULL}, $1->place);
-																		//$$->place = $1->place;
-																		//$$->nextlist.insert($$->nextlist.end(), $3->nextlist.begin(), $3->nextlist.end());
-																		///////////////////////////////////////
-
-
-																		if(type != arg_list[i].first){
+																			if(type != arg_list[i].first){
+																				printf("\e[1;31mError [line %d]:\e[0m For function '%s', argument %d should be of type '%s', '%s' provided.\n",line,$1->name,i+1,arg_list[i].first.c_str(),type.c_str());
+																				exit(-1);
+																			}
+																			arg_names.push_back($3->v[i]->place);
+																		}
+																		else if($3->v[i]->node_data.back() == ']'){
 																			printf("\e[1;31mError [line %d]:\e[0m For function '%s', argument %d should be of type '%s', '%s' provided.\n",line,$1->name,i+1,arg_list[i].first.c_str(),type.c_str());
 																			exit(-1);
 																		}
+
+																		else{
+																			string tmp1 = $3->v[i]->node_data;
+																			string tmp2 = arg_list[i].first;
+																			string type1, type2;
+																			pair<string, int> p1 = get_equivalent_pointer(tmp1);
+																			pair<string, int> p2 = get_equivalent_pointer(tmp2);
+																			type1 = p1.first, type2 = p2.first;
+																			tt_entry* entry1 = type_lookup(type1);
+																			tt_entry* entry2 = type_lookup(type2);
+																			if(entry1 && entry2){
+																				if(entry1 != entry2){
+																					printf("\e[1;31mError [line %d]:\e[0m For function '%s', argument %d should be of type '%s', '%s' provided.\n",line, $1->name, i+1, tmp2.c_str(), tmp1.c_str());
+																					exit(-1);
+																				}
+																			}
+																			else if(entry1 || entry2){
+																				printf("\e[1;31mError [line %d]:\e[0m For function '%s', argument %d should be of type '%s', '%s' provided.\n",line, $1->name, i+1, tmp2.c_str(), tmp1.c_str());
+																				exit(-1);
+																			}
+																			//if((tmp1.find("[") != string::npos && tmp1.find("[]") == string::npos)){
+																			//	printf("\e[1;31mError [line %d]:\e[0m Array variables cannot be reassigned.\n",line);
+																			//	exit(-1);
+																			//}
+																			if(p1.second && p2.second){
+																				if(p1.first != p2.first){
+																					printf("\e[1;35mWarning [line %d]:\e[0m For function '%s', argument %d should be of type '%s', '%s' provided.\n",line, $1->name, i+1, tmp2.c_str(), tmp1.c_str());
+																				}
+																			}
+																			else if(p1.second){
+																				if(tmp2 == "float" || tmp2 == "double" || tmp2 == "long double"){
+																					printf("\e[1;31mError [line %d]:\e[0m For function '%s', argument %d should be of type '%s', '%s' provided.\n",line, $1->name, i+1, tmp2.c_str(), tmp1.c_str());
+																					exit(-1);
+																				}
+																				printf("\e[1;35mWarning [line %d]:\e[0m For function '%s', argument %d should be of type '%s', '%s' provided.\n",line, $1->name, i+1, tmp2.c_str(), tmp1.c_str());
+																			}
+																			else if(p2.second){
+																				if(tmp1 == "float" || tmp1 == "double" || tmp1 == "long double"){
+																					printf("\e[1;31mError [line %d]:\e[0m For function '%s', argument %d should be of type '%s', '%s' provided.\n",line, $1->name, i+1, tmp2.c_str(), tmp1.c_str());
+																					exit(-1);
+																				}
+																				printf("\e[1;35mWarning [line %d]:\e[0m For function '%s', argument %d should be of type '%s', '%s' provided.\n",line, $1->name, i+1, tmp2.c_str(), tmp1.c_str());
+																			}
+
+																			if(tmp1 != tmp2){
+																				string op2 = "("+tmp1 + "-to-" + tmp2+")"; // Modify
+																				qi tmp = getNewTemp(tmp2);  
+																				int x = emit(op2, $3->v[i]->place, {"", NULL}, tmp);
+																				arg_names.push_back(tmp);
+																			}
+																			else{
+																				arg_names.push_back($3->v[i]->place);
+																			}
+																		}
+
 																	}
 																	$$->node_data = entry->type;
 																	$$->value_type = RVALUE;
@@ -296,7 +308,8 @@ postfix_expression
 																	for(auto i: $3->v){
 																		emit("PARAM", i->place, {"", NULL}, {"", NULL});
 																	}
-																	emit("CALL", $1->place, {"", NULL}, {"", NULL});
+																	$$->place = getNewTemp($$->node_data);
+																	emit("CALL", $1->place, {"", NULL}, $$->place);
 																	/////////////////////////////////////
 																}
 	| postfix_expression '.' IDENTIFIER							{
