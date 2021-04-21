@@ -16,6 +16,7 @@
 	int break_level=0;
 	int continue_level=0;
 	string next_name;
+	string func_ret_type = "";
 %}
 %union {
 	struct node* nodes;
@@ -3116,9 +3117,18 @@ jump_statement
 																}
 	| RETURN ';'												{
 																	$$ = node_(0,$1,-1);
+																	emit("RETURN_VOID", {"", NULL}, {"", NULL}, {"", NULL});
 																}
 	| RETURN expression ';'										{
 																	$$ = node_(1,$1,-1); $$->v[0] = $2;
+																	if(func_ret_type == "void"){
+																		printf("\e[1;35mWarning [line %d]:\e[0m ‘return’ with a value, in function returning void.\n", line);
+																		emit("RETURN_VOID", {"", NULL}, {"", NULL}, {"", NULL});
+																	}
+																	else{
+
+																	}
+
 																}
 	;
 
@@ -3205,6 +3215,7 @@ function_definition
 													func_entry->arg_list = tmp;
 												}
 												next_name = $3->node_name;
+												func_ret_type = $1->node_data;
 											} 
 
 	compound_statement					{
@@ -3212,11 +3223,13 @@ function_definition
 											st_entry* tmp = lookup($3->node_name); 
 											tmp->sym_table = curr->v.back()->val;
 											tmp->size = curr_width;
+											func_ret_type = "";
 
 											backpatch($5->nextlist, nextquad);
 										}
 
-	| declarator 						{
+
+	| declarator 						{	
 											curr_width = 0;
 											for(auto p : func_params){
 												if(p.second == ""){
@@ -3270,6 +3283,9 @@ function_definition
 												func_entry->arg_list = tmp;
 												next_name = $1->node_name;
 											}
+											st_entry* temp = lookup($1->node_name);
+											func_ret_type = temp->type; 
+
 										}
 
 	compound_statement					{
@@ -3277,6 +3293,7 @@ function_definition
 											st_entry* tmp = lookup($1->node_name); 
 											tmp->sym_table = curr->v.back()->val;
 											tmp->size = curr_width;
+											func_ret_type = "";
 
 											backpatch($3->nextlist, nextquad);
 										}
