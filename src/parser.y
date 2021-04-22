@@ -290,6 +290,7 @@ postfix_expression
 																				printf("\e[1;35mWarning [line %d]:\e[0m For function '%s', argument %d should be of type '%s', '%s' provided.\n",line, $1->name, i+1, tmp2.c_str(), tmp1.c_str());
 																			}
 
+																			//////////////// 3AC ////////////////
 																			if(tmp1 != tmp2){
 																				string op2 = "("+tmp1 + "-to-" + tmp2+")"; // Modify
 																				qi tmp = getNewTemp(tmp2);  
@@ -299,6 +300,7 @@ postfix_expression
 																			else{
 																				arg_names.push_back($3->v[i]->place);
 																			}
+																			/////////////////////////////////////
 																		}
 
 																	}
@@ -3176,9 +3178,56 @@ jump_statement
 																		emit("RETURN_VOID", {"", NULL}, {"", NULL}, {"", NULL});
 																	}
 																	else{
-
+																		string tmp1 = func_ret_type, tmp2 = $2->node_data;
+																		string type;
+																		string type1, type2;
+																		pair<string, int> p1 = get_equivalent_pointer(tmp1);
+																		pair<string, int> p2 = get_equivalent_pointer(tmp2);
+																		type1 = p1.first, type2 = p2.first;
+																		tt_entry* entry1 = type_lookup(type1);
+																		tt_entry* entry2 = type_lookup(type2);
+																		if(entry1 && entry2){
+																			if(entry1 != entry2){
+																				printf("\e[1;31mError [line %d]:\e[0m Incompatible types when returning type ‘%s’ but ‘%s’ was expected.\n",line, tmp2.c_str(), tmp1.c_str());
+																				exit(-1);
+																			}
+																			break;
+																		}
+																		if(entry1 || entry2){
+																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types when returning type ‘%s’ but ‘%s’ was expected.\n",line, tmp2.c_str(), tmp1.c_str());
+																			exit(-1);
+																		}
+																		if(p1.second && p2.second){
+																			if(p1.first != p2.first){
+																				printf("\e[1;35mWarning [line %d]:\e[0m Returning ‘%s’ from a function with return type ‘%s’.\n",line, tmp2.c_str(), tmp1.c_str());
+																			}
+																		}
+																		else if(p1.second){
+																			if(tmp2 == "float" || tmp2 == "double" || tmp2 == "long double"){
+																				printf("\e[1;31mError [line %d]:\e[0m Incompatible types when returning type ‘%s’ but ‘%s’ was expected.\n",line, tmp2.c_str(), tmp1.c_str());
+																				exit(-1);
+																			}
+																			printf("\e[1;35mWarning [line %d]:\e[0m Returning ‘%s’ from a function with return type ‘%s’.\n",line, tmp2.c_str(), tmp1.c_str());
+																		}
+																		else if(p2.second){
+																			if(tmp1 == "float" || tmp1 == "double" || tmp1 == "long double"){
+																				printf("\e[1;31mError [line %d]:\e[0m Incompatible types when returning type ‘%s’ but ‘%s’ was expected.\n",line, tmp2.c_str(), tmp1.c_str());
+																				exit(-1);
+																			}
+																			printf("\e[1;35mWarning [line %d]:\e[0m Returning ‘%s’ from a function with return type ‘%s’.\n",line, tmp2.c_str(), tmp1.c_str());	
+																		}
+																		qi tmp;
+																		if($2->token == CONSTANT){
+																			$2->place = emitConstant($2);
+																		}
+																		tmp = $2->place;
+																		if(tmp1!=tmp2){
+																			tmp = getNewTemp(tmp1);
+																			string op = "("+tmp2+"-to-"+tmp1+")";
+																			emit(op, $2->place, {"", NULL}, tmp);
+																		}
+																		emit("RETURN", tmp, {"", NULL}, {"", NULL});
 																	}
-
 																}
 	;
 
@@ -3266,6 +3315,7 @@ function_definition
 												}
 												next_name = $3->node_name;
 												func_ret_type = $1->node_data;
+												emit("FUNC_START", {$3->node_name, NULL}, {"", NULL}, {"", NULL});
 											} 
 
 	compound_statement					{
@@ -3336,6 +3386,7 @@ function_definition
 											st_entry* temp = lookup($1->node_name);
 											func_ret_type = temp->type; 
 
+											emit("FUNC_START", {$1->node_name, NULL}, {"", NULL}, {"", NULL});
 										}
 
 	compound_statement					{

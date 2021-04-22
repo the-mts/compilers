@@ -1,11 +1,13 @@
 #include<stdio.h>
-float fun(){
-	int x  = 1;
-	return x;
+int fun(){
+	int z[2];
+	return z;
 }
 int main(){
-	float k = fun();
-	printf("%f\n", k);
+	int x[5];
+	// int * y = x;
+	int y[5];
+	y[2] = fun();
 	return 0;
 }
->>>>>>> shash
+
