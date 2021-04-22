@@ -16,6 +16,7 @@
 	int break_level=0;
 	int continue_level=0;
 	string next_name;
+	string func_ret_type = "";
 %}
 %union {
 	struct node* nodes;
@@ -195,7 +196,8 @@ postfix_expression
 																	$$->value_type = RVALUE;
 
 																	//////////////// 3AC ////////////////
-
+																	$$->place = getNewTemp($$->node_data);
+																	emit("CALL", $1->place, {"", NULL}, $$->place);
 																	/////////////////////////////////////
 																}
 	| postfix_expression '(' argument_expression_list ')'		{
@@ -224,22 +226,91 @@ postfix_expression
 																		exit(-1);
 																	}
 																	auto arg_list = *(entry->arg_list);
+																	vector<qi> arg_names;
 																	for(int i = 0; i < $3->sz; i++){
-																		string type;
-																		if($3->v[i]->node_data.back() == ']')
+																		string type = $3->v[i]->node_data;
+
+																		if(arg_list[i].first.back() == ']'){
+																			if($3->v[i]->node_data.back() != ']'){
+																				printf("\e[1;31mError [line %d]:\e[0m For function '%s', argument %d should be of type '%s', '%s' provided.\n",line,$1->name,i+1,arg_list[i].first.c_str(),type.c_str());
+																				exit(-1);
+																			}
 																			type = increase_array_level(reduce_pointer_level($3->v[i]->node_data));
-																		else
-																			type = $3->v[i]->node_data;
-																		if(type != arg_list[i].first){
+																			if(type != arg_list[i].first){
+																				printf("\e[1;31mError [line %d]:\e[0m For function '%s', argument %d should be of type '%s', '%s' provided.\n",line,$1->name,i+1,arg_list[i].first.c_str(),type.c_str());
+																				exit(-1);
+																			}
+																			arg_names.push_back($3->v[i]->place);
+																		}
+																		else if($3->v[i]->node_data.back() == ']'){
 																			printf("\e[1;31mError [line %d]:\e[0m For function '%s', argument %d should be of type '%s', '%s' provided.\n",line,$1->name,i+1,arg_list[i].first.c_str(),type.c_str());
 																			exit(-1);
 																		}
+
+																		else{
+																			string tmp1 = $3->v[i]->node_data;
+																			string tmp2 = arg_list[i].first;
+																			string type1, type2;
+																			pair<string, int> p1 = get_equivalent_pointer(tmp1);
+																			pair<string, int> p2 = get_equivalent_pointer(tmp2);
+																			type1 = p1.first, type2 = p2.first;
+																			tt_entry* entry1 = type_lookup(type1);
+																			tt_entry* entry2 = type_lookup(type2);
+																			if(entry1 && entry2){
+																				if(entry1 != entry2){
+																					printf("\e[1;31mError [line %d]:\e[0m For function '%s', argument %d should be of type '%s', '%s' provided.\n",line, $1->name, i+1, tmp2.c_str(), tmp1.c_str());
+																					exit(-1);
+																				}
+																			}
+																			else if(entry1 || entry2){
+																				printf("\e[1;31mError [line %d]:\e[0m For function '%s', argument %d should be of type '%s', '%s' provided.\n",line, $1->name, i+1, tmp2.c_str(), tmp1.c_str());
+																				exit(-1);
+																			}
+																			//if((tmp1.find("[") != string::npos && tmp1.find("[]") == string::npos)){
+																			//	printf("\e[1;31mError [line %d]:\e[0m Array variables cannot be reassigned.\n",line);
+																			//	exit(-1);
+																			//}
+																			if(p1.second && p2.second){
+																				if(p1.first != p2.first){
+																					printf("\e[1;35mWarning [line %d]:\e[0m For function '%s', argument %d should be of type '%s', '%s' provided.\n",line, $1->name, i+1, tmp2.c_str(), tmp1.c_str());
+																				}
+																			}
+																			else if(p1.second){
+																				if(tmp2 == "float" || tmp2 == "double" || tmp2 == "long double"){
+																					printf("\e[1;31mError [line %d]:\e[0m For function '%s', argument %d should be of type '%s', '%s' provided.\n",line, $1->name, i+1, tmp2.c_str(), tmp1.c_str());
+																					exit(-1);
+																				}
+																				printf("\e[1;35mWarning [line %d]:\e[0m For function '%s', argument %d should be of type '%s', '%s' provided.\n",line, $1->name, i+1, tmp2.c_str(), tmp1.c_str());
+																			}
+																			else if(p2.second){
+																				if(tmp1 == "float" || tmp1 == "double" || tmp1 == "long double"){
+																					printf("\e[1;31mError [line %d]:\e[0m For function '%s', argument %d should be of type '%s', '%s' provided.\n",line, $1->name, i+1, tmp2.c_str(), tmp1.c_str());
+																					exit(-1);
+																				}
+																				printf("\e[1;35mWarning [line %d]:\e[0m For function '%s', argument %d should be of type '%s', '%s' provided.\n",line, $1->name, i+1, tmp2.c_str(), tmp1.c_str());
+																			}
+
+																			if(tmp1 != tmp2){
+																				string op2 = "("+tmp1 + "-to-" + tmp2+")"; // Modify
+																				qi tmp = getNewTemp(tmp2);  
+																				int x = emit(op2, $3->v[i]->place, {"", NULL}, tmp);
+																				arg_names.push_back(tmp);
+																			}
+																			else{
+																				arg_names.push_back($3->v[i]->place);
+																			}
+																		}
+
 																	}
 																	$$->node_data = entry->type;
 																	$$->value_type = RVALUE;
 
 																	//////////////// 3AC ////////////////
-
+																	for(auto i: $3->v){
+																		emit("PARAM", i->place, {"", NULL}, {"", NULL});
+																	}
+																	$$->place = getNewTemp($$->node_data);
+																	emit("CALL", $1->place, {"", NULL}, $$->place);
 																	/////////////////////////////////////
 																}
 	| postfix_expression '.' IDENTIFIER							{
@@ -371,14 +442,18 @@ argument_expression_list
 																	$$ = node_(1,"arg_list",-1); $$->v[0] = $1;
 
 																	//////////////// 3AC ////////////////
-																	
+																	if($1->token == CONSTANT){
+																		$1->place = emitConstant($1);
+																	}
 																	/////////////////////////////////////
 																}
 	| argument_expression_list ',' assignment_expression		{
 																	$$ = $1; add_node($$,$3);
 
 																	//////////////// 3AC ////////////////
-																	
+																	if($3->token == CONSTANT){
+																		$3->place = emitConstant($3);
+																	}
 																	/////////////////////////////////////
 																}
 	;
@@ -1858,22 +1933,6 @@ assignment_expression
 																					}
 																					printf("\e[1;35mWarning [line %d]:\e[0m Assignment to '%s' from incompatible type '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
 																				}
-																				/*if(type1.back()=='*' && type2.back()=='*') break;
-																				type = arithmetic_type_upgrade(type1, type2, string((const char*)$2->name));
-																				if(type.back() == '*'){
-																					else if(type1.back()=='*' && (type2.find("float") != string::npos || type2.find("double")!=string::npos)){
-																						printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2->name);
-																						exit(-1);
-																					}
-																					else if(type2.back()=='*' && (type1.find("float") != string::npos || type1.find("double")!=string::npos)){
-																						printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2->name);
-																						exit(-1);
-																					}
-																					else{
-																						printf("\e[1;35mWarning [line %d]:\e[0m Assignment is without a cast for operator '%s'.\n",line, $2->name);
-																					}
-																				}*/
-																				
 																				//////////////// 3AC ////////////////
 																				backpatch($3->nextlist, nextquad); // CHECK THIS!!!!!
 																				if($3->token == CONSTANT){
@@ -3108,9 +3167,18 @@ jump_statement
 																}
 	| RETURN ';'												{
 																	$$ = node_(0,$1,-1);
+																	emit("RETURN_VOID", {"", NULL}, {"", NULL}, {"", NULL});
 																}
 	| RETURN expression ';'										{
 																	$$ = node_(1,$1,-1); $$->v[0] = $2;
+																	if(func_ret_type == "void"){
+																		printf("\e[1;35mWarning [line %d]:\e[0m ‘return’ with a value, in function returning void.\n", line);
+																		emit("RETURN_VOID", {"", NULL}, {"", NULL}, {"", NULL});
+																	}
+																	else{
+
+																	}
+
 																}
 	;
 
@@ -3197,6 +3265,7 @@ function_definition
 													func_entry->arg_list = tmp;
 												}
 												next_name = $3->node_name;
+												func_ret_type = $1->node_data;
 											} 
 
 	compound_statement					{
@@ -3204,11 +3273,13 @@ function_definition
 											st_entry* tmp = lookup($3->node_name); 
 											tmp->sym_table = curr->v.back()->val;
 											tmp->size = curr_width;
+											func_ret_type = "";
 
 											backpatch($5->nextlist, nextquad);
 										}
 
-	| declarator 						{
+
+	| declarator 						{	
 											curr_width = 0;
 											for(auto p : func_params){
 												if(p.second == ""){
@@ -3262,6 +3333,9 @@ function_definition
 												func_entry->arg_list = tmp;
 												next_name = $1->node_name;
 											}
+											st_entry* temp = lookup($1->node_name);
+											func_ret_type = temp->type; 
+
 										}
 
 	compound_statement					{
@@ -3269,6 +3343,7 @@ function_definition
 											st_entry* tmp = lookup($1->node_name); 
 											tmp->sym_table = curr->v.back()->val;
 											tmp->size = curr_width;
+											func_ret_type = "";
 
 											backpatch($3->nextlist, nextquad);
 										}
