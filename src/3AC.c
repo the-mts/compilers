@@ -92,10 +92,14 @@ void make_blocks(){
 	blocks.push_back(block(0));
 	for (int i = 0; i < n; i++){
 		if (curr < blocknum[i]){
-			if (code_array[i-1].op == "GOTO")
+			if (code_array[i-1].op == "GOTO"){
 				blocks[curr].succ = blocknum[code_array[i-1].goto_addr];
-			else if (code_array[i-1].goto_addr != -1)
+				blocks[curr].code[blocks[curr].code.size()-1].goto_addr = blocks[curr].succ;
+			}
+			else if (code_array[i-1].goto_addr != -1){
 				blocks[curr].cond_succ = blocknum[code_array[i-1].goto_addr];
+				blocks[curr].code[blocks[curr].code.size()-1].goto_addr = blocks[curr].cond_succ;			
+			}
 			else if (code_array[i-1].op == "RETURN" || code_array[i-1].op == "RETURN_VOID") 
 				blocks[curr].succ = -1;
 			curr++;
@@ -103,10 +107,13 @@ void make_blocks(){
 		}
 		blocks[curr].code.push_back(code_array[i]);
 	}
-	if (code_array[n-1].op == "GOTO")
+	if (code_array[n-1].op == "GOTO"){
 		blocks[curr].succ = blocknum[code_array[n-1].goto_addr];
-	else if (code_array[n-1].goto_addr != -1)
+	}
+	else if (code_array[n-1].goto_addr != -1){
 		blocks[curr].cond_succ = blocknum[code_array[n-1].goto_addr];
+		blocks[curr].code[blocks[curr].code.size()-1].goto_addr = blocks[curr].cond_succ;
+	}
 	else
 		blocks[curr].succ = -1;
 	
