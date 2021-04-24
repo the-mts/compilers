@@ -1,6 +1,7 @@
 %{
 	#include<string.h>
 	#include<stdlib.h>
+	#include<numeric>
 	#include "parse_utils.h"
 	#include "3AC.h"
 	using namespace std;
@@ -409,7 +410,7 @@ postfix_expression
 
 																	//////////////// 3AC ////////////////
 																	$$->place = getNewTemp($$->node_data);
-																	// st_entry* new_entry = add_entry($$->place.first, $$->node_data, 0, offset.back(), IS_TEMP);
+																	// st_entry* new_entry = add_entry($$->place.first, $$->node_data, 0, accumulate(offset.begin()+1, offset.end(), 0), IS_TEMP);
 																	// $$->place.second = new_entry;
 																	int x = emit("x++", $1->place, {"", NULL}, $$->place);
 																	/////////////////////////////////////
@@ -2192,14 +2193,14 @@ init_declarator
 																	}
 																	check_valid_array(data_type_);
 																	if($1->node_type == 1){
-																		st_entry* tmp = add_entry($1->node_name, data_type_,0,offset.back(),IS_FUNC);
+																		st_entry* tmp = add_entry($1->node_name, data_type_,get_size(data_type_),accumulate(offset.begin()+1, offset.end(), 0),IS_FUNC);
 																		tmp->type_name = IS_FUNC;
 																		check_param_list(func_params);
 																		vector<pair<string, string>> *temp = new vector<pair<string, string>>(func_params);
 																		tmp->arg_list = temp;
 																	}
 																	else{
-																		st_entry* tmp = add_entry($1->node_name, data_type_,0,offset.back(),IS_VAR);
+																		st_entry* tmp = add_entry($1->node_name, data_type_, get_size(data_type_),accumulate(offset.begin()+1, offset.end(), 0),IS_VAR);
 																		if(data_type_ == "void"){
 																			printf("\e[1;31mError [line %d]:\e[0m Variable or field '%s' declared void.\n", line, $1->node_name.c_str());
 																			exit(-1);
@@ -2225,7 +2226,7 @@ init_declarator
 																			printf("\e[1;31mError [line %d]:\e[0m Redeclaration of '%s'.\n", line, $1->node_name.c_str());
 																			exit(-1);
 																		}
-																		st_entry* tmp = add_entry($1->name, data_type_, 0, offset.back(), IS_VAR);/*change IS_VAR*/
+																		st_entry* tmp = add_entry($1->name, data_type_, get_size(data_type_), accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);/*change IS_VAR*/
 																		$1->place = {$1->node_name, tmp};
 																		if(data_type_ == "void"){
 																			printf("\e[1;31mError [line %d]:\e[0m Variable or field '%s' declared void.\n", line, $1->node_name.c_str());
@@ -2830,8 +2831,45 @@ M1
 																	new_scope();
 																	check_param_list(func_params);
 																	offset.push_back(0);
+																	int int_char = 0, double_float = 0;
+																	int curr_offset = -16;
 																	for(auto p: func_params){
-																		add_entry(p.second, p.first, 0, offset.back(), IS_VAR);    //IS_VAR to be changed
+																		int flag = 0;
+																		if(p.first.find("int") != string::npos || p.first.find("char") != string::npos || p.first.back() == ']' || p.first.back() == '*'){
+																			flag = 1;
+																		}
+																		else if(p.first.find("double") != string::npos || p.first.find("float") != string::npos){
+																			flag = 2;
+																		}
+																		else{
+																			flag = 3;
+																		}
+																		if(flag == 1 && int_char<6){
+																			st_entry* st = add_entry(p.second, p.first, get_size(p.first), accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
+																			int_char++;
+																		}
+																		else if(flag == 2 && double_float<8){
+																			st_entry* st = add_entry(p.second, p.first, get_size(p.first), accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
+																			double_float++;
+																		}
+																		else if(flag == 1 && int_char == 6){
+																			st_entry* st = add_entry(p.second, p.first, 0, accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
+																			st->size = get_size(p.first);
+																			st->offset = curr_offset;
+																			curr_offset-=get_size(p.first);
+																		}
+																		else if(flag == 2 && double_float == 8){
+																			st_entry* st = add_entry(p.second, p.first, 0, accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
+																			st->size = get_size(p.first);
+																			st->offset = curr_offset;
+																			curr_offset-=get_size(p.first);
+																		}
+																		else if(flag == 3){
+																			st_entry* st = add_entry(p.second, p.first, 0, accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
+																			st->size = get_size(p.first);
+																			st->offset = curr_offset;
+																			curr_offset-=get_size(p.first);
+																		}
 																	}
 																	func_params.clear();
 																}
@@ -2842,7 +2880,6 @@ M2
 																	scope_cleanup();
 																	long long temp = offset.back();
 																	offset.pop_back();
-																	offset.back()+=temp;
 																}
 	;
 
@@ -3298,7 +3335,7 @@ function_definition
 												}
 												else{
 													check_param_list(func_params);
-													st_entry* func_entry = add_entry($3->node_name, get_eqtype($1->node_data), 0, offset.back(), IS_FUNC);
+													st_entry* func_entry = add_entry($3->node_name, get_eqtype($1->node_data), 0, accumulate(offset.begin()+1, offset.end(), 0), IS_FUNC);
 													if(!func_params.empty() && func_params[0].first == ""){
 														printf("\e[1;35mWarning [line %d]:\e[0m Function parameter type defaults to \"int\"\n", line);
 													}
@@ -3367,7 +3404,7 @@ function_definition
 											}
 											else{
 												check_param_list(func_params);
-												st_entry* func_entry = add_entry($1->node_name, "int", 0, offset.back(), IS_FUNC);
+												st_entry* func_entry = add_entry($1->node_name, "int", 0, accumulate(offset.begin()+1, offset.end(), 0), IS_FUNC);
 												printf("\e[1;35mWarning [line %d]:\e[0m Function return type defaults to \"int\"\n", line);
 												if(!func_params.empty() && func_params[0].first == ""){
 													printf("\e[1;35mWarning [line %d]:\e[0m Function parameter type defaults to \"int\"\n", line);
