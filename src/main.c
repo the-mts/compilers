@@ -39,6 +39,30 @@ void print_code(){
     }
 }
 
+void print_blocks(){
+	int c = 0, j;
+	for (auto b: blocks){
+		cout<<"Block "<<c<<":"<<endl;
+		j = 0;
+		// cout << b.pred
+		for(auto i: b.code){
+			cout<<j<<"\t\t";
+	        if(i.op.find("unary")!= string::npos) cout<<i.res.first<< " = " << i.op<< ' '<<i.op1.first;
+			else if(i.op == "IF_TRUE_GOTO") cout<<"IF "<< i.op1.first << " IS TRUE GOTO " << i.goto_addr;
+			else if(i.op == "GOTO") cout<<"GOTO " << i.goto_addr;
+			else if(i.op == "PARAM") cout<<"PARAM " << i.op1.first;
+			else if(i.op == "CALL") cout<<"CALL " << i.op1.first<<' '<<i.res.first;
+			else if(i.op1.first!="" && i.op2.first!="") cout<<i.res.first<< " = " << i.op1.first <<' '<< i.op<<' ' << i.op2.first;
+			else if(i.op2.first == "" && i.op[0]=='=') cout<<i.res.first<< ' '<<i.op << ' '<<i.op1.first;
+			else if(i.op2.first == "") cout<<i.res.first<< " = "<< i.op << ' '<<i.op1.first;
+    	    cout<<endl;
+			j++;
+    	}
+		cout<<"succ: " << b.succ << ", cond_succ: " << b.cond_succ << endl;
+		c++;
+	}
+}
+
 void print_table(typtab* table){
 	string name = "";
 	if(scope_num == 0){
@@ -234,5 +258,8 @@ int main(int argc, char const* argv[]){
 	freopen("bin/tac.txt", "w", stdout);
 	print_code();
 
+	make_blocks();
+	freopen("bin/basic_blocks.txt", "w", stdout);
+	print_blocks();
 	return 0;
 }

@@ -3,6 +3,7 @@
 
 vector<quad> code_array;
 int nextquad = 0;
+vector<block> blocks;
 
 int emit(string op, qi op1, qi op2, qi res, int goto_addr){
     quad q (op, op1, op2, res, goto_addr);
@@ -46,4 +47,60 @@ qi emitConstant(node* tmp){
 
     emit("=", temp1, {"", NULL}, temp);
     return temp;
+}
+
+void make_blocks(){
+	int n = code_array.size();
+	if (n == 0) return;
+	int leader[n];
+	int blocknum[n];
+	int curr = 0, prev;
+
+	// Replace some obviously redundant GOTOs with DUMMY statements
+	for (int i = 0; i < n-1; i++)
+		if (code_array[i].goto_addr == i+1) {
+			code_array[i].op = "DUMMY";
+			code_array[i].op1 = {"", NULL};
+			code_array[i].op2 = {"", NULL};
+			code_array[i].res = {"", NULL};
+			code_array[i].goto_addr = -1;
+		}
+
+	// Finding leaders
+
+	leader[0] = 1;
+	for (int i = 1; i < n; i++)	leader[i] = 0;
+	for (int i = 0; i < n-1; i++){
+		if (code_array[i].goto_addr > -1){
+			leader[i+1] = 1;
+			leader[code_array[i].goto_addr] = 1;
+		}
+	}
+	if (code_array[n-1].goto_addr > -1) leader[code_array[n-1].goto_addr] = 1;
+
+	for (int i = 0; i < n; i++){
+		blocknum[i] = curr;
+		if (leader[i]) curr++;
+	}
+
+	curr = 0;
+	blocks.push_back(block(0));
+	for (int i = 0; i < n; i++){
+		if (curr < blocknum[i]){
+			if (code_array[i-1].op == "GOTO")
+				blocks[curr].succ = blocknum[code_array[i-1].goto_addr];
+			else if (code_array[i-1].goto_addr != -1)
+				blocks[curr].cond_succ = blocknum[code_array[i-1].goto_addr];
+			curr++;
+			blocks.push_back(block(curr));
+		}
+		blocks[curr].code.push_back(code_array[i]);
+	}
+	if (code_array[n-1].op == "GOTO")
+		blocks[curr].succ = blocknum[code_array[n-1].goto_addr];
+	else if (code_array[n-1].goto_addr != -1)
+		blocks[curr].cond_succ = blocknum[code_array[n-1].goto_addr];
+	else
+		blocks[curr].succ = -1;
+
 }

@@ -24,6 +24,16 @@ typedef struct quad {
     }
 } quad;
 
+typedef struct block {
+	vector<quad> code;
+	int succ;
+	int cond_succ = -1;
+	vector<int> pred;
+	block(int num){
+		this->succ = num+1;
+	}
+} block;
+
 extern vector<quad> code_array;
 extern int nextquad;
 
@@ -32,4 +42,6 @@ extern void backpatch(vector<int>& list, int addr);
 extern qi getNewTemp(string type);
 extern qi emitConstant(node* tmp);
 
+extern vector<block> blocks;
+extern void make_blocks();
 #endif
