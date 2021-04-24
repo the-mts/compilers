@@ -290,10 +290,11 @@ void init_symtab(){
 }
 
 st_entry* add_entry(string key, string type, unsigned long size, long offset, enum sym_type type_name){
-	if(type_name != IS_FUNC)
-		size = get_size(type);
-	else
-		size = 0;
+	// if(type_name != IS_FUNC)
+	// 	size = get_size(type);
+	// else
+	// 	size = 0;
+	offset += size;
 	st_entry * new_entry = new st_entry(type, size, offset, type_name);
 	if(type_name != IS_FUNC)
 		::offset.back() += size;
