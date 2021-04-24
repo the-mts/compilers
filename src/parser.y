@@ -290,6 +290,7 @@ postfix_expression
 																				printf("\e[1;35mWarning [line %d]:\e[0m For function '%s', argument %d should be of type '%s', '%s' provided.\n",line, $1->name, i+1, tmp2.c_str(), tmp1.c_str());
 																			}
 
+																			//////////////// 3AC ////////////////
 																			if(tmp1 != tmp2){
 																				string op2 = "("+tmp1 + "-to-" + tmp2+")"; // Modify
 																				qi tmp = getNewTemp(tmp2);  
@@ -299,6 +300,7 @@ postfix_expression
 																			else{
 																				arg_names.push_back($3->v[i]->place);
 																			}
+																			/////////////////////////////////////
 																		}
 
 																	}
@@ -1637,43 +1639,58 @@ inclusive_or_expression
 
 logical_and_expression
 	: inclusive_or_expression									{$$ = $1;}
-	| logical_and_expression AND_OP inclusive_or_expression		{
+	| logical_and_expression AND_OP 							{
+																	if ($1->truelist.empty() && $1->falselist.empty()){
+																	    if($1->token == CONSTANT){
+																			$1->place = emitConstant($1);
+																		}
+																		int x = emit("IF_TRUE_GOTO", $1->place, {"", NULL}, {"", NULL}, nextquad+2);
+																		int y = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
+																		$1->falselist.push_back(y);
+																	}
+																	else {
+																		backpatch($1->truelist, nextquad);
+																	}
+																}
+
+
+	inclusive_or_expression										{
 																	if($1->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
 																	}
-																	if($3->node_data == "void"){
+																	if($4->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
 																	}
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
-																	pair<string,int> p2 = get_equivalent_pointer($3->node_data);
+																	pair<string,int> p2 = get_equivalent_pointer($4->node_data);
 																	if((p1.second || p2.second) && (!p1.second || !p2.second)){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																		exit(-1);
 																	}
 																	arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
-																	if($1->token == CONSTANT && $3->token == CONSTANT){
-																		evaluate_const($1, $3, AND_OP, "int");
-																		$$ = $1;
-																	}
-																	else{
-																		$$ = node_(2,$2,-1);
+																																			$$ = node_(2,$2,-1);
 																		$$->v[0] = $1;
-																		$$->v[1] = $3;
+																		$$->v[1] = $4;
 
 																		//////////////// 3AC ////////////////
-																		if($1->token == CONSTANT){
-																			$1->place = emitConstant($1);
-																		}
-																		else if($3->token == CONSTANT){
-																			$3->place = emitConstant($3);
+																		
+																		 if($4->token == CONSTANT){
+																			$4->place = emitConstant($4);
 																		}
 
-																		$$->place = getNewTemp("int");
-																		emit("&&", $1->place, $3->place, $$->place);
+																		//$$->place = getNewTemp("int");
+																		//emit("&&", $1->place, $3->place, $$->place);
+
+																		int x = emit("IF_TRUE_GOTO", $4->place, {"", NULL}, {"", NULL});
+																		int y = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
+																		$$->falselist.push_back(y);
+																		$$->truelist.push_back(x);
+																		$$->falselist.insert($$->falselist.end(), $1->falselist.begin(), $1->falselist.end());
+
 																		/////////////////////////////////////
-																	}
+																	
 																	$$->node_data = "int";
 																	$$->value_type = RVALUE;
 																}
@@ -1681,43 +1698,63 @@ logical_and_expression
 
 logical_or_expression
 	: logical_and_expression									{$$ = $1;}
-	| logical_or_expression OR_OP logical_and_expression		{
+	| logical_or_expression OR_OP								{
+																	if ($1->falselist.empty() && $1->truelist.empty()){
+																		if($1->token == CONSTANT){
+																			$1->place = emitConstant($1);
+																		}
+																		int x = emit("IF_TRUE_GOTO", $1->place, {"", NULL}, {"", NULL});
+																		//int y = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL}, nextquad+1);
+																		$1->truelist.push_back(x);
+																	}
+																	else {
+																		backpatch($1->falselist, nextquad);
+																	}
+																}
+
+ 
+
+	logical_and_expression		{
 																	if($1->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
 																	}
-																	if($3->node_data == "void"){
+																	if($4->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
 																	}
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
-																	pair<string,int> p2 = get_equivalent_pointer($3->node_data);
+																	pair<string,int> p2 = get_equivalent_pointer($4->node_data);
 																	if((p1.second || p2.second) && (!p1.second || !p2.second)){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																		exit(-1);
 																	}
 																	arithmetic_type_upgrade(p1.first,p2.first,string((const char*)$2));
-																	if($1->token == CONSTANT && $3->token == CONSTANT){
-																		evaluate_const($1, $3, OR_OP, "int");
-																		$$ = $1;
-																	}
-																	else{
-																		$$ = node_(2,$2,-1);
+																																			$$ = node_(2,$2,-1);
 																		$$->v[0] = $1;
-																		$$->v[1] = $3;
+																		$$->v[1] = $4;
 
 																		//////////////// 3AC ////////////////
-																		if($1->token == CONSTANT){
-																			$1->place = emitConstant($1);
-																		}
-																		else if($3->token == CONSTANT){
-																			$3->place = emitConstant($3);
+																		
+																		if($4->token == CONSTANT){
+																			$4->place = emitConstant($4);
 																		}
 
-																		$$->place = getNewTemp("int");
-																		emit("||", $1->place, $3->place, $$->place);
+																		//$$->place = getNewTemp("int");
+																		//emit("||", $1->place, $3->place, $$->place);
+
+																		if ($4->truelist.empty()){
+																			int x = emit("IF_TRUE_GOTO", $4->place, {"", NULL}, {"", NULL});
+																			int y = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
+																			$4->truelist.push_back(x);
+																			$4->falselist.push_back(y);
+																		}
+																		$$->falselist = $4->falselist;
+																		$$->truelist.insert($$->truelist.end(), $1->truelist.begin(), $1->truelist.end());
+																		$$->truelist.insert($$->truelist.end(), $4->truelist.begin(), $4->truelist.end());
+
 																		/////////////////////////////////////
-																	}
+																	
 																	$$->node_data = "int";
 																	$$->value_type = RVALUE;
 																}
@@ -1734,14 +1771,28 @@ M7
 															int y = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
 															tmp->nextlist.push_back(y);
 															backpatch($<nodes>-4->falselist, nextquad);
+															//backpatch($<nodes>-4->falselist, nextquad);
 															$$ = x;
 															/////////////////////////////////////
 														}
 
 conditional_expression
-	: logical_or_expression												{$$ = $1;}
+	: logical_or_expression								{
+															if ($1->truelist.empty() && $1->falselist.empty()) $$ = $1;
+															else {
+																$$->place = getNewTemp("int");
+																int x = emit("=", {to_string(1), NULL}, {"", NULL}, $$->place);
+																emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL}, nextquad+2);
+																int y = emit("=", {to_string(0), NULL}, {"", NULL}, $$->place);
+																backpatch($1->truelist, x);
+																backpatch($1->falselist, y);
+															}
+
+														}
 	| logical_or_expression '?'	 						{
 															//////////////// 3AC ////////////////
+															if ($1->truelist.empty() && $1->falselist.empty())
+															{
 															if($1->token == CONSTANT){
 																$1->place = emitConstant($1);
 																// printf("Ternary condition constant. %s %d\n", $1->place.first.c_str(), $1->val.int_const);
@@ -1750,6 +1801,7 @@ conditional_expression
 															int y = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
 															$1->truelist.push_back(x);
 															$1->falselist.push_back(y);
+															}
 															backpatch($1->truelist, nextquad);
 															/////////////////////////////////////
 														}
@@ -3126,9 +3178,56 @@ jump_statement
 																		emit("RETURN_VOID", {"", NULL}, {"", NULL}, {"", NULL});
 																	}
 																	else{
-
+																		string tmp1 = func_ret_type, tmp2 = $2->node_data;
+																		string type;
+																		string type1, type2;
+																		pair<string, int> p1 = get_equivalent_pointer(tmp1);
+																		pair<string, int> p2 = get_equivalent_pointer(tmp2);
+																		type1 = p1.first, type2 = p2.first;
+																		tt_entry* entry1 = type_lookup(type1);
+																		tt_entry* entry2 = type_lookup(type2);
+																		if(entry1 && entry2){
+																			if(entry1 != entry2){
+																				printf("\e[1;31mError [line %d]:\e[0m Incompatible types when returning type ‘%s’ but ‘%s’ was expected.\n",line, tmp2.c_str(), tmp1.c_str());
+																				exit(-1);
+																			}
+																			break;
+																		}
+																		if(entry1 || entry2){
+																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types when returning type ‘%s’ but ‘%s’ was expected.\n",line, tmp2.c_str(), tmp1.c_str());
+																			exit(-1);
+																		}
+																		if(p1.second && p2.second){
+																			if(p1.first != p2.first){
+																				printf("\e[1;35mWarning [line %d]:\e[0m Returning ‘%s’ from a function with return type ‘%s’.\n",line, tmp2.c_str(), tmp1.c_str());
+																			}
+																		}
+																		else if(p1.second){
+																			if(tmp2 == "float" || tmp2 == "double" || tmp2 == "long double"){
+																				printf("\e[1;31mError [line %d]:\e[0m Incompatible types when returning type ‘%s’ but ‘%s’ was expected.\n",line, tmp2.c_str(), tmp1.c_str());
+																				exit(-1);
+																			}
+																			printf("\e[1;35mWarning [line %d]:\e[0m Returning ‘%s’ from a function with return type ‘%s’.\n",line, tmp2.c_str(), tmp1.c_str());
+																		}
+																		else if(p2.second){
+																			if(tmp1 == "float" || tmp1 == "double" || tmp1 == "long double"){
+																				printf("\e[1;31mError [line %d]:\e[0m Incompatible types when returning type ‘%s’ but ‘%s’ was expected.\n",line, tmp2.c_str(), tmp1.c_str());
+																				exit(-1);
+																			}
+																			printf("\e[1;35mWarning [line %d]:\e[0m Returning ‘%s’ from a function with return type ‘%s’.\n",line, tmp2.c_str(), tmp1.c_str());	
+																		}
+																		qi tmp;
+																		if($2->token == CONSTANT){
+																			$2->place = emitConstant($2);
+																		}
+																		tmp = $2->place;
+																		if(tmp1!=tmp2){
+																			tmp = getNewTemp(tmp1);
+																			string op = "("+tmp2+"-to-"+tmp1+")";
+																			emit(op, $2->place, {"", NULL}, tmp);
+																		}
+																		emit("RETURN", tmp, {"", NULL}, {"", NULL});
 																	}
-
 																}
 	;
 
@@ -3216,6 +3315,7 @@ function_definition
 												}
 												next_name = $3->node_name;
 												func_ret_type = $1->node_data;
+												emit("FUNC_START", {$3->node_name, NULL}, {"", NULL}, {"", NULL});
 											} 
 
 	compound_statement					{
@@ -3286,6 +3386,7 @@ function_definition
 											st_entry* temp = lookup($1->node_name);
 											func_ret_type = temp->type; 
 
+											emit("FUNC_START", {$1->node_name, NULL}, {"", NULL}, {"", NULL});
 										}
 
 	compound_statement					{
