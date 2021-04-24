@@ -102,5 +102,9 @@ void make_blocks(){
 		blocks[curr].cond_succ = blocknum[code_array[n-1].goto_addr];
 	else
 		blocks[curr].succ = -1;
-
+	
+	for (int i = 0; i < blocks.size(); i++){
+		if (blocks[i].succ != -1) blocks[blocks[i].succ].pred.push_back(i);
+		if (blocks[i].cond_succ != -1) blocks[blocks[i].cond_succ].pred.push_back(i);
+	}
 }

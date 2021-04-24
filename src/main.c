@@ -47,7 +47,10 @@ void print_blocks(){
 	for (auto b: blocks){
 		cout<<"Block "<<c<<":"<<endl;
 		j = 0;
-		// cout << b.pred
+		cout<<"pred: ";
+		for (auto p: b.pred)
+		cout << p << ", ";
+		cout<<endl;
 		for(auto i: b.code){
 			cout<<j<<"\t\t";
 	        if(i.op.find("unary")!= string::npos) cout<<i.res.first<< " = " << i.op<< ' '<<i.op1.first;
