@@ -1,7 +1,6 @@
-#include<stdio.h>
 int fun(){
 	int z[2];
-	return z;
+	return z[0];
 }
 int main(){
 	int x[5];

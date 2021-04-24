@@ -58,6 +58,9 @@ void print_blocks(){
 			else if(i.op == "GOTO") cout<<"GOTO " << i.goto_addr;
 			else if(i.op == "PARAM") cout<<"PARAM " << i.op1.first;
 			else if(i.op == "CALL") cout<<"CALL " << i.op1.first<<' '<<i.res.first;
+			else if(i.op == "RETURN_VOID") cout<<"RETURN_VOID";
+			else if(i.op == "RETURN") cout<<"RETURN " << i.op1.first;
+			else if(i.op == "FUNC_START") cout<<"<" << i.op1.first << ">:";
 			else if(i.op1.first!="" && i.op2.first!="") cout<<i.res.first<< " = " << i.op1.first <<' '<< i.op<<' ' << i.op2.first;
 			else if(i.op2.first == "" && i.op[0]=='=') cout<<i.res.first<< ' '<<i.op << ' '<<i.op1.first;
 			else if(i.op2.first == "") cout<<i.res.first<< " = "<< i.op << ' '<<i.op1.first;
