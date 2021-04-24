@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "3AC.h"
 #include "parse_utils.h"
 
@@ -48,6 +49,7 @@ qi emitConstant(node* tmp){
     emit("=", temp1, {"", NULL}, temp);
     return temp;
 }
+
 
 void make_blocks(){
 	int n = code_array.size();
@@ -111,5 +113,26 @@ void make_blocks(){
 	for (int i = 0; i < blocks.size(); i++){
 		if (blocks[i].succ != -1) blocks[blocks[i].succ].pred.push_back(i);
 		if (blocks[i].cond_succ != -1) blocks[blocks[i].cond_succ].pred.push_back(i);
+		blocks[i].code.erase(remove_if(blocks[i].code.begin(), blocks[i].code.end(), [](quad q){return q.op == "DUMMY";}), blocks[i].code.end());
+	}
+	
+	for (int i = 0; i < blocks.size(); i++){
+		if (blocks[i].code.size() == 0){
+			for (auto j: blocks[i].pred){
+				if (blocks[j].succ == i){
+					blocks[j].succ = blocks[i].succ;
+					blocks[blocks[i].succ].pred.push_back(j);
+				}
+				else if (blocks[j].cond_succ == i){
+					blocks[j].cond_succ = blocks[i].succ;
+					blocks[blocks[i].succ].pred.push_back(j);
+				}
+				else {
+					//cout << "Something went horribly wrong and I don't know what" << endl;
+					exit(-1);
+				}
+			}
+			blocks[i].pred.clear();
+		}
 	}
 }
