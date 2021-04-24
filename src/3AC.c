@@ -54,7 +54,7 @@ void make_blocks(){
 	if (n == 0) return;
 	int leader[n];
 	int blocknum[n];
-	int curr = 0, prev;
+	int curr = -1, prev;
 
 	// Replace some obviously redundant GOTOs with DUMMY statements
 	for (int i = 0; i < n-1; i++)
@@ -79,8 +79,8 @@ void make_blocks(){
 	if (code_array[n-1].goto_addr > -1) leader[code_array[n-1].goto_addr] = 1;
 
 	for (int i = 0; i < n; i++){
-		blocknum[i] = curr;
 		if (leader[i]) curr++;
+		blocknum[i] = curr;
 	}
 
 	curr = 0;
