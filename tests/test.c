@@ -1,3 +1,5 @@
+int x = 5;
+int a = x;
 int fun(){
 	int z[2];
 	return z[0];

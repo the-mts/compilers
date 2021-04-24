@@ -197,7 +197,7 @@ postfix_expression
 
 																	//////////////// 3AC ////////////////
 																	$$->place = getNewTemp($$->node_data);
-																	emit("CALL", $1->place, {"", NULL}, $$->place);
+																	emit("CALL", $1->place, {"", NULL}, $$->place, 0);
 																	/////////////////////////////////////
 																}
 	| postfix_expression '(' argument_expression_list ')'		{
@@ -312,7 +312,7 @@ postfix_expression
 																		emit("PARAM", i->place, {"", NULL}, {"", NULL});
 																	}
 																	$$->place = getNewTemp($$->node_data);
-																	emit("CALL", $1->place, {"", NULL}, $$->place);
+																	emit("CALL", $1->place, {"", NULL}, $$->place, $3->sz);
 																	/////////////////////////////////////
 																}
 	| postfix_expression '.' IDENTIFIER							{
@@ -539,7 +539,7 @@ unary_expression
 
 																			//////////////// 3AC ////////////////
 																			$$->place = getNewTemp($$->node_data);
-																			int x = emit("unary" + string((const char*)$1), $2->place, {"", NULL}, $$->place);
+																			int x = emit("UNARY" + string((const char*)$1), $2->place, {"", NULL}, $$->place);
 																			/////////////////////////////////////																			
 																		}
 																		break;
@@ -554,7 +554,7 @@ unary_expression
 
 																				//////////////// 3AC ////////////////
 																				$$->place = getNewTemp($$->node_data);
-																				int x = emit(string((const char*) $1), $2->place, {"", NULL}, $$->place);
+																				int x = emit("UNARY"+string((const char*) $1), $2->place, {"", NULL}, $$->place);
 																				/////////////////////////////////////
 																			}
 																		}
@@ -584,7 +584,7 @@ unary_expression
 
 																				//////////////// 3AC ////////////////
 																				$$->place = getNewTemp($$->node_data);
-																				int x = emit(string((const char*) $1), $2->place, {"", NULL}, $$->place);
+																				int x = emit("UNARY"+string((const char*) $1), $2->place, {"", NULL}, $$->place);
 																				/////////////////////////////////////
 
 																				break;
@@ -640,7 +640,7 @@ unary_expression
 
 																				//////////////// 3AC ////////////////
 																				$$->place = getNewTemp($$->node_data);
-																				int x = emit(string((const char*) $1), $2->place, {"", NULL}, $$->place);
+																				int x = emit("UNARY"+string((const char*) $1), $2->place, {"", NULL}, $$->place);
 																				/////////////////////////////////////
 																			}
 																		}
@@ -674,7 +674,7 @@ unary_expression
 
 																				//////////////// 3AC ////////////////
 																				$$->place = getNewTemp($$->node_data);
-																				int x = emit(string((const char*) $1), $2->place, {"", NULL}, $$->place);
+																				int x = emit("UNARY"+string((const char*) $1), $2->place, {"", NULL}, $$->place);
 																				/////////////////////////////////////
 
 																			}
@@ -3315,7 +3315,7 @@ function_definition
 												}
 												next_name = $3->node_name;
 												func_ret_type = $1->node_data;
-												emit("FUNC_START", {$3->node_name, NULL}, {"", NULL}, {"", NULL});
+												emit("FUNC_START", {$3->node_name, lookup($3->node_name)}, {"", NULL}, {"", NULL});
 											} 
 
 	compound_statement					{
@@ -3386,7 +3386,7 @@ function_definition
 											st_entry* temp = lookup($1->node_name);
 											func_ret_type = temp->type; 
 
-											emit("FUNC_START", {$1->node_name, NULL}, {"", NULL}, {"", NULL});
+											emit("FUNC_START", {$1->node_name, lookup($1->node_name)}, {"", NULL}, {"", NULL});
 										}
 
 	compound_statement					{
