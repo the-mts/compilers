@@ -58,7 +58,7 @@ void make_blocks(){
 	if (n == 0) return;
 	int leader[n];
 	int blocknum[n];
-	int curr = -1, prev;
+	int curr = -1, s;
 	
 //	printf("chick1\n");
 	// Replace some obviously redundant GOTOs with DUMMY statements
@@ -138,7 +138,10 @@ void make_blocks(){
 					if (blocks[j].code.back().op == "GOTO")
 						blocks[j].code.back().goto_addr = blocks[i].succ;
 					blocks[j].succ = blocks[i].succ;
-					if (blocks[i].succ != -1) blocks[blocks[i].succ].pred.push_back(j);
+					if (blocks[i].succ != -1) {
+						blocks[blocks[i].succ].pred.push_back(j);
+					}
+
 				}
 				else if (blocks[j].cond_succ == i){
 					blocks[j].code.back().goto_addr = blocks[i].succ;
@@ -150,6 +153,11 @@ void make_blocks(){
 					exit(-1);
 				}
 			}
+			if (blocks[i].succ != -1){
+				s = blocks[i].succ;
+				blocks[s].pred.erase(remove(blocks[s].pred.begin(), blocks[s].pred.end(), i), blocks[s].pred.end());
+				blocks[i].succ = -1;
+			}
 			blocks[i].pred.clear();
 		}
 	}
@@ -158,8 +166,26 @@ void make_blocks(){
 }
 
 void opt_ret_dead(){
-	for (auto b: blocks){
-		if (b.pred.size() == 0 && b.code.size() && b.code[0].op != "FUNC_START")
-		b.code.clear();
+	int c = 1, s;
+	int lim = 1000;
+	while (c && lim--) {
+		c = 0;
+		for (int b = 0; b < blocks.size(); b++){
+			if (blocks[b].pred.size() == 0 && blocks[b].code.size() && blocks[b].code[0].op != "FUNC_START"){
+				blocks[b].code.clear();
+				if (blocks[b].succ != -1){
+					s = blocks[b].succ;
+					blocks[s].pred.erase(remove(blocks[s].pred.begin(), blocks[s].pred.end(), b), blocks[s].pred.end());
+					c = 1;
+				}
+				if (blocks[b].cond_succ != -1){
+					s = blocks[b].cond_succ;
+					blocks[s].pred.erase(remove(blocks[s].pred.begin(), blocks[s].pred.end(), b), blocks[s].pred.end());
+					c = 1;
+				}
+				blocks[b].succ = -1;
+				blocks[b].cond_succ = -1;
+			}
+		}
 	}
 }

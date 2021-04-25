@@ -44,4 +44,5 @@ extern qi emitConstant(node* tmp);
 
 extern vector<block> blocks;
 extern void make_blocks();
+extern void opt_ret_dead();
 #endif

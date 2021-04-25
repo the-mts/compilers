@@ -269,6 +269,7 @@ int main(int argc, char const* argv[]){
 
 	//cout<<"Check me\n";
 	make_blocks();
+	opt_ret_dead();
 	freopen("bin/basic_blocks.txt", "w", stdout);
 	print_blocks();
 	return 0;
