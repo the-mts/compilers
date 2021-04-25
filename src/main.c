@@ -42,33 +42,68 @@ void print_code(){
     }
 }
 
-void print_blocks(){
+void print_blocks(int only_alive = 1){
 	int c = 0, j;
-	for (auto b: blocks){
-		cout<<"Block "<<c<<":"<<endl;
-		j = 0;
-		cout<<"pred: ";
-		for (auto p: b.pred)
-		cout << p << ", ";
-		cout<<endl;
-		for(auto i: b.code){
-			cout<<j<<"\t\t";
-	        if(i.op.find("unary")!= string::npos) cout<<i.res.first<< " = " << i.op<< ' '<<i.op1.first;
-			else if(i.op == "IF_TRUE_GOTO") cout<<"IF "<< i.op1.first << " IS TRUE GOTO " << i.goto_addr;
-			else if(i.op == "GOTO") cout<<"GOTO " << i.goto_addr;
-			else if(i.op == "PARAM") cout<<"PARAM " << i.op1.first;
-			else if(i.op == "CALL") cout<<"CALL " << i.op1.first<<' '<<i.res.first;
-			else if(i.op == "RETURN_VOID") cout<<"RETURN_VOID";
-			else if(i.op == "RETURN") cout<<"RETURN " << i.op1.first;
-			else if(i.op == "FUNC_START") cout<<"<" << i.op1.first << ">:";
-			else if(i.op1.first!="" && i.op2.first!="") cout<<i.res.first<< " = " << i.op1.first <<' '<< i.op<<' ' << i.op2.first;
-			else if(i.op2.first == "" && i.op[0]=='=') cout<<i.res.first<< ' '<<i.op << ' '<<i.op1.first;
-			else if(i.op2.first == "") cout<<i.res.first<< " = "<< i.op << ' '<<i.op1.first;
-    	    cout<<endl;
-			j++;
-    	}
-		cout<<"succ: " << b.succ << ", cond_succ: " << b.cond_succ << endl;
-		c++;
+	if (blocks.size()==0) return;
+	if (only_alive){
+		for (int b = 0; b != -1; b = blocks[b].next){
+			cout<<"Block "<<b<<":"<<endl;
+			j = 0;
+			cout<<"pred: ";
+			for (auto p: blocks[b].pred)
+			cout << p << ", ";
+			cout<<endl;
+			for(auto i: blocks[b].code){
+				cout<<j<<"\t\t";
+		        if(i.op.find("unary")!= string::npos) cout<<i.res.first<< " = " << i.op<< ' '<<i.op1.first;
+				else if(i.op == "IF_TRUE_GOTO") cout<<"IF "<< i.op1.first << " IS TRUE GOTO " << i.goto_addr;
+				else if(i.op == "GOTO") cout<<"GOTO " << i.goto_addr;
+				else if(i.op == "PARAM") cout<<"PARAM " << i.op1.first;
+				else if(i.op == "CALL") cout<<"CALL " << i.op1.first<<' '<<i.res.first;
+				else if(i.op == "RETURN_VOID") cout<<"RETURN_VOID";
+				else if(i.op == "RETURN") cout<<"RETURN " << i.op1.first;
+				else if(i.op == "FUNC_START") cout<<"<" << i.op1.first << ">:";
+				else if(i.op1.first!="" && i.op2.first!="") cout<<i.res.first<< " = " << i.op1.first <<' '<< i.op<<' ' << i.op2.first;
+				else if(i.op2.first == "" && i.op[0]=='=') cout<<i.res.first<< ' '<<i.op << ' '<<i.op1.first;
+				else if(i.op2.first == "") cout<<i.res.first<< " = "<< i.op << ' '<<i.op1.first;
+	    	    cout<<endl;
+				j++;
+    		}
+			cout<<"succ: " << blocks[b].succ << ", cond_succ: " << blocks[b].cond_succ << endl;
+			cout<<"next: "<< blocks[b].next << endl;
+			c++;
+		}
+	}
+	else {
+		for (auto b: blocks){
+			cout<<"Block "<<c<<":"<<endl;
+			if (b.alive) cout<<"alive\n";
+			else cout<<"dead\n";
+			j = 0;
+			cout<<"pred: ";
+			for (auto p: b.pred)
+			cout << p << ", ";
+			cout<<endl;
+			for(auto i: b.code){
+				cout<<j<<"\t\t";
+		        if(i.op.find("unary")!= string::npos) cout<<i.res.first<< " = " << i.op<< ' '<<i.op1.first;
+				else if(i.op == "IF_TRUE_GOTO") cout<<"IF "<< i.op1.first << " IS TRUE GOTO " << i.goto_addr;
+				else if(i.op == "GOTO") cout<<"GOTO " << i.goto_addr;
+				else if(i.op == "PARAM") cout<<"PARAM " << i.op1.first;
+				else if(i.op == "CALL") cout<<"CALL " << i.op1.first<<' '<<i.res.first;
+				else if(i.op == "RETURN_VOID") cout<<"RETURN_VOID";
+				else if(i.op == "RETURN") cout<<"RETURN " << i.op1.first;
+				else if(i.op == "FUNC_START") cout<<"<" << i.op1.first << ">:";
+				else if(i.op1.first!="" && i.op2.first!="") cout<<i.res.first<< " = " << i.op1.first <<' '<< i.op<<' ' << i.op2.first;
+				else if(i.op2.first == "" && i.op[0]=='=') cout<<i.res.first<< ' '<<i.op << ' '<<i.op1.first;
+				else if(i.op2.first == "") cout<<i.res.first<< " = "<< i.op << ' '<<i.op1.first;
+	    	    cout<<endl;
+				j++;
+    		}
+			cout<<"succ: " << b.succ << ", cond_succ: " << b.cond_succ << endl;
+			cout<<"next: "<< b.next << endl;
+			c++;
+		}
 	}
 }
 

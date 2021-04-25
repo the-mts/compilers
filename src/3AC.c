@@ -85,7 +85,7 @@ void make_blocks(){
 		else if (code_array[i].op == "RETURN" || code_array[i].op == "RETURN_VOID") leader[i+1] = 1;
 	}
 	if (code_array[n-1].goto_addr > -1) leader[code_array[n-1].goto_addr] = 1;
-	if (code_array[n-1].op == "FUNC_START") leader[n-1] = 1;
+	else if (code_array[n-1].op == "FUNC_START") leader[n-1] = 1;
 
 	for (int i = 0; i < n; i++){
 		if (leader[i]) curr++;
@@ -121,8 +121,10 @@ void make_blocks(){
 		blocks[curr].cond_succ = blocknum[code_array[n-1].goto_addr];
 		blocks[curr].code[blocks[curr].code.size()-1].goto_addr = blocks[curr].cond_succ;
 	}
-	else
+	else{
 		blocks[curr].succ = -1;
+	}
+	blocks[curr].next = -1;
 
 	for (int i = 0; i < blocks.size(); i++){
 		if (blocks[i].succ != -1) blocks[blocks[i].succ].pred.push_back(i);
@@ -130,9 +132,11 @@ void make_blocks(){
 		blocks[i].code.erase(remove_if(blocks[i].code.begin(), blocks[i].code.end(), [](quad q){return q.op == "DUMMY";}), blocks[i].code.end());
 	}
 	//printf("chick5\n");
-
-	for (int i = 0; i < blocks.size(); i++){
+	
+	for (int i = blocks.size()-1; i >= 0; i--){
 		if (blocks[i].code.size() == 0){
+			blocks[i].alive = 0;
+			blocks[i-1].next = blocks[i].next;
 			for (auto j: blocks[i].pred){
 				if (blocks[j].succ == i){
 					if (blocks[j].code.back().op == "GOTO")
@@ -166,12 +170,16 @@ void make_blocks(){
 }
 
 void opt_ret_dead(){
+	//Won't work if globals are present. This will remove them also.
+	if (blocks.size() == 0) return;
 	int c = 1, s;
+	int temp;
 	int lim = 1000;
-	while (c && lim--) {
+	while (lim-- && c) {
 		c = 0;
-		for (int b = 0; b < blocks.size(); b++){
-			if (blocks[b].pred.size() == 0 && blocks[b].code.size() && blocks[b].code[0].op != "FUNC_START"){
+		for (int b = 0; b != -1; b = blocks[b].next){
+			if (blocks[b].pred.size() == 0 && blocks[b].alive && blocks[b].code[0].op != "FUNC_START"){
+				blocks[b].alive = 0;
 				blocks[b].code.clear();
 				if (blocks[b].succ != -1){
 					s = blocks[b].succ;
@@ -185,6 +193,11 @@ void opt_ret_dead(){
 				}
 				blocks[b].succ = -1;
 				blocks[b].cond_succ = -1;
+				temp = b;
+				do {
+					temp--;
+					blocks[temp].next = blocks[temp+1].next;
+				}while(!blocks[temp].alive);
 			}
 		}
 	}

@@ -29,8 +29,11 @@ typedef struct block {
 	int succ;
 	int cond_succ = -1;
 	vector<int> pred;
+	int alive = 1;
+	int next;
 	block(int num){
 		this->succ = num+1;
+		this->next = num+1;
 	}
 } block;
 
