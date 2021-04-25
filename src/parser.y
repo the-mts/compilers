@@ -3363,6 +3363,7 @@ function_definition
 											func_ret_type = "";
 
 											backpatch($5->nextlist, nextquad);
+											emit("FUNC_END", {"", NULL}, {"", NULL}, {"", NULL});
 										}
 
 
@@ -3434,6 +3435,7 @@ function_definition
 											func_ret_type = "";
 
 											backpatch($3->nextlist, nextquad);
+											emit("FUNC_END", {"", NULL}, {"", NULL}, {"", NULL});
 										}
 	| declaration_specifiers M3 declarator declaration_list compound_statement		{$$ = node_(1,$3->name,-1); $$->v[0] = $5;/*not used*/}
 	| declarator declaration_list compound_statement							{$$ = node_(1,$1->name,-1); $$->v[0] = $3;/*not used*/}

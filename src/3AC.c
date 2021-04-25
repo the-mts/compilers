@@ -58,7 +58,7 @@ void make_blocks(){
 	if (n == 0) return;
 	int leader[n];
 	int blocknum[n];
-	int curr = -1, s;
+	int curr = -1, s, f=0;
 	
 //	printf("chick1\n");
 	// Replace some obviously redundant GOTOs with DUMMY statements
@@ -83,21 +83,26 @@ void make_blocks(){
 		}
 		else if (code_array[i].op == "FUNC_START") leader[i] = 1;
 		else if (code_array[i].op == "RETURN" || code_array[i].op == "RETURN_VOID") leader[i+1] = 1;
+		else if (code_array[i].op == "FUNC_END") {
+			leader[i] = 1;
+			leader[i+1] = 1;
+		}
 	}
 	if (code_array[n-1].goto_addr > -1) leader[code_array[n-1].goto_addr] = 1;
-	else if (code_array[n-1].op == "FUNC_START") leader[n-1] = 1;
-
+	else if (code_array[n-1].op == "FUNC_END") leader[n-1] = 1;
 	for (int i = 0; i < n; i++){
 		if (leader[i]) curr++;
 		blocknum[i] = curr;
 	}
-//printf("chick3\n");
-
+//	printf("chick3\n");
 
 	curr = 0;
 	blocks.push_back(block(0));
+	if (code_array[0].op == "FUNC_START") f = 1;
 	for (int i = 0; i < n; i++){
 		if (curr < blocknum[i]){
+			blocks[curr].isglobal = !f;
+			if (blocks[curr].isglobal) blocks[curr].pred.push_back(-1);
 			if (code_array[i-1].op == "GOTO"){
 				blocks[curr].succ = blocknum[code_array[i-1].goto_addr];
 				blocks[curr].code[blocks[curr].code.size()-1].goto_addr = blocks[curr].succ;
@@ -106,10 +111,15 @@ void make_blocks(){
 				blocks[curr].cond_succ = blocknum[code_array[i-1].goto_addr];
 				blocks[curr].code[blocks[curr].code.size()-1].goto_addr = blocks[curr].cond_succ;			
 			}
-			else if (code_array[i-1].op == "RETURN" || code_array[i-1].op == "RETURN_VOID") 
+			else if (code_array[i-1].op == "RETURN" || code_array[i-1].op == "RETURN_VOID")
 				blocks[curr].succ = -1;
+			else if (code_array[i-1].op == "FUNC_END"){
+				blocks[curr].succ = -1;
+				f = 0;
+			}
 			curr++;
 			blocks.push_back(block(curr));
+			if (code_array[i].op == "FUNC_START") f = 1;
 		}
 		blocks[curr].code.push_back(code_array[i]);
 	}
@@ -125,14 +135,18 @@ void make_blocks(){
 		blocks[curr].succ = -1;
 	}
 	blocks[curr].next = -1;
+	blocks[curr].isglobal = !f;
+	if (blocks[curr].isglobal) blocks[curr].pred.push_back(-1);
 
+//	printf("chick4\n");
+	//return;
 	for (int i = 0; i < blocks.size(); i++){
 		if (blocks[i].succ != -1) blocks[blocks[i].succ].pred.push_back(i);
 		if (blocks[i].cond_succ != -1) blocks[blocks[i].cond_succ].pred.push_back(i);
 		blocks[i].code.erase(remove_if(blocks[i].code.begin(), blocks[i].code.end(), [](quad q){return q.op == "DUMMY";}), blocks[i].code.end());
 	}
-	//printf("chick5\n");
-	
+//	printf("chick5\n");
+	//return;
 	for (int i = blocks.size()-1; i >= 0; i--){
 		if (blocks[i].code.size() == 0){
 			blocks[i].alive = 0;
@@ -178,7 +192,7 @@ void opt_ret_dead(){
 	while (lim-- && c) {
 		c = 0;
 		for (int b = 0; b != -1; b = blocks[b].next){
-			if (blocks[b].pred.size() == 0 && blocks[b].alive && blocks[b].code[0].op != "FUNC_START"){
+			if (blocks[b].pred.size() == 0 && blocks[b].alive && blocks[b].code[0].op != "FUNC_START" && blocks[b].code[0].op != "FUNC_END"){
 				blocks[b].alive = 0;
 				blocks[b].code.clear();
 				if (blocks[b].succ != -1){

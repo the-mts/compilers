@@ -34,6 +34,7 @@ void print_code(){
 		else if(i.op == "RETURN_VOID") cout<<"RETURN_VOID";
 		else if(i.op == "RETURN") cout<<"RETURN " << i.op1.first;
 		else if(i.op == "FUNC_START") cout<<"<" << i.op1.first << ">:";
+		else if(i.op == "FUNC_END") cout<<"<" << "FUNC_END"<<">";
 		else if(i.op1.first!="" && i.op2.first!="") cout<<i.res.first<< " = " << i.op1.first <<' '<< i.op<<' ' << i.op2.first;
 		else if(i.op2.first == "" && i.op[0]=='=') cout<<i.res.first<< ' '<<i.op << ' '<<i.op1.first;
 		else if(i.op2.first == "") cout<<i.res.first<< " = "<< i.op << ' '<<i.op1.first;
@@ -48,6 +49,7 @@ void print_blocks(int only_alive = 1){
 	if (only_alive){
 		for (int b = 0; b != -1; b = blocks[b].next){
 			cout<<"Block "<<b<<":"<<endl;
+			cout<<"isglobal: "<<blocks[b].isglobal<<endl;
 			j = 0;
 			cout<<"pred: ";
 			for (auto p: blocks[b].pred)
@@ -63,6 +65,7 @@ void print_blocks(int only_alive = 1){
 				else if(i.op == "RETURN_VOID") cout<<"RETURN_VOID";
 				else if(i.op == "RETURN") cout<<"RETURN " << i.op1.first;
 				else if(i.op == "FUNC_START") cout<<"<" << i.op1.first << ">:";
+				else if(i.op == "FUNC_END") cout<<"<" << "FUNC_END"<<">";
 				else if(i.op1.first!="" && i.op2.first!="") cout<<i.res.first<< " = " << i.op1.first <<' '<< i.op<<' ' << i.op2.first;
 				else if(i.op2.first == "" && i.op[0]=='=') cout<<i.res.first<< ' '<<i.op << ' '<<i.op1.first;
 				else if(i.op2.first == "") cout<<i.res.first<< " = "<< i.op << ' '<<i.op1.first;
@@ -79,6 +82,8 @@ void print_blocks(int only_alive = 1){
 			cout<<"Block "<<c<<":"<<endl;
 			if (b.alive) cout<<"alive\n";
 			else cout<<"dead\n";
+			cout<<"isglobal: "<<b.isglobal<<endl;
+
 			j = 0;
 			cout<<"pred: ";
 			for (auto p: b.pred)
@@ -94,6 +99,7 @@ void print_blocks(int only_alive = 1){
 				else if(i.op == "RETURN_VOID") cout<<"RETURN_VOID";
 				else if(i.op == "RETURN") cout<<"RETURN " << i.op1.first;
 				else if(i.op == "FUNC_START") cout<<"<" << i.op1.first << ">:";
+				else if(i.op == "FUNC_END") cout<<"<" << "FUNC_END"<<">";
 				else if(i.op1.first!="" && i.op2.first!="") cout<<i.res.first<< " = " << i.op1.first <<' '<< i.op<<' ' << i.op2.first;
 				else if(i.op2.first == "" && i.op[0]=='=') cout<<i.res.first<< ' '<<i.op << ' '<<i.op1.first;
 				else if(i.op2.first == "") cout<<i.res.first<< " = "<< i.op << ' '<<i.op1.first;
@@ -286,7 +292,7 @@ int main(int argc, char const* argv[]){
 	fprintf(out_file,"}");
 
 	string name = "bin/symtab.csv";
-	freopen((const char*)name.c_str(), "w", stdout);
+	FILE* fp=	freopen((const char*)name.c_str(), "w", stdout);
 
 	st_root->name = "global";
 	curr_fun = "global";
@@ -298,11 +304,11 @@ int main(int argc, char const* argv[]){
 		curr_fun = "global";
 		dfs3(st_root);
 	}
-
+	//fclose(fp);
 	freopen("bin/tac.txt", "w", stdout);
 	print_code();
 
-	//cout<<"Check me\n";
+//	cout<<"Check me\n";
 	make_blocks();
 	opt_ret_dead();
 	freopen("bin/basic_blocks.txt", "w", stdout);

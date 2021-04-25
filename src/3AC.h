@@ -31,6 +31,7 @@ typedef struct block {
 	vector<int> pred;
 	int alive = 1;
 	int next;
+	int isglobal=0;
 	block(int num){
 		this->succ = num+1;
 		this->next = num+1;
