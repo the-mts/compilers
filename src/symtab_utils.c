@@ -1,4 +1,5 @@
 #include "symtab.h"
+#include <iostream>
 using namespace std;
 extern string next_name;
 vector<symtab*> table_scope;
@@ -294,10 +295,17 @@ st_entry* add_entry(string key, string type, unsigned long size, long offset, en
 	// 	size = get_size(type);
 	// else
 	// 	size = 0;
-	offset += size;
+	if(type == "long double"){
+		offset += (16 - offset % 16) % 16;
+		offset += 16;
+	}
+	else if(size != 0){
+		offset += size;
+		offset += (8 - offset % 8) % 8;
+	}
 	st_entry * new_entry = new st_entry(type, size, offset, type_name);
 	if(type_name != IS_FUNC)
-		::offset.back() += size;
+		::offset.back() = offset;
 	curr_width += size;
 	symtab * temp = table_scope.back();
 	temp->insert({key, new_entry});

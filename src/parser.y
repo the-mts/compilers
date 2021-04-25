@@ -2855,18 +2855,28 @@ M1
 																		else if(flag == 1 && int_char == 6){
 																			st_entry* st = add_entry(p.second, p.first, 0, accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
 																			st->size = get_size(p.first);
+																			curr_offset -= (8-(-curr_offset)%8)%8;
 																			st->offset = curr_offset;
-																			curr_offset-=get_size(p.first);
+																			curr_offset -= 8;
 																		}
 																		else if(flag == 2 && double_float == 8){
 																			st_entry* st = add_entry(p.second, p.first, 0, accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
 																			st->size = get_size(p.first);
-																			st->offset = curr_offset;
-																			curr_offset-=get_size(p.first);
+																			if(p.first == "long double"){
+																				curr_offset -= (16-(-curr_offset)%16)%16;
+																				st->offset = curr_offset;
+																				curr_offset-=16;
+																			}
+																			else{
+																				curr_offset -= (8-(-curr_offset)%8)%8;
+																				st->offset = curr_offset;
+																				curr_offset -= 8;
+																			}
 																		}
 																		else if(flag == 3){
 																			st_entry* st = add_entry(p.second, p.first, 0, accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
 																			st->size = get_size(p.first);
+																			curr_offset -= (8-(-curr_offset)%8)%8;
 																			st->offset = curr_offset;
 																			curr_offset-=get_size(p.first);
 																		}
