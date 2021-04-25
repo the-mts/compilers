@@ -3,6 +3,7 @@
 #include "y.tab.h"
 #include "parse_utils.h"
 #include "3AC.h"
+#include "codegen.h"
 using namespace std;
 extern FILE* yyin;
 extern char yytext[];
@@ -313,5 +314,7 @@ int main(int argc, char const* argv[]){
 	opt_ret_dead();
 	freopen("bin/basic_blocks.txt", "w", stdout);
 	print_blocks();
+	freopen("bin/assembly.s", "w", stdout);
+	codegen();
 	return 0;
 }

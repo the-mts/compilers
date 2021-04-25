@@ -346,7 +346,7 @@ postfix_expression
 																		$$->value_type = LVALUE;
 
 																	//////////////// 3AC ////////////////
-
+																	
 																	/////////////////////////////////////
 																}
 	| postfix_expression PTR_OP IDENTIFIER 						{
@@ -2224,6 +2224,10 @@ init_declarator
 																		
 																		if(current_lookup($1->node_name)!=NULL){
 																			printf("\e[1;31mError [line %d]:\e[0m Redeclaration of '%s'.\n", line, $1->node_name.c_str());
+																			exit(-1);
+																		}
+																		if(table_scope.back()==&global && $3->token != CONSTANT){
+																			printf("\e[1;31mError [line %d]:\e[0m Initializer for '%s' must be a constant.\n", line, $1->node_name.c_str());
 																			exit(-1);
 																		}
 																		st_entry* tmp = add_entry($1->name, data_type_, get_size(data_type_), accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);/*change IS_VAR*/
