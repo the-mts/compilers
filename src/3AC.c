@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <stdio.h>
 #include "3AC.h"
 #include "parse_utils.h"
 
@@ -52,12 +53,14 @@ qi emitConstant(node* tmp){
 
 
 void make_blocks(){
+//	printf("chick0\n");
 	int n = code_array.size();
 	if (n == 0) return;
 	int leader[n];
 	int blocknum[n];
 	int curr = -1, prev;
-
+	
+//	printf("chick1\n");
 	// Replace some obviously redundant GOTOs with DUMMY statements
 	for (int i = 0; i < n-1; i++)
 		if (code_array[i].goto_addr == i+1) {
@@ -69,7 +72,8 @@ void make_blocks(){
 		}
 
 	// Finding leaders
-
+//	printf("chick2\n");
+	
 	leader[0] = 1;
 	for (int i = 1; i < n; i++)	leader[i] = 0;
 	for (int i = 0; i < n-1; i++){
@@ -87,6 +91,8 @@ void make_blocks(){
 		if (leader[i]) curr++;
 		blocknum[i] = curr;
 	}
+//printf("chick3\n");
+
 
 	curr = 0;
 	blocks.push_back(block(0));
@@ -109,6 +115,7 @@ void make_blocks(){
 	}
 	if (code_array[n-1].op == "GOTO"){
 		blocks[curr].succ = blocknum[code_array[n-1].goto_addr];
+		blocks[curr].code[blocks[curr].code.size()-1].goto_addr = blocks[curr].succ;		
 	}
 	else if (code_array[n-1].goto_addr != -1){
 		blocks[curr].cond_succ = blocknum[code_array[n-1].goto_addr];
@@ -116,23 +123,27 @@ void make_blocks(){
 	}
 	else
 		blocks[curr].succ = -1;
-	
+
 	for (int i = 0; i < blocks.size(); i++){
 		if (blocks[i].succ != -1) blocks[blocks[i].succ].pred.push_back(i);
 		if (blocks[i].cond_succ != -1) blocks[blocks[i].cond_succ].pred.push_back(i);
 		blocks[i].code.erase(remove_if(blocks[i].code.begin(), blocks[i].code.end(), [](quad q){return q.op == "DUMMY";}), blocks[i].code.end());
 	}
-	
+	//printf("chick5\n");
+
 	for (int i = 0; i < blocks.size(); i++){
 		if (blocks[i].code.size() == 0){
 			for (auto j: blocks[i].pred){
 				if (blocks[j].succ == i){
+					if (blocks[j].code.back().op == "GOTO")
+						blocks[j].code.back().goto_addr = blocks[i].succ;
 					blocks[j].succ = blocks[i].succ;
-					blocks[blocks[i].succ].pred.push_back(j);
+					if (blocks[i].succ != -1) blocks[blocks[i].succ].pred.push_back(j);
 				}
 				else if (blocks[j].cond_succ == i){
+					blocks[j].code.back().goto_addr = blocks[i].succ;
 					blocks[j].cond_succ = blocks[i].succ;
-					blocks[blocks[i].succ].pred.push_back(j);
+					if (blocks[i].succ != -1) blocks[blocks[i].succ].pred.push_back(j);
 				}
 				else {
 					//cout << "Something went horribly wrong and I don't know what" << endl;
@@ -141,5 +152,14 @@ void make_blocks(){
 			}
 			blocks[i].pred.clear();
 		}
+	}
+//printf("chick6\n");
+
+}
+
+void opt_ret_dead(){
+	for (auto b: blocks){
+		if (b.pred.size() == 0 && b.code.size() && b.code[0].op != "FUNC_START")
+		b.code.clear();
 	}
 }

@@ -267,6 +267,7 @@ int main(int argc, char const* argv[]){
 	freopen("bin/tac.txt", "w", stdout);
 	print_code();
 
+	//cout<<"Check me\n";
 	make_blocks();
 	freopen("bin/basic_blocks.txt", "w", stdout);
 	print_blocks();
