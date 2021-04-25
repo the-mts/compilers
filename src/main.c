@@ -34,6 +34,7 @@ void print_code(){
 		else if(i.op == "RETURN_VOID") cout<<"RETURN_VOID";
 		else if(i.op == "RETURN") cout<<"RETURN " << i.op1.first;
 		else if(i.op == "FUNC_START") cout<<"<" << i.op1.first << ">:";
+		else if(i.op == "FUNC_END")	cout<<"<FUNC_END>";
 		else if(i.op1.first!="" && i.op2.first!="") cout<<i.res.first<< " = " << i.op1.first <<' '<< i.op<<' ' << i.op2.first;
 		else if(i.op2.first == "" && i.op[0]=='=') cout<<i.res.first<< ' '<<i.op << ' '<<i.op1.first;
 		else if(i.op2.first == "") cout<<i.res.first<< " = "<< i.op << ' '<<i.op1.first;

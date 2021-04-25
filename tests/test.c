@@ -11,20 +11,3 @@ int main(){
 	y[2] = fun();
 	return 0;
 }
-
-int main(){
-	struct x xx;
-	xx.y1.y2 = 4;
-	{
-		int x;
-		{
-			int * x1;
-		}
-		{
-			struct x xx;
-		}
-	}
-	{
-		int y;
-	}
-}
