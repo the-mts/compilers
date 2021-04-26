@@ -1,4 +1,8 @@
 /*#include<stdio.h>*/
+void fun(int x[][10]){
+	x[1]++;
+}
+
 int main(){
 	char c;
 	int x = 4;

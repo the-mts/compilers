@@ -295,14 +295,15 @@ st_entry* add_entry(string key, string type, unsigned long size, long offset, en
 	// 	size = get_size(type);
 	// else
 	// 	size = 0;
-	if(type == "long double"){
-		offset += (16 - offset % 16) % 16;
-		offset += 16;
-	}
-	else if(size != 0){
-		offset += size;
-		offset += (8 - offset % 8) % 8;
-	}
+	// if(type == "long double"){
+	// 	offset += (16 - offset % 16) % 16;
+	// 	offset += 16;
+	// }
+	// else if(size != 0){
+	// 	offset += size;
+	// 	offset += (8 - offset % 8) % 8;
+	// }
+	offset += size;
 	st_entry * new_entry = new st_entry(type, size, offset, type_name);
 	if(type_name != IS_FUNC)
 		::offset.back() = offset;
