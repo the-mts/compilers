@@ -6,6 +6,13 @@ vector<string> code;
 map<pair<int, int>, string> intregs;
 vector<qi> params_list;
 
+void dump_const_labels(){
+	for (auto i : constLabels){
+		cout<<i.first<<endl;
+		cout<<i.second.second<<endl;
+	}
+}
+
 void setregmap(){
 	intregs[{1,1}] = "%dil";
 	intregs[{2,1}] = "%sil";
@@ -116,7 +123,7 @@ void codegen(){
 				}
 			}
 
-			if (instr.op == "RETURN_VOID" || instr.op == "FUNC_END"){
+			else if(instr.op == "RETURN_VOID" || instr.op == "FUNC_END"){
 				cout<<"leave\n";
 				cout<<"ret\n";
 			}
@@ -125,7 +132,7 @@ void codegen(){
 				cout<<"jmp .L"<<instr.goto_addr<<endl;
 			}
 
-			if(instr.op == "IF_TRUE_GOTO"){
+			else if(instr.op == "IF_TRUE_GOTO"){
 				string p = instr.op1.second->type;
 				if(p.find("int") != string::npos || p.find("char") != string::npos || p.back() == ']' || p.back() == '*'){
 					int size = get_size(p);
@@ -135,11 +142,11 @@ void codegen(){
 				}
 			}
 
-			if(instr.op == "PARAM"){
+			else if(instr.op == "PARAM"){
 				params_list.push_back(instr.op1);
 			}
 
-			if(instr.op == "CALL"){
+			else if(instr.op == "CALL"){
 				int int_char = 0, double_float = 0;
 				int param_stk_size = 0;
 				vector<qi> stk_params;
@@ -188,7 +195,7 @@ void codegen(){
 				params_list.clear();
 			}
 
-			if(instr.op == "+int"){
+			else if(instr.op == "+int"){
 				qi t1 = instr.op1;
 				qi t2 = instr.op2;
 				string type1 = instr.op1.second->type, type2 = instr.op2.second->type;
@@ -296,7 +303,7 @@ void codegen(){
 				}
 			}
 
-			if(instr.op == "-int"){
+			else if(instr.op == "-int"){
 				qi t1 = instr.op1;
 				qi t2 = instr.op2;
 				string type1 = instr.op1.second->type, type2 = instr.op2.second->type;
@@ -404,7 +411,7 @@ void codegen(){
 				}
 			}
 
-			if(instr.op == "*int"){
+			else if(instr.op == "*int"){
 				qi t1 = instr.op1;
 				qi t2 = instr.op2;
 				string type1 = instr.op1.second->type, type2 = instr.op2.second->type;
@@ -458,7 +465,7 @@ void codegen(){
 				}
 			}
 
-			if(instr.op == "/int"){
+			else if(instr.op == "/int"){
 				qi t1 = instr.op1;
 				qi t2 = instr.op2;
 				string type1 = instr.op1.second->type, type2 = instr.op2.second->type;
@@ -512,7 +519,7 @@ void codegen(){
 				}
 			}
 
-			if(instr.op == "%"){
+			else if(instr.op == "%"){
 				qi t1 = instr.op1;
 				qi t2 = instr.op2;
 				string type1 = instr.op1.second->type, type2 = instr.op2.second->type;
@@ -566,7 +573,7 @@ void codegen(){
 				}
 			}
 
-			if(instr.op == "&"){
+			else if(instr.op == "&"){
 				qi t1 = instr.op1;
 				qi t2 = instr.op2;
 				string type1 = instr.op1.second->type, type2 = instr.op2.second->type;
@@ -620,7 +627,7 @@ void codegen(){
 				}
 			}
 
-			if(instr.op == "|"){
+			else if(instr.op == "|"){
 				qi t1 = instr.op1;
 				qi t2 = instr.op2;
 				string type1 = instr.op1.second->type, type2 = instr.op2.second->type;
@@ -674,7 +681,7 @@ void codegen(){
 				}
 			}
 
-			if(instr.op == "^"){
+			else if(instr.op == "^"){
 				qi t1 = instr.op1;
 				qi t2 = instr.op2;
 				string type1 = instr.op1.second->type, type2 = instr.op2.second->type;
@@ -728,7 +735,7 @@ void codegen(){
 				}
 			}
 
-			if(instr.op == "++x"){
+			else if(instr.op == "++x"){
 				qi t1 = instr.op1;
 				string type1 = instr.op1.second->type;
 				if(type1 == "int"){
@@ -757,7 +764,7 @@ void codegen(){
 				}
 			}
 
-			if(instr.op == "x++"){
+			else if(instr.op == "x++"){
 				qi t1 = instr.op1;
 				string type1 = instr.op1.second->type;
 				if(type1 == "int"){
@@ -785,7 +792,7 @@ void codegen(){
 				}
 			}
 
-			if(instr.op == "--x"){
+			else if(instr.op == "--x"){
 				qi t1 = instr.op1;
 				string type1 = instr.op1.second->type;
 				if(type1 == "int"){
@@ -813,7 +820,7 @@ void codegen(){
 				}
 			}
 
-			if(instr.op == "x--"){
+			else if(instr.op == "x--"){
 				qi t1 = instr.op1;
 				string type1 = instr.op1.second->type;
 				if(type1 == "int"){
@@ -841,7 +848,7 @@ void codegen(){
 				}
 			}
 
-			if(instr.op == "<<"){
+			else if(instr.op == "<<"){
 				qi t1 = instr.op1;
 				qi t2 = instr.op2;
 				string type1 = instr.op1.second->type, type2 = instr.op2.second->type;
@@ -904,7 +911,7 @@ void codegen(){
 				}
 			}
 
-			if(instr.op == ">>"){
+			else if(instr.op == ">>"){
 				qi t1 = instr.op1;
 				qi t2 = instr.op2;
 				string type1 = instr.op1.second->type, type2 = instr.op2.second->type;
@@ -967,8 +974,65 @@ void codegen(){
 				}
 			}
 
-
-
+			else if(instr.op == "="){
+				qi t1 = instr.op1;
+				qi t2 = instr.res;
+				string type1 = t2.second->type;
+				if(t1.first[0]=='$'){ //Immediate
+					if(type1 == "int" || type1 == "unsigned int"){
+						cout<<"movl "<<t1.first<<", "<<-t2.second->offset<<"(%rbp)"<<endl;
+					}
+					else if(type1 == "short int" || type1 == "unsigned short int"){
+						cout<<"movw "<<t1.first<<", "<<-t2.second->offset<<"(%rbp)"<<endl;
+					}
+					else if(type1 == "long int" || type1 == "unsigned long int"){
+						cout<<"movq "<<t1.first<<", "<<-t2.second->offset<<"(%rbp)"<<endl;
+					}
+					else if(type1 == "char"){
+						cout<<"movb "<<t1.first<<", "<<-t2.second->offset<<"(%rbp)"<<endl;
+					}
+					else if(type1.back()=='*'){
+						cout<<"movq "<<t1.first<<", "<<-t2.second->offset<<"(%rbp)"<<endl;
+					}
+				}
+				else if(t1.first[0]=='.'){ //RIP address for floats
+					if(type1 == "float"){
+						cout<<"movss "<<t1.first<<"(%rip), "<<"%xmm0"<<endl;
+						cout<<"movss "<<"%xmm0, "<<-t2.second->offset<<"(%rbp)"<<endl;
+					}
+					else if(type1 == "double"){
+						cout<<"movsd "<<t1.first<<"(%rip), "<<"%xmm0"<<endl;
+						cout<<"movsd "<<"%xmm0, "<<-t2.second->offset<<"(%rbp)"<<endl;
+					}
+					else if(type1 == "long double"){
+						cout<<"fldt "<<t1.first<<"(%rip)"<<endl;
+						cout<<"fstpt "<<-t2.second->offset<<"(%rbp)"<<endl;
+					}
+				}
+				else{
+					if(type1 == "int"){
+						cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+						cout<<"movl "<<"%eax, "<<-t2.second->offset<<"(%rbp)"<<endl;
+					}
+					else if(type1 == "short int"){
+						cout<<"movw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
+						cout<<"movw "<<"%ax, "<<-t2.second->offset<<"(%rbp)"<<endl;
+					}
+					else if(type1 == "long int"){
+						cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+						cout<<"movq "<<"%rax, "<<-t2.second->offset<<"(%rbp)"<<endl;
+					}
+					else if(type1 == "char"){
+						cout<<"movb "<<-t1.second->offset<<"(%rbp), "<<"%al"<<endl;
+						cout<<"movb "<<"%al, "<<-t2.second->offset<<"(%rbp)"<<endl;
+					}
+					else if(type1.back()=='*'){
+						cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+						cout<<"movq "<<"%rax, "<<-t2.second->offset<<"(%rbp)"<<endl;
+					}
+				}
+			}
 		}
 	}
+	dump_const_labels();
 }

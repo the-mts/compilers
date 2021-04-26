@@ -6,6 +6,12 @@
 vector<quad> code_array;
 int nextquad = 0;
 vector<block> blocks;
+unordered_map<string, pair<string, string>> constLabels;
+
+string gen_new_const_label(){
+	static int a=0;
+	return ".LC"+to_string(a++);
+}
 
 int emit(string op, qi op1, qi op2, qi res, int goto_addr){
     quad q (op, op1, op2, res, goto_addr);
@@ -35,19 +41,56 @@ qi emitConstant(node* tmp){
     qi temp1 = {"", NULL};
 
     switch(tmp->val_dt){
-        case IS_INT:        temp1.first = to_string(tmp->val.int_const); break;
-        case IS_LONG:       temp1.first = to_string(tmp->val.long_const); break;
-        case IS_SHORT:      temp1.first = to_string(tmp->val.short_const); break;
-        case IS_U_INT:      temp1.first = to_string(tmp->val.u_int_const); break;
-        case IS_U_LONG:     temp1.first = to_string(tmp->val.u_long_const); break;
-        case IS_U_SHORT:    temp1.first = to_string(tmp->val.u_short_const); break;
-        case IS_FLOAT:      temp1.first = to_string(tmp->val.float_const); break;
-        case IS_DOUBLE:     temp1.first = to_string(tmp->val.double_const); break;
-        case IS_LONG_DOUBLE: temp1.first = to_string(tmp->val.long_double_const); break;
-        case IS_CHAR:       temp1.first = "'" + to_string(tmp->val.char_const) + "'"; break;
+        case IS_INT:        
+			temp1.first = "$" + to_string(tmp->val.int_const);
+			break;
+        case IS_LONG:       
+			temp1.first = "$" + to_string(tmp->val.long_const);
+			break;
+        case IS_SHORT:
+			temp1.first = "$" + to_string(tmp->val.short_const);
+			break;
+        case IS_U_INT:      
+			temp1.first = "$" + to_string(tmp->val.u_int_const);
+			break;
+        case IS_U_LONG:
+			temp1.first = "$" + to_string(tmp->val.u_long_const);
+			break;
+        case IS_U_SHORT:
+			temp1.first = "$" + to_string(tmp->val.u_short_const);
+			break;
+        case IS_CHAR:
+			temp1.first = "$" + to_string( (int) tmp->val.char_const);
+			break;
+        case IS_FLOAT:
+			{
+				temp1.first = gen_new_const_label();
+				unsigned int* xf = (unsigned int*) &tmp->val.float_const;
+				unsigned int yf = *xf;
+				constLabels[temp1.first] = {".long", ".long "+to_string(yf)};
+			}
+			break;
+        case IS_DOUBLE:
+			{	
+				temp1.first = gen_new_const_label();
+				unsigned long long* xd = (unsigned long long*) &tmp->val.double_const;
+				unsigned long long yd = *xd;
+				constLabels[temp1.first] = {".quad", ".quad "+to_string(yd)};
+			}
+			break;
+        case IS_LONG_DOUBLE:
+			{
+				temp1.first = gen_new_const_label();
+				unsigned int* xld = (unsigned int*) &tmp->val.long_double_const;
+				unsigned int a1 = *xld;
+				unsigned int a2 = *(xld+1);
+				unsigned int a3 = *((unsigned int*)((short*)(xld+2)));
+				constLabels[temp1.first] = {".t", ".long "+to_string(a1)+"\n.long"+to_string(a2)+"\n.long"+to_string(a3)+"\n.long 0"};
+			}
+			break;
     }
 
-    emit("=", temp1, {"", NULL}, temp);
+    emit("=", temp1, {"", NULL}, temp, -2);
     return temp;
 }
 
