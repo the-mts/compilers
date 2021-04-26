@@ -746,6 +746,15 @@ void codegen(){
 					cout<<"movw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
 					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
+
+
+				else if(type1.back() == '*'){
+					type1.pop_back();
+					int size = get_size(type1);
+					cout<<"addq $"<<size<<", "<<-t1.second->offset<<"(%rbp)"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
 			}
 
 			if(instr.op == "x++"){
@@ -756,15 +765,23 @@ void codegen(){
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 					cout<<"addl $1, "<<-t1.second->offset<<"(%rbp)"<<endl;
 				}
+				else if(type1 == "short int"){
+					cout<<"movw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+					cout<<"addw $1, "<<-t1.second->offset<<"(%rbp)"<<endl;
+				}
 				else if(type1 == "long int"){
 					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 					cout<<"addq $1, "<<-t1.second->offset<<"(%rbp)"<<endl;
 				}
-				else if(type1 == "short int"){
-					cout<<"movw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
-					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
-					cout<<"addw $1, "<<-t1.second->offset<<"(%rbp)"<<endl;
+
+				else if(type1.back() == '*'){
+					type1.pop_back();
+					int size = get_size(type1);
+					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+					cout<<"addq $"<<size<<", "<<-t1.second->offset<<"(%rbp)"<<endl;
 				}
 			}
 
@@ -786,6 +803,14 @@ void codegen(){
 					cout<<"movw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
 					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
+
+				else if(type1.back() == '*'){
+					type1.pop_back();
+					int size = get_size(type1);
+					cout<<"subq $"<<size<<", "<<-t1.second->offset<<"(%rbp)"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
 			}
 
 			if(instr.op == "x--"){
@@ -805,6 +830,14 @@ void codegen(){
 					cout<<"movw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
 					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 					cout<<"subw $1, "<<-t1.second->offset<<"(%rbp)"<<endl;
+				}
+
+				else if(type1.back() == '*'){
+					type1.pop_back();
+					int size = get_size(type1);
+					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+					cout<<"subq $"<<size<<", "<<-t1.second->offset<<"(%rbp)"<<endl;
 				}
 			}
 
@@ -870,6 +903,7 @@ void codegen(){
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 			}
+
 			if(instr.op == ">>"){
 				qi t1 = instr.op1;
 				qi t2 = instr.op2;

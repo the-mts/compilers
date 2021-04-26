@@ -134,6 +134,12 @@ primary_expression
 postfix_expression
 	: primary_expression										{
 																	$$ = $1;
+																	if($$->node_data.back() == ']'){
+																		$$->value_type = RVALUE;
+																	}
+																	else{
+																		$$->value_type = LVALUE;
+																	}
 																}
 	| postfix_expression '[' expression ']'						{
 																	if($3->node_data == "void"){
@@ -157,6 +163,12 @@ postfix_expression
 																		exit(-1);
 																	}
 																	$$->node_data = reduce_pointer_level($1->node_data);
+																	if($$->node_data.back() == ']'){
+																		$$->value_type = RVALUE;
+																	}
+																	else{
+																		$$->value_type = LVALUE;
+																	}
 
 																	//////////////// 3AC ////////////////
 																	if($3->token == CONSTANT){
