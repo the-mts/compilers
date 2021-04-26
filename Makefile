@@ -25,7 +25,7 @@ $(BIN)/symtab_utils.o: $(SRC)/symtab_utils.c $(SRC)/symtab.h
 	$(CC) -c -Wno-abi $< -o $@
 
 $(BIN)/3AC.o: $(SRC)/3AC.c $(SRC)/3AC.h
-	$(CC) -c $< -o $@
+	$(CC) -std=c++17 -c $< -o $@
 
 $(BIN)/codegen.o: $(SRC)/codegen.c $(SRC)/codegen.h $(SRC)/3AC.h
 	$(CC) -c $< -o $@

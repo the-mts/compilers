@@ -788,7 +788,7 @@ void codegen(){
 				}
 			}
 
-			if(instr == "x--"){
+			if(instr.op == "x--"){
 				qi t1 = instr.op1;
 				string type1 = instr.op1.second->type;
 				if(type1 == "int"){

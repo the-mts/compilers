@@ -1,6 +1,6 @@
 #include <algorithm>
-#include <stdio.h>
 #include <map>
+#include<iostream>
 #include "3AC.h"
 #include "parse_utils.h"
 
@@ -219,13 +219,24 @@ void opt_ret_dead(){
 	}
 }
 
+void print_map(const map<pair<string, pair<string, string>>, qi>& m)
+{
+	   for (const auto& [key, value] : m) {
+	        cout <<"(" << key.first<< ", "<<key.second.first<<", "<< key.second.second<< ") = " << value.first << "; ";
+	   }
+	   cout<<"\n";
+}
+
 void opt_cse(){
 	if (blocks.size() == 0) return;
 	map<pair<string, pair<string, string>>, qi> expr;
 	//map<string, vector<pair<string, pair<string, string>>>> used;
 	int i;
 	string op, op1, op2, res;
+	//cout<<"chick1\n";
+	//print_map(expr);
 	for (int b = 0; b != -1; b = blocks[b].next){
+		expr.clear();
 		i = 0;
 		if (blocks[b].code[0].op == "FUNC_START") i = 1;
 		for (; i < blocks[b].code.size(); i++){
@@ -238,19 +249,22 @@ void opt_cse(){
 				op == "RETURN" || op == "RETURN_VOID" ||
 				op == "FUNC_END") break;
 			if (expr.find({op, {op1, op2}}) != expr.end()){
+				//cout<<"Found expr\n";
 				blocks[b].code[i].op = "=";
 				blocks[b].code[i].op1 = expr[{op, {op1, op2}}];
 				blocks[b].code[i].op2 = {"", NULL};
 			}
 			else {
+				//cout<<"Adding expr\n";
 				expr[{op, {op1, op2}}] = blocks[b].code[i].res;	
 			}
 			//Remove all entries in expr which have 
 			//for (auto v: used[res])
 			//	expr.erase(v);
+
 			auto pred = [&](const auto& item) {
         		auto const& [key, value] = item;
-		        return key.second.first == op1 || key.second.first == op2 || key.second.second == op1 || key.second.second == op2;
+		        return key.second.first == res || key.second.second == res;
 			};
 
 			for (auto i = expr.begin(), last = expr.end(); i != last; ) {
@@ -261,5 +275,7 @@ void opt_cse(){
 			  }
 			}
 		}
+		//print_map(expr);
+		//cout<<"chick2\n";
 	}
 }
