@@ -3,6 +3,7 @@
 #include "y.tab.h"
 #include "parse_utils.h"
 #include "3AC.h"
+#include "codegen.h"
 using namespace std;
 extern FILE* yyin;
 extern char yytext[];
@@ -34,7 +35,7 @@ void print_code(){
 		else if(i.op == "RETURN_VOID") cout<<"RETURN_VOID";
 		else if(i.op == "RETURN") cout<<"RETURN " << i.op1.first;
 		else if(i.op == "FUNC_START") cout<<"<" << i.op1.first << ">:";
-		else if(i.op == "FUNC_END") cout<<"<" << "FUNC_END"<<">";
+		else if(i.op == "FUNC_END")	cout<<"<FUNC_END>";
 		else if(i.op1.first!="" && i.op2.first!="") cout<<i.res.first<< " = " << i.op1.first <<' '<< i.op<<' ' << i.op2.first;
 		else if(i.op2.first == "" && i.op[0]=='=') cout<<i.res.first<< ' '<<i.op << ' '<<i.op1.first;
 		else if(i.op2.first == "") cout<<i.res.first<< " = "<< i.op << ' '<<i.op1.first;
@@ -313,5 +314,7 @@ int main(int argc, char const* argv[]){
 	opt_ret_dead();
 	freopen("bin/basic_blocks.txt", "w", stdout);
 	print_blocks();
+	freopen("bin/assembly.s", "w", stdout);
+	codegen();
 	return 0;
 }

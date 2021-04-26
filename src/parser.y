@@ -346,7 +346,7 @@ postfix_expression
 																		$$->value_type = LVALUE;
 
 																	//////////////// 3AC ////////////////
-
+																	
 																	/////////////////////////////////////
 																}
 	| postfix_expression PTR_OP IDENTIFIER 						{
@@ -2226,6 +2226,10 @@ init_declarator
 																			printf("\e[1;31mError [line %d]:\e[0m Redeclaration of '%s'.\n", line, $1->node_name.c_str());
 																			exit(-1);
 																		}
+																		if(table_scope.back()==&global && $3->token != CONSTANT){
+																			printf("\e[1;31mError [line %d]:\e[0m Initializer for '%s' must be a constant.\n", line, $1->node_name.c_str());
+																			exit(-1);
+																		}
 																		st_entry* tmp = add_entry($1->name, data_type_, get_size(data_type_), accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);/*change IS_VAR*/
 																		$1->place = {$1->node_name, tmp};
 																		if(data_type_ == "void"){
@@ -2855,18 +2859,28 @@ M1
 																		else if(flag == 1 && int_char == 6){
 																			st_entry* st = add_entry(p.second, p.first, 0, accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
 																			st->size = get_size(p.first);
+																			curr_offset -= (8-(-curr_offset)%8)%8;
 																			st->offset = curr_offset;
-																			curr_offset-=get_size(p.first);
+																			curr_offset -= 8;
 																		}
 																		else if(flag == 2 && double_float == 8){
 																			st_entry* st = add_entry(p.second, p.first, 0, accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
 																			st->size = get_size(p.first);
-																			st->offset = curr_offset;
-																			curr_offset-=get_size(p.first);
+																			if(p.first == "long double"){
+																				curr_offset -= (16-(-curr_offset)%16)%16;
+																				st->offset = curr_offset;
+																				curr_offset-=16;
+																			}
+																			else{
+																				curr_offset -= (8-(-curr_offset)%8)%8;
+																				st->offset = curr_offset;
+																				curr_offset -= 8;
+																			}
 																		}
 																		else if(flag == 3){
 																			st_entry* st = add_entry(p.second, p.first, 0, accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
 																			st->size = get_size(p.first);
+																			curr_offset -= (8-(-curr_offset)%8)%8;
 																			st->offset = curr_offset;
 																			curr_offset-=get_size(p.first);
 																		}

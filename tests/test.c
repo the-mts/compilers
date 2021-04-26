@@ -1,30 +1,20 @@
-int x = 5;
-int a = x;
-int fun(){
-	int z[2];
-	return z[0];
-}
-int main(){
-	int x[5];
-	// int * y = x;
-	int y[5];
-	y[2] = fun();
-	return 0;
+int fun(int a, char b, int x, char d, int e, int q, int w, int z){
+	w++;
+	z++;
+	return 1;
 }
 
 int main(){
-	struct x xx;
-	xx.y1.y2 = 4;
-	{
-		int x;
-		{
-			int * x1;
-		}
-		{
-			struct x xx;
-		}
-	}
-	{
-		int y;
-	}
+	char b;
+	int q;
+	char d;
+	int e;
+	int x;
+	int a;
+	int w;
+	int z;
+	//fun(a,b,x,d,e,q,w,z);
+	float xx;
+	int* p;
+	int * qq = p+xx;
 }

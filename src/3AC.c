@@ -77,11 +77,12 @@ void make_blocks(){
 	leader[0] = 1;
 	for (int i = 1; i < n; i++)	leader[i] = 0;
 	for (int i = 0; i < n-1; i++){
-		if (code_array[i].goto_addr > -1){
+		if (code_array[i].op== "IF_TRUE_GOTO" || code_array[i].op== "GOTO"){
 			leader[i+1] = 1;
 			leader[code_array[i].goto_addr] = 1;
 		}
 		else if (code_array[i].op == "FUNC_START") leader[i] = 1;
+		else if (code_array[i].op == "CALL") leader[i+1] = 1;
 		else if (code_array[i].op == "RETURN" || code_array[i].op == "RETURN_VOID") leader[i+1] = 1;
 		else if (code_array[i].op == "FUNC_END") {
 			leader[i] = 1;
@@ -107,7 +108,7 @@ void make_blocks(){
 				blocks[curr].succ = blocknum[code_array[i-1].goto_addr];
 				blocks[curr].code[blocks[curr].code.size()-1].goto_addr = blocks[curr].succ;
 			}
-			else if (code_array[i-1].goto_addr != -1){
+			else if (code_array[i-1].op == "IF_TRUE_GOTO"){
 				blocks[curr].cond_succ = blocknum[code_array[i-1].goto_addr];
 				blocks[curr].code[blocks[curr].code.size()-1].goto_addr = blocks[curr].cond_succ;			
 			}
