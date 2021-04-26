@@ -1,20 +1,60 @@
-int fun(int a, char b, int x, char d, int e, int q, int w, int z){
-	w++;
-	z++;
-	return 1;
-}
-
+/*#include<stdio.h>*/
 int main(){
-	char b;
-	int q;
-	char d;
-	int e;
-	int x;
-	int a;
-	int w;
-	int z;
-	//fun(a,b,x,d,e,q,w,z);
-	float xx;
-	int* p;
-	int * qq = p+xx;
+	unsigned int a = 8;
+	unsigned int b = 2;
+	/*short int b = 5;*/
+	/*a &= b;*/
+	/*int c = a & b;*/ 
+	/*a+=10;*/
+	/*int e = a*++a;*/
+	/*int e = a ^ b;*/
+	int f = a >> b;
+	// printf("%d\n", f);	
+	return 0;
 }
+/*[]
+CALL
+(-to-)
+PARAM
+++ (Pre/Post)
+-- ''
+UNARY&
+UNARY*
+!
+UNARY+
+UNARY-
+~
+inttoreal
+*int
+*real
+/int
+/real
+%
++int
++real
+-int
+-real
+<<
+>>
+<int
+<real
+>int
+>real
+<=int,real
+>=int,real
+==int,real
+!=int,real
+&
+^
+|
+IF_TRUE_GOTO
+GOTO
+=
++=int,real
+-=...
+*=...
+/=...
+%,<<,>>,&,^,|=
+RETURN_VOID
+RETURN
+FUNC_START*/
