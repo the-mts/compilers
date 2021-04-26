@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <stdio.h>
+#include <map>
 #include "3AC.h"
 #include "parse_utils.h"
 
@@ -154,8 +155,9 @@ void make_blocks(){
 			blocks[i-1].next = blocks[i].next;
 			for (auto j: blocks[i].pred){
 				if (blocks[j].succ == i){
-					if (blocks[j].code.back().op == "GOTO")
+					if (blocks[j].code.back().op == "GOTO"){
 						blocks[j].code.back().goto_addr = blocks[i].succ;
+					}
 					blocks[j].succ = blocks[i].succ;
 					if (blocks[i].succ != -1) {
 						blocks[blocks[i].succ].pred.push_back(j);
@@ -168,7 +170,7 @@ void make_blocks(){
 					if (blocks[i].succ != -1) blocks[blocks[i].succ].pred.push_back(j);
 				}
 				else {
-					//cout << "Something went horribly wrong and I don't know what" << endl;
+					printf("Something went horribly wrong and I don't know what");
 					exit(-1);
 				}
 			}
@@ -212,6 +214,51 @@ void opt_ret_dead(){
 					temp--;
 					blocks[temp].next = blocks[temp+1].next;
 				}while(!blocks[temp].alive);
+			}
+		}
+	}
+}
+
+void opt_cse(){
+	if (blocks.size() == 0) return;
+	map<pair<string, pair<string, string>>, qi> expr;
+	//map<string, vector<pair<string, pair<string, string>>>> used;
+	int i;
+	string op, op1, op2, res;
+	for (int b = 0; b != -1; b = blocks[b].next){
+		i = 0;
+		if (blocks[b].code[0].op == "FUNC_START") i = 1;
+		for (; i < blocks[b].code.size(); i++){
+			op = blocks[b].code[i].op;
+			op1 = blocks[b].code[i].op1.first;
+			op2 = blocks[b].code[i].op2.first;
+			res = blocks[b].code[i].res.first;
+			if (op == "IF_TRUE_GOTO" || op == "GOTO" ||
+				op == "PARAM" || op == "CALL" ||
+				op == "RETURN" || op == "RETURN_VOID" ||
+				op == "FUNC_END") break;
+			if (expr.find({op, {op1, op2}}) != expr.end()){
+				blocks[b].code[i].op = "=";
+				blocks[b].code[i].op1 = expr[{op, {op1, op2}}];
+				blocks[b].code[i].op2 = {"", NULL};
+			}
+			else {
+				expr[{op, {op1, op2}}] = blocks[b].code[i].res;	
+			}
+			//Remove all entries in expr which have 
+			//for (auto v: used[res])
+			//	expr.erase(v);
+			auto pred = [&](const auto& item) {
+        		auto const& [key, value] = item;
+		        return key.second.first == op1 || key.second.first == op2 || key.second.second == op1 || key.second.second == op2;
+			};
+
+			for (auto i = expr.begin(), last = expr.end(); i != last; ) {
+			  if (pred(*i)) {
+			      i = expr.erase(i);
+			  } else {
+			      ++i;
+			  }
 			}
 		}
 	}
