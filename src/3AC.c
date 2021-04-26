@@ -184,7 +184,6 @@ void make_blocks(){
 }
 
 void opt_ret_dead(){
-	//Won't work if globals are present. This will remove them also.
 	if (blocks.size() == 0) return;
 	int c = 1, s;
 	int temp;
