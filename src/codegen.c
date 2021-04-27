@@ -8,7 +8,7 @@ vector<qi> params_list;
 
 void dump_const_labels(){
 	for (auto i : constLabels){
-		cout<<i.first<<endl;
+		cout<<i.first<<":"<<endl;
 		cout<<i.second.second<<endl;
 	}
 }
@@ -151,6 +151,19 @@ void codegen(){
 				int param_stk_size = 0;
 				vector<qi> stk_params;
 				for(auto x: params_list){
+					if(x.first[0]=='.' && constLabels.find(x.first)!=constLabels.end()){
+						auto tmp = constLabels[x.first];
+						if (tmp.first == ".string"){
+							if(int_char<6){
+								cout<<"leaq "<<x.first<<"(%rip), "<<intregs[{int_char+1, 8}]<<endl;
+								int_char++;
+								continue;
+							}
+							else{
+								// Should do something here
+							}
+						}
+					}
 					string p = x.second->type;
 					int flag = 0;
 					if(p.find("int") != string::npos || p.find("char") != string::npos || p.back() == ']' || p.back() == '*'){

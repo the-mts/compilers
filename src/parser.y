@@ -123,6 +123,9 @@ primary_expression
 
 	| STRING_LITERAL											{
 																	$$ = node_(0,$1,STRING_LITERAL); $$->node_data = "char ["+to_string(strlen($1)+1)+"]";
+																	string tmp = gen_new_const_label();
+																	constLabels[tmp] = {".string", ".string "+string((const char*) $1)};
+																	$$->place = {tmp, NULL};
 																}
 
 	| '(' expression ')'										{
@@ -214,6 +217,15 @@ postfix_expression
 																		printf("\e[1;31mError [line %d]:\e[0m Invalid function name '%s'.\n",line,$1->name);
 																		exit(-1);
 																	}
+
+																	vector<qi> arg_names;
+																	vector<pair<string,string>> arg_list;
+																	if(entry->type_name == IS_BUILTIN_FUNC){
+																		// arg_names = $3->v;
+																		for(auto i : $3->v) arg_names.push_back(i->place);
+																		goto skip_arg_check;
+																	}
+
 																	if(entry->type_name != IS_FUNC){
 																		printf("\e[1;31mError [line %d]:\e[0m Called object '%s' is not a function.\n",line,$1->name);
 																		exit(-1);
@@ -226,8 +238,7 @@ postfix_expression
 																		printf("\e[1;31mError [line %d]:\e[0m Function '%s' needs %d arguments but %d provided.\n",line,$1->name,(int)entry->arg_list->size(),$3->sz);
 																		exit(-1);
 																	}
-																	auto arg_list = *(entry->arg_list);
-																	vector<qi> arg_names;
+																	arg_list = *(entry->arg_list);
 																	for(int i = 0; i < $3->sz; i++){
 																		string type = $3->v[i]->node_data;
 
@@ -305,12 +316,14 @@ postfix_expression
 																		}
 
 																	}
+
+																	skip_arg_check:
 																	$$->node_data = entry->type;
 																	$$->value_type = RVALUE;
 
 																	//////////////// 3AC ////////////////
-																	for(auto i: $3->v){
-																		emit("PARAM", i->place, {"", NULL}, {"", NULL});
+																	for(auto i: arg_names){
+																		emit("PARAM", i, {"", NULL}, {"", NULL});
 																	}
 																	$$->place = getNewTemp($$->node_data);
 																	emit("CALL", $1->place, {"", NULL}, $$->place, $3->sz);
