@@ -74,7 +74,7 @@ void print_blocks(int only_alive = 1){
 				j++;
     		}
 			cout<<"succ: " << blocks[b].succ << ", cond_succ: " << blocks[b].cond_succ << endl;
-			cout<<"next: "<< blocks[b].next << endl;
+			cout<<"next: "<< blocks[b].next << endl << endl;
 			c++;
 		}
 	}
@@ -108,7 +108,7 @@ void print_blocks(int only_alive = 1){
 				j++;
     		}
 			cout<<"succ: " << b.succ << ", cond_succ: " << b.cond_succ << endl;
-			cout<<"next: "<< b.next << endl;
+			cout<<"next: "<< b.next << endl << endl;
 			c++;
 		}
 	}
