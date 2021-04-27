@@ -287,6 +287,7 @@ void init_symtab(){
 	st_root = new table_tree(&global, &types_table);
 	st_root->name = "global";
 	curr = st_root;
+	add_entry("printf", "int", 0, 0, IS_BUILTIN_FUNC);
 
 }
 
