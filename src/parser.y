@@ -188,10 +188,10 @@ postfix_expression
 																		printf("\e[1;31mError [line %d]:\e[0m Called object '%s' is not a function.\n",line,$1->name);
 																		exit(-1);
 																	}
-																	if(entry->is_init != 1){
-																		printf("\e[1;31mError [line %d]:\e[0m Function '%s' declared but not defined.\n",line,$1->name);
-																		exit(-1);
-																	}
+																	// if(entry->is_init != 1){
+																	// 	printf("\e[1;31mError [line %d]:\e[0m Function '%s' declared but not defined.\n",line,$1->name);
+																	// 	exit(-1);
+																	// }
 																	if((int)entry->arg_list->size() != 0){
 																		printf("\e[1;31mError [line %d]:\e[0m Function '%s' needs %d arguments but 0 provided.\n",line,$1->name,(int)entry->arg_list->size());
 																		exit(-1);
@@ -230,10 +230,10 @@ postfix_expression
 																		printf("\e[1;31mError [line %d]:\e[0m Called object '%s' is not a function.\n",line,$1->name);
 																		exit(-1);
 																	}
-																	if(entry->is_init != 1){
-																		printf("\e[1;31mError [line %d]:\e[0m Function '%s' declared but not defined.\n",line,$1->name);
-																		exit(-1);
-																	}
+																	// if(entry->is_init != 1){
+																	// 	printf("\e[1;31mError [line %d]:\e[0m Function '%s' declared but not defined.\n",line,$1->name);
+																	// 	exit(-1);
+																	// }
 																	if((int)entry->arg_list->size() != $3->sz){
 																		printf("\e[1;31mError [line %d]:\e[0m Function '%s' needs %d arguments but %d provided.\n",line,$1->name,(int)entry->arg_list->size(),$3->sz);
 																		exit(-1);
