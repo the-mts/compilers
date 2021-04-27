@@ -40,6 +40,7 @@ typedef struct block {
 
 extern vector<quad> code_array;
 extern int nextquad;
+extern unordered_map<string, pair<string, string>> constLabels;
 
 extern int emit(string op, qi op1, qi op2, qi res, int goto_addr = -1);
 extern void backpatch(vector<int>& list, int addr);
@@ -49,5 +50,5 @@ extern qi emitConstant(node* tmp);
 extern vector<block> blocks;
 extern void make_blocks();
 extern void opt_ret_dead();
-extern unordered_map<string, pair<string, string>> constLabels;
+extern string gen_new_const_label();
 #endif
