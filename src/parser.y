@@ -3431,7 +3431,7 @@ function_definition
 												}
 												next_name = $3->node_name;
 												func_ret_type = $1->node_data;
-												emit("FUNC_START", {$3->node_name, lookup($3->node_name)}, {"", NULL}, {"", NULL});
+												emit("FUNC_START", {$3->node_name, lookup($3->node_name)}, {"", NULL}, {"", NULL}, var_no);
 											} 
 
 	compound_statement					{
@@ -3442,7 +3442,7 @@ function_definition
 											func_ret_type = "";
 
 											backpatch($5->nextlist, nextquad);
-											emit("FUNC_END", {"", NULL}, {"", NULL}, {"", NULL});
+											emit("FUNC_END", {"", NULL}, {"", NULL}, {"", NULL}, var_no);
 										}
 
 
@@ -3503,7 +3503,7 @@ function_definition
 											st_entry* temp = lookup($1->node_name);
 											func_ret_type = temp->type; 
 
-											emit("FUNC_START", {$1->node_name, lookup($1->node_name)}, {"", NULL}, {"", NULL});
+											emit("FUNC_START", {$1->node_name, lookup($1->node_name)}, {"", NULL}, {"", NULL}, var_no);
 										}
 
 	compound_statement					{
@@ -3514,7 +3514,7 @@ function_definition
 											func_ret_type = "";
 
 											backpatch($3->nextlist, nextquad);
-											emit("FUNC_END", {"", NULL}, {"", NULL}, {"", NULL});
+											emit("FUNC_END", {"", NULL}, {"", NULL}, {"", NULL}, var_no);
 										}
 	| declaration_specifiers M3 declarator declaration_list compound_statement		{$$ = node_(1,$3->name,-1); $$->v[0] = $5;/*not used*/}
 	| declarator declaration_list compound_statement							{$$ = node_(1,$1->name,-1); $$->v[0] = $3;/*not used*/}

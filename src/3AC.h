@@ -32,6 +32,8 @@ typedef struct block {
 	int alive = 1;
 	int next;
 	int isglobal=0;
+	int varstart;
+	int varend;
 	block(int num){
 		this->succ = num+1;
 		this->next = num+1;
@@ -40,6 +42,7 @@ typedef struct block {
 
 extern vector<quad> code_array;
 extern int nextquad;
+extern int var_no;
 
 extern int emit(string op, qi op1, qi op2, qi res, int goto_addr = -1);
 extern void backpatch(vector<int>& list, int addr);
