@@ -110,10 +110,10 @@ void make_blocks(){
 	for (int i = 0; i < n-1; i++)
 		if ((code_array[i].op == "GOTO" || code_array[i].op == "IF_TRUE_GOTO") && code_array[i].goto_addr == i+1) {
 			code_array[i].op = "DUMMY";
-			code_array[i].op1 = {"", NULL};
+			/*code_array[i].op1 = {"", NULL};
 			code_array[i].op2 = {"", NULL};
 			code_array[i].res = {"", NULL};
-			code_array[i].goto_addr = -1;
+			code_array[i].goto_addr = -1;*/
 		}
 
 	// Finding leaders
