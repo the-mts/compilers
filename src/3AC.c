@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <stdio.h>
+#include <numeric>
 #include "3AC.h"
 #include "parse_utils.h"
 
@@ -26,7 +27,7 @@ qi getNewTemp(string type){
     var_no++;
     qi q;
     q.first = var_name;
-    q.second = add_entry(q.first, type, get_size(type), offset.back(), IS_TEMP);
+    q.second = add_entry(q.first, type, get_size(type), accumulate(offset.begin()+1, offset.end(), 0), IS_TEMP);
     return q;
 }
 
