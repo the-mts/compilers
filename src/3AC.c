@@ -322,3 +322,74 @@ void opt_cse(){
 		//cout<<"chick2\n";
 	}
 }
+
+void print_copy_map(const map<string, qi>& m)
+{
+	   for (const auto& [key, value] : m) {
+	        cout << key << " = " << value.first << "; ";
+	   }
+	   cout<<"\n";
+}
+
+void opt_copy(){
+	if (blocks.size() == 0) return;
+	map<string, qi> expr;
+	//map<string, vector<pair<string, pair<string, string>>>> used;
+	int i;
+	string op, op1, op2, res;
+	//cout<<"chick1\n";
+	//print_copy_map(expr);
+	for (int b = 0; b != -1; b = blocks[b].next){
+		expr.clear();
+		i = 0;
+		if (blocks[b].code[0].op == "FUNC_START") i = 1;
+		for (; i < blocks[b].code.size(); i++){
+			op = blocks[b].code[i].op;
+			op1 = blocks[b].code[i].op1.first;
+			op2 = blocks[b].code[i].op2.first;
+			res = blocks[b].code[i].res.first;
+			if (op == "GOTO" || op == "CALL" ||
+			    op == "RETURN_VOID" || op == "FUNC_END") break;
+			if (expr.find(op1) != expr.end()){
+				//cout<<"Found expr\n";
+				blocks[b].code[i].op1 = expr[op1];
+			}
+			if (expr.find(op2) != expr.end()){
+				blocks[b].code[i].op2 = expr[op2];
+			}
+			if (op == "=" && op1[0] != '$' && op1[0] != '.'){
+				//cout<<"Adding expr\n";
+				expr[res] = blocks[b].code[i].op1;
+			}
+			else {
+				auto pred = [&](const auto& item) {
+        			auto const& [key, value] = item;
+			        return key == res;
+				};
+	
+				for (auto i = expr.begin(), last = expr.end(); i != last; ) {
+				  if (pred(*i)) {
+				      i = expr.erase(i);
+			  		} else {
+			      ++i;
+			  		}
+				}
+			}
+			//Remove all entries in expr which have 
+			//for (auto v: used[res])
+			//	expr.erase(v);
+
+			
+		}
+		//print_copy_map(expr);
+		//cout<<"chick2\n";
+	}
+}
+
+
+
+void optimize(){
+	opt_ret_dead();
+	opt_cse();
+	opt_copy();
+}
