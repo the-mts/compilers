@@ -50,4 +50,6 @@ extern vector<block> blocks;
 extern void make_blocks();
 extern void opt_ret_dead();
 extern void opt_cse();
+
+extern unordered_map<string, pair<string, string>> constLabels;
 #endif

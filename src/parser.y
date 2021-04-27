@@ -134,12 +134,6 @@ primary_expression
 postfix_expression
 	: primary_expression										{
 																	$$ = $1;
-																	if($$->node_data.back() == ']'){
-																		$$->value_type = RVALUE;
-																	}
-																	else{
-																		$$->value_type = LVALUE;
-																	}
 																}
 	| postfix_expression '[' expression ']'						{
 																	if($3->node_data == "void"){
@@ -163,12 +157,6 @@ postfix_expression
 																		exit(-1);
 																	}
 																	$$->node_data = reduce_pointer_level($1->node_data);
-																	if($$->node_data.back() == ']'){
-																		$$->value_type = RVALUE;
-																	}
-																	else{
-																		$$->value_type = LVALUE;
-																	}
 
 																	//////////////// 3AC ////////////////
 																	if($3->token == CONSTANT){
@@ -1953,8 +1941,16 @@ assignment_expression
 																				if($3->token == CONSTANT){
 																					$3->place = emitConstant($3);
 																				}
-																				
-																				emit("=", $3->place, {"", NULL}, $1->place);
+
+																				if(type1 != type2){
+																					qi tmpvar = getNewTemp($1->node_data);
+																					string cast = "("+ type2 +"-to-"+ type1 +")";
+																					emit(cast, $3->place, {"", NULL}, tmpvar);
+																					emit("=", tmpvar, {"", NULL}, $1->place);
+																				}
+																				else{
+																					emit("=", $3->place, {"", NULL}, $1->place);
+																				}
 																				$$->place = $1->place;
 																				$$->nextlist.insert($$->nextlist.end(), $3->nextlist.begin(), $3->nextlist.end());
 																				/////////////////////////////////////
@@ -1976,7 +1972,15 @@ assignment_expression
 																				op = string((const char*) $2->name);
 																				op.pop_back();
 																				if(type.find("int")!=string::npos || type.find("char")!=string::npos){
-																					int x = emit(op+"int", $1->place, $3->place, $1->place);
+																					auto tmp = getNewTemp(type);
+																					int x = emit(op+"int", $1->place, $3->place, tmp);
+
+																					// Typecasting before assignment
+																					auto tmp2 = getNewTemp($1->node_data);
+																					string cast = "("+ $3->node_data +"-to-"+ $1->node_data +")";
+																					emit(cast, tmp, {"", NULL}, tmp2);
+																					
+																					emit("=", tmp2, {"", NULL}, $1->place);
 																				}
 																				else {
 																					if($1->node_data.find("int")!=string::npos){
@@ -1984,7 +1988,13 @@ assignment_expression
 																						auto tmp2 = getNewTemp(type);
 																						int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
 																						emit(op+"real", tmp, $3->place, tmp2);
-																						emit("=", tmp2, {"", NULL}, $1->place);
+																						
+																						// Typecasting before assignment
+																						auto tmp3 = getNewTemp($1->node_data);
+																						string cast = "("+ $3->node_data +"-to-"+ $1->node_data +")";
+																						emit(cast, tmp2, {"", NULL}, tmp3);
+																						
+																						emit("=", tmp3, {"", NULL}, $1->place);
 																					}
 																					else if ($3->node_data.find("int")!=string::npos){
 																						auto tmp = getNewTemp(type);
@@ -1992,7 +2002,16 @@ assignment_expression
 																						emit(op+"real", $1->place, tmp, $1->place);
 																					}
 																					else {
-																						emit(op+"real", $1->place, $3->place, $1->place);
+																						/* emit(op+"real", $1->place, $3->place, $1->place); */
+																						auto tmp = getNewTemp(type);
+																						int x = emit(op+"real", $1->place, $3->place, tmp);
+
+																						// Typecasting before assignment
+																						auto tmp2 = getNewTemp($1->node_data);
+																						string cast = "("+ $3->node_data +"-to-"+ $1->node_data +")";
+																						emit(cast, tmp, {"", NULL}, tmp2);
+																						
+																						emit("=", tmp2, {"", NULL}, $1->place);
 																					}
 																				}
 																				/////////////////////////////////////
@@ -2011,7 +2030,16 @@ assignment_expression
 																				op = string((const char*) $2->name);
 																				op.pop_back();
 																				if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.find("*")!=string::npos){
-																					int x = emit(op+"int", $1->place, $3->place, $1->place);
+																					/* int x = emit(op+"int", $1->place, $3->place, $1->place); */
+																					auto tmp = getNewTemp(type);
+																					int x = emit(op+"int", $1->place, $3->place, tmp);
+
+																					// Typecasting before assignment
+																					auto tmp2 = getNewTemp($1->node_data);
+																					string cast = "("+ $3->node_data +"-to-"+ $1->node_data +")";
+																					emit(cast, tmp, {"", NULL}, tmp2);
+																					
+																					emit("=", tmp2, {"", NULL}, $1->place);
 																				}
 																				else {
 																					if($1->node_data.find("int")!=string::npos){
@@ -2019,7 +2047,13 @@ assignment_expression
 																						auto tmp2 = getNewTemp(type);
 																						int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
 																						emit(op+"real", tmp, $3->place, tmp2);
-																						emit("=", tmp2, {"", NULL}, $1->place);
+
+																						// Typecasting before assignment
+																						auto tmp3 = getNewTemp($1->node_data);
+																						string cast = "("+ $3->node_data +"-to-"+ $1->node_data +")";
+																						emit(cast, tmp2, {"", NULL}, tmp3);
+																						
+																						emit("=", tmp3, {"", NULL}, $1->place);
 																					}
 																					else if ($3->node_data.find("int")!=string::npos){
 																						auto tmp = getNewTemp(type);
@@ -2027,7 +2061,16 @@ assignment_expression
 																						emit(op+"real", $1->place, tmp, $1->place);
 																					}
 																					else {
-																						emit(op+"real", $1->place, $3->place, $1->place);
+																						/* emit(op+"real", $1->place, $3->place, $1->place); */
+																						auto tmp = getNewTemp(type);
+																						int x = emit(op+"real", $1->place, $3->place, tmp);
+
+																						// Typecasting before assignment
+																						auto tmp2 = getNewTemp($1->node_data);
+																						string cast = "("+ $3->node_data +"-to-"+ $1->node_data +")";
+																						emit(cast, tmp, {"", NULL}, tmp2);
+																						
+																						emit("=", tmp2, {"", NULL}, $1->place);
 																					}
 																				}
 																				/////////////////////////////////////
@@ -2056,7 +2099,17 @@ assignment_expression
 																				$$->place = $1->place;
 																				op = string((const char*) $2->name);
 																				op.pop_back();
-																				int x = emit(op, $1->place, $3->place, $1->place);
+																				/* int x = emit(op, $1->place, $3->place, $1->place); */
+
+																				auto tmp = getNewTemp(type);
+																				int x = emit(op+"int", $1->place, $3->place, tmp);
+
+																				// Typecasting before assignment
+																				auto tmp2 = getNewTemp($1->node_data);
+																				string cast = "("+ $3->node_data +"-to-"+ $1->node_data +")";
+																				emit(cast, tmp, {"", NULL}, tmp2);
+																				
+																				emit("=", tmp2, {"", NULL}, $1->place);
 																				/////////////////////////////////////
 																			}
 																		}

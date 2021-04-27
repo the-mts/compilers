@@ -1,13 +1,14 @@
-/*#include<stdio.h>*/
-void fun(int x[][10]){
-	x[1]++;
-}
-
+// #include<string>
+// using namespace std;
 int main(){
-	char c;
-	int x = 4;
-	short int b;
-	int y= x++;
-	// printf("%d\n", x);
-	// printf("%d\n", y);
+	short y;
+	int x;
+	long z;
+	float w;
+	double d;
+	x = 2;
+	y = 3;
+	z = 4;
+	w = 2.4;
+	d = 1.1111;
 }
