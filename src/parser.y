@@ -920,6 +920,7 @@ additive_expression
 																		exit(-1);
 																	}
 																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2));
+																
 																	if($1->token == CONSTANT && $3->token == CONSTANT){
 																		evaluate_const($1, $3, *($2), type);
 																		$$ = $1;
@@ -971,6 +972,10 @@ additive_expression
 																		exit(-1);
 																	}
 																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2));
+																	if(type.back() == '*' && get_equivalent_pointer($1->node_data).first.back() != '*'){
+																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, "-");
+																		exit(-1);
+																	}
 																	if($1->token == CONSTANT && $3->token == CONSTANT){
 																		evaluate_const($1, $3, *($2), type);
 																		$$ = $1;

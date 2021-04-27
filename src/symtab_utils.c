@@ -528,6 +528,7 @@ string arithmetic_type_upgrade(string type1, string type2, string op){
 	m1["float"] = 1;
 	m1["double"] = 1;
 	m1["long double"] = 1;
+	m1["short int"] = 1;
 	m1["int"] = 1;
 	m1["long int"] = 1;
 	m1["unsigned int"] = 1;
@@ -623,7 +624,8 @@ string arithmetic_type_upgrade(string type1, string type2, string op){
 	if(type1 == "long int"){
 		if(m1.count(type2)){
 			ans = "long int";
-			goto implicit_warn;		}
+			goto implicit_warn;		
+		}
 
 		else{
 			return type2;
@@ -641,7 +643,8 @@ string arithmetic_type_upgrade(string type1, string type2, string op){
 	if(type1 == "unsigned int"){
 		if(m1.count(type2)){
 			ans = "unsigned int";
-			goto implicit_warn;		}
+			goto implicit_warn;		
+		}
 
 		else{
 			return type2;
@@ -659,7 +662,8 @@ string arithmetic_type_upgrade(string type1, string type2, string op){
 	if(type1 == "int"){
 		if(m1.count(type2)){
 			ans = "int";
-			goto implicit_warn;		}
+			goto implicit_warn;		
+		}
 
 		else{
 			return type2;
@@ -674,23 +678,45 @@ string arithmetic_type_upgrade(string type1, string type2, string op){
 			return type1;
 		}
 	}
+	if(type1 == "short int"){
+		if(m1.count(type2)){
+			ans = "short int";
+			goto implicit_warn;		
+		}
+
+		else{
+			return type2;
+		}
+	}
+	if(type2 == "short int"){
+		if(m1.count(type1)){
+			ans = "short int";
+			goto implicit_warn;
+		}
+		else{
+			return type1;
+		}
+	}
 	if(type1 == "char"){
 		if(m1.count(type2)){
-			ans = "int";
-			goto implicit_warn;		}
-
+			ans = "char";
+			goto implicit_warn;		
+		}
 		else{
 			return type2;
 		}
 	}
 	if(type2 == "char"){
 		if(m1.count(type1)){
-			ans = "int";
+			ans = "char";
 			goto implicit_warn;
 		}
 		else{
 			return type1;
 		}
+	}
+	if(op == "-" && (type1 == type2) && (type1.back() == '*')){
+		return "int";
 	}
 	printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, op.c_str());
 	exit(-1);
