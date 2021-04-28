@@ -1573,9 +1573,9 @@ void codegen(){
 				}
 
 				if (type1 == "char") 			cout<<"movsbq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
-				else if (type2 == "short int")  cout<<"movswq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
-				else if (type2 == "int") 		cout<<"movslq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
-				else if (type2 == "long int") 	cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+				else if (type1 == "short int")  cout<<"movswq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+				else if (type1 == "int") 		cout<<"movslq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+				else if (type1 == "long int") 	cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
 
 				if (type2 == "char") 			cout<<"cmpb "<<-t2.second->offset<<"(%rbp), %al"<<endl;	
 				else if (type2 == "short int")	cout<<"cmpw "<<-t2.second->offset<<"(%rbp), %ax"<<endl;	

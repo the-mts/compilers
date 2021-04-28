@@ -802,12 +802,12 @@ multiplicative_expression
 																			int x = emit("*int", $1->place, $3->place, $$->place);
 																		}
 																		else {
-																			if($1->node_data.find("int")!=string::npos){
+																			if($1->node_data.find("int")!=string::npos || $1->node_data.find("char")!=string::npos){
 																				auto tmp = getNewTemp(type);
 																				int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
 																				emit("*real", tmp, $3->place, $$->place);
 																			}
-																			else if ($3->node_data.find("int")!=string::npos){
+																			else if ($3->node_data.find("int")!=string::npos || $3->node_data.find("char")!=string::npos){
 																				auto tmp = getNewTemp(type);
 																				int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
 																				emit("*real", $1->place, tmp, $$->place);
@@ -857,12 +857,12 @@ multiplicative_expression
 																			int x = emit("/int", $1->place, $3->place, $$->place);
 																		}
 																		else {
-																			if($1->node_data.find("int")!=string::npos){
+																			if($1->node_data.find("int")!=string::npos || $1->node_data.find("char")!=string::npos){
 																				auto tmp = getNewTemp(type);
 																				int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
 																				emit("/real", tmp, $3->place, $$->place);
 																			}
-																			else if ($3->node_data.find("int")!=string::npos){
+																			else if ($3->node_data.find("int")!=string::npos || $3->node_data.find("char")!=string::npos){
 																				auto tmp = getNewTemp(type);
 																				int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
 																				emit("/real", $1->place, tmp, $$->place);
@@ -956,12 +956,12 @@ additive_expression
 																			int x = emit("+int", $1->place, $3->place, $$->place);
 																		}
 																		else {
-																			if($1->node_data.find("int")!=string::npos){
+																			if($1->node_data.find("int")!=string::npos || $1->node_data.find("char")!=string::npos){
 																				auto tmp = getNewTemp(type);
 																				int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
 																				emit("+real", tmp, $3->place, $$->place);
 																			}
-																			else if ($3->node_data.find("int")!=string::npos){
+																			else if ($3->node_data.find("int")!=string::npos || $3->node_data.find("char")!=string::npos){
 																				auto tmp = getNewTemp(type);
 																				int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
 																				emit("+real", $1->place, tmp, $$->place);
@@ -1011,12 +1011,12 @@ additive_expression
 																			int x = emit("-int", $1->place, $3->place, $$->place);
 																		}
 																		else {
-																			if($1->node_data.find("int")!=string::npos){
+																			if($1->node_data.find("int")!=string::npos || $1->node_data.find("char")!=string::npos){
 																				auto tmp = getNewTemp(type);
 																				int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
 																				emit("-real", tmp, $3->place, $$->place);
 																			}
-																			else if ($3->node_data.find("int")!=string::npos){
+																			else if ($3->node_data.find("int")!=string::npos || $3->node_data.find("char")!=string::npos){
 																				auto tmp = getNewTemp(type);
 																				int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
 																				emit("-real", $1->place, tmp, $$->place);
@@ -1169,13 +1169,13 @@ relational_expression
 																			int x = emit("<int", $1->place, $3->place, $$->place);
 																		}
 																		else {
-																			if($1->node_data.find("int")!=string::npos){
+																			if($1->node_data.find("int")!=string::npos || $1->node_data.find("char")!=string::npos){
 																				auto tmp = getNewTemp(type);
 																				int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
 																				emit("<real", tmp, $3->place, $$->place);
 																			}
-																			else if ($3->node_data.find("int")!=string::npos){
-																				auto tmp = getNewTemp(type);
+																			else if ($3->node_data.find("int")!=string::npos || $3->node_data.find("char")!=string::npos){
+																				auto tmp = getNewTemp(type); 
 																				int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
 																				emit("<real", $1->place, tmp, $$->place);
 																			}
@@ -1234,12 +1234,12 @@ relational_expression
 																			int x = emit(">int", $1->place, $3->place, $$->place);
 																		}
 																		else {
-																			if($1->node_data.find("int")!=string::npos){
+																			if($1->node_data.find("int")!=string::npos || $1->node_data.find("char")!=string::npos){
 																				auto tmp = getNewTemp(type);
 																				int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
 																				emit(">real", tmp, $3->place, $$->place);
 																			}
-																			else if ($3->node_data.find("int")!=string::npos){
+																			else if ($3->node_data.find("int")!=string::npos || $3->node_data.find("char")!=string::npos){
 																				auto tmp = getNewTemp(type);
 																				int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
 																				emit(">real", $1->place, tmp, $$->place);
@@ -1299,12 +1299,12 @@ relational_expression
 																			int x = emit("<=int", $1->place, $3->place, $$->place);
 																		}
 																		else {
-																			if($1->node_data.find("int")!=string::npos){
+																			if($1->node_data.find("int")!=string::npos || $1->node_data.find("char")!=string::npos){
 																				auto tmp = getNewTemp(type);
 																				int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
 																				emit("<=real", tmp, $3->place, $$->place);
 																			}
-																			else if ($3->node_data.find("int")!=string::npos){
+																			else if ($3->node_data.find("int")!=string::npos || $3->node_data.find("char")!=string::npos){
 																				auto tmp = getNewTemp(type);
 																				int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
 																				emit("<=real", $1->place, tmp, $$->place);
@@ -1364,12 +1364,12 @@ relational_expression
 																			int x = emit(">=int", $1->place, $3->place, $$->place);
 																		}
 																		else {
-																			if($1->node_data.find("int")!=string::npos){
+																			if($1->node_data.find("int")!=string::npos || $1->node_data.find("char")!=string::npos){
 																				auto tmp = getNewTemp(type);
 																				int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
 																				emit(">=real", tmp, $3->place, $$->place);
 																			}
-																			else if ($3->node_data.find("int")!=string::npos){
+																			else if ($3->node_data.find("int")!=string::npos || $3->node_data.find("char")!=string::npos){
 																				auto tmp = getNewTemp(type);
 																				int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
 																				emit(">=real", $1->place, tmp, $$->place);
@@ -1433,12 +1433,12 @@ equality_expression
 																			int x = emit("==int", $1->place, $3->place, $$->place);
 																		}
 																		else {
-																			if($1->node_data.find("int")!=string::npos){
+																			if($1->node_data.find("int")!=string::npos || $1->node_data.find("char")!=string::npos){
 																				auto tmp = getNewTemp(type);
 																				int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
 																				emit("==real", tmp, $3->place, $$->place);
 																			}
-																			else if ($3->node_data.find("int")!=string::npos){
+																			else if ($3->node_data.find("int")!=string::npos || $3->node_data.find("char")!=string::npos){
 																				auto tmp = getNewTemp(type);
 																				int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
 																				emit("==real", $1->place, tmp, $$->place);
@@ -1498,12 +1498,12 @@ equality_expression
 																			int x = emit("!=int", $1->place, $3->place, $$->place);
 																		}
 																		else {
-																			if($1->node_data.find("int")!=string::npos){
+																			if($1->node_data.find("int")!=string::npos || $1->node_data.find("char")!=string::npos){
 																				auto tmp = getNewTemp(type);
 																				int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
 																				emit("!=real", tmp, $3->place, $$->place);
 																			}
-																			else if ($3->node_data.find("int")!=string::npos){
+																			else if ($3->node_data.find("int")!=string::npos || $3->node_data.find("char")!=string::npos){
 																				auto tmp = getNewTemp(type);
 																				int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
 																				emit("!=real", $1->place, tmp, $$->place);
@@ -1994,27 +1994,35 @@ assignment_expression
 																					int x = emit(op+"int", $1->place, $3->place, tmp);
 
 																					// Typecasting before assignment
-																					auto tmp2 = getNewTemp($1->node_data);
-																					string cast = "("+ $3->node_data +"-to-"+ $1->node_data +")";
-																					emit(cast, tmp, {"", NULL}, tmp2);
-																					
-																					emit("=", tmp2, {"", NULL}, $1->place);
+																					if($1->node_data!=$3->node_data){
+																						auto tmp2 = getNewTemp($1->node_data);
+																						string cast = "("+ $3->node_data +"-to-"+ $1->node_data +")";
+																						emit(cast, tmp, {"", NULL}, tmp2);
+																						emit("=", tmp2, {"", NULL}, $1->place);
+																					}
+																					else{
+																						emit("=", tmp, {"", NULL}, $1->place);
+																					}
 																				}
 																				else {
-																					if($1->node_data.find("int")!=string::npos){
+																					if($1->node_data.find("int")!=string::npos || $1->node_data.find("char")!=string::npos){
 																						auto tmp = getNewTemp(type);
 																						auto tmp2 = getNewTemp(type);
 																						int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
 																						emit(op+"real", tmp, $3->place, tmp2);
 																						
 																						// Typecasting before assignment
-																						auto tmp3 = getNewTemp($1->node_data);
-																						string cast = "("+ $3->node_data +"-to-"+ $1->node_data +")";
-																						emit(cast, tmp2, {"", NULL}, tmp3);
-																						
-																						emit("=", tmp3, {"", NULL}, $1->place);
+																						if($1->node_data!=$3->node_data){
+																							auto tmp3 = getNewTemp($1->node_data);
+																							string cast = "("+ $3->node_data +"-to-"+ $1->node_data +")";
+																							emit(cast, tmp2, {"", NULL}, tmp3);
+																							emit("=", tmp3, {"", NULL}, $1->place);
+																						}
+																						else{
+																							emit("=", tmp2, {"", NULL}, $1->place);
+																						}
 																					}
-																					else if ($3->node_data.find("int")!=string::npos){
+																					else if ($3->node_data.find("int")!=string::npos || $3->node_data.find("char")!=string::npos){
 																						auto tmp = getNewTemp(type);
 																						int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
 																						emit(op+"real", $1->place, tmp, $1->place);
@@ -2025,11 +2033,15 @@ assignment_expression
 																						int x = emit(op+"real", $1->place, $3->place, tmp);
 
 																						// Typecasting before assignment
-																						auto tmp2 = getNewTemp($1->node_data);
-																						string cast = "("+ $3->node_data +"-to-"+ $1->node_data +")";
-																						emit(cast, tmp, {"", NULL}, tmp2);
-																						
-																						emit("=", tmp2, {"", NULL}, $1->place);
+																						if($1->node_data!=$3->node_data){
+																							auto tmp2 = getNewTemp($1->node_data);
+																							string cast = "("+ $3->node_data +"-to-"+ $1->node_data +")";
+																							emit(cast, tmp, {"", NULL}, tmp2);
+																							emit("=", tmp2, {"", NULL}, $1->place);
+																						}
+																						else{
+																							emit("=", tmp, {"", NULL}, $1->place);
+																						}
 																					}
 																				}
 																				/////////////////////////////////////
@@ -2053,27 +2065,35 @@ assignment_expression
 																					int x = emit(op+"int", $1->place, $3->place, tmp);
 
 																					// Typecasting before assignment
-																					auto tmp2 = getNewTemp($1->node_data);
-																					string cast = "("+ $3->node_data +"-to-"+ $1->node_data +")";
-																					emit(cast, tmp, {"", NULL}, tmp2);
-																					
-																					emit("=", tmp2, {"", NULL}, $1->place);
+																					if($1->node_data!=$3->node_data){
+																						auto tmp2 = getNewTemp($1->node_data);
+																						string cast = "("+ $3->node_data +"-to-"+ $1->node_data +")";
+																						emit(cast, tmp, {"", NULL}, tmp2);
+																						emit("=", tmp2, {"", NULL}, $1->place);
+																					}
+																					else{
+																						emit("=", tmp, {"", NULL}, $1->place);
+																					}
 																				}
 																				else {
-																					if($1->node_data.find("int")!=string::npos){
+																					if($1->node_data.find("int")!=string::npos || $1->node_data.find("char")!=string::npos){
 																						auto tmp = getNewTemp(type);
 																						auto tmp2 = getNewTemp(type);
 																						int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
 																						emit(op+"real", tmp, $3->place, tmp2);
 
 																						// Typecasting before assignment
-																						auto tmp3 = getNewTemp($1->node_data);
-																						string cast = "("+ $3->node_data +"-to-"+ $1->node_data +")";
-																						emit(cast, tmp2, {"", NULL}, tmp3);
-																						
-																						emit("=", tmp3, {"", NULL}, $1->place);
+																						if($1->node_data!=$3->node_data){
+																							auto tmp3 = getNewTemp($1->node_data);
+																							string cast = "("+ $3->node_data +"-to-"+ $1->node_data +")";
+																							emit(cast, tmp2, {"", NULL}, tmp3);
+																							emit("=", tmp3, {"", NULL}, $1->place);
+																						}
+																						else{
+																							emit("=", tmp2, {"", NULL}, $1->place);
+																						}
 																					}
-																					else if ($3->node_data.find("int")!=string::npos){
+																					else if ($3->node_data.find("int")!=string::npos || $3->node_data.find("char")!=string::npos){
 																						auto tmp = getNewTemp(type);
 																						int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
 																						emit(op+"real", $1->place, tmp, $1->place);
@@ -2084,11 +2104,16 @@ assignment_expression
 																						int x = emit(op+"real", $1->place, $3->place, tmp);
 
 																						// Typecasting before assignment
-																						auto tmp2 = getNewTemp($1->node_data);
-																						string cast = "("+ $3->node_data +"-to-"+ $1->node_data +")";
-																						emit(cast, tmp, {"", NULL}, tmp2);
+																						if($1->node_data!=$3->node_data){
+																							auto tmp2 = getNewTemp($1->node_data);
+																							string cast = "("+ $3->node_data +"-to-"+ $1->node_data +")";
+																							emit(cast, tmp, {"", NULL}, tmp2);
+																							emit("=", tmp2, {"", NULL}, $1->place);
+																						}
+																						else{
+																							emit("=", tmp, {"", NULL}, $1->place);
+																						}
 																						
-																						emit("=", tmp2, {"", NULL}, $1->place);
 																					}
 																				}
 																				/////////////////////////////////////
@@ -2123,11 +2148,15 @@ assignment_expression
 																				int x = emit(op+"int", $1->place, $3->place, tmp);
 
 																				// Typecasting before assignment
-																				auto tmp2 = getNewTemp($1->node_data);
-																				string cast = "("+ $3->node_data +"-to-"+ $1->node_data +")";
-																				emit(cast, tmp, {"", NULL}, tmp2);
-																				
-																				emit("=", tmp2, {"", NULL}, $1->place);
+																				if($1->node_data!=$3->node_data){
+																					auto tmp2 = getNewTemp($1->node_data);
+																					string cast = "("+ $3->node_data +"-to-"+ $1->node_data +")";
+																					emit(cast, tmp, {"", NULL}, tmp2);
+																					emit("=", tmp2, {"", NULL}, $1->place);
+																				}
+																				else{
+																					emit("=", tmp, {"", NULL}, $1->place);
+																				}
 																				/////////////////////////////////////
 																			}
 																		}
@@ -3082,12 +3111,12 @@ selection_statement
 									int x = emit("==int", $3->place, tmp, tmp2);
 								}
 								else {
-									if($3->node_data.find("int")!=string::npos){
+									if($3->node_data.find("int")!=string::npos || $3->node_data.find("char")!=string::npos){
 										auto tmp3 = getNewTemp(type);
 										int x = emit("inttoreal", $3->place, {"", NULL}, tmp3);
 										emit("==real", tmp3, tmp, tmp2);
 									}
-									else if (i.second->node_data.find("int")!=string::npos){
+									else if (i.second->node_data.find("int")!=string::npos || i.second->node_data.find("char")!=string::npos){
 										auto tmp3 = getNewTemp(type);
 										int x = emit("inttoreal", tmp, {"", NULL}, tmp3);
 										emit("==real", $3->place, tmp3, tmp2);
