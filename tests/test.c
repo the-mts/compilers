@@ -1,10 +1,8 @@
 int main(){
-	long int x = 55;
-	long int i = 11;
-	for(i; i>=0; i--){
-		x-=i;
-		printf("%ld %ld\n", x, i);
-	}
-	// printf("%d\n", x);
+	int *x, y;
+	char z[2], *z1;
+	float w;
+	
+	z!=x;
 	return 0;
 }
