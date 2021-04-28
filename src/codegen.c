@@ -1558,9 +1558,9 @@ void codegen(){
 				qi t2 = instr.op2;
 				qi r  = instr.res;
 				string type1 = t1.second->type;
-				if (type1.back == '*') type1 = "long int";
+				if (type1.back() == '*') type1 = "long int";
 				string type2 = t2.second->type;
-				if (type1.back == '*') type2 = "long int";
+				if (type1.back() == '*') type2 = "long int";
 				map<string, int> rank = {{"char", 1}, {"short int", 2}, {"int", 4}, {"long int", 8}};
 				
 				if (rank[type1] > rank[type2]){
@@ -1577,10 +1577,10 @@ void codegen(){
 				else if (type2 == "int") 		cout<<"movslq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
 				else if (type2 == "long int") 	cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
 
-				if (type2 == "char") 			cout<<"cmpb %al, "<<-t2.second->offset<<"(%rbp)"<<endl;	
-				else if (type2 == "short int")	cout<<"cmpw %ax, "<<-t2.second->offset<<"(%rbp)"<<endl;	
-				else if (type2 == "int") 		cout<<"cmpl %eax, "<<-t2.second->offset<<"(%rbp)"<<endl;	
-				else if (type2 == "long int") 	cout<<"cmpq %rax, "<<-t2.second->offset<<"(%rbp)"<<endl;
+				if (type2 == "char") 			cout<<"cmpb "<<-t2.second->offset<<"(%rbp), %al"<<endl;	
+				else if (type2 == "short int")	cout<<"cmpw "<<-t2.second->offset<<"(%rbp), %ax"<<endl;	
+				else if (type2 == "int") 		cout<<"cmpl "<<-t2.second->offset<<"(%rbp), %eax"<<endl;	
+				else if (type2 == "long int") 	cout<<"cmpq "<<-t2.second->offset<<"(%rbp), %rax"<<endl;
 
 				cout<<"set";
 				if (op == "<int") 		cout<<"l";
@@ -1591,7 +1591,9 @@ void codegen(){
 				else if (op == "!=int") cout<<"ne";
 				cout<<" %al"<<endl;
 
-				cout<<"movzbl %al, "<<-r.second->offset<<"(%rbp)"<<endl;
+				cout<<"movzbl %al, %eax"<<endl;
+				cout<<"movl %eax, "<<-r.second->offset<<"(%rbp)"<<endl;
+
 			}
 
 			else if(instr.op == "UNARY+"){
