@@ -1134,19 +1134,42 @@ relational_expression
 																	}
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
 																	pair<string,int> p2 = get_equivalent_pointer($3->node_data);
-																	if((p1.second || p2.second) && (!p1.second || !p2.second)){
-																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
-																		exit(-1);
-																	}
+																	//if((p1.second || p2.second) && (!p1.second || !p2.second)){
+																		//printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
+																		//exit(-1);
+																	//}
 
 																	string type;
-																	if(!(p1.second && p2.second))
+																	if(!p1.second && !p2.second){
 																		type = arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
-																	else{
+																	}
+																	else if(p1.second && p2.second){
 																		if($1->node_data != $3->node_data){
 																			printf("\e[1;35mWarning [line %d]:\e[0m Comparison of pointers or types '%s' and '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
 																		}
+																		type = "int*";
 																	}
+																	else if(p1.second){
+																		if($3->node_data.find("float")!=string::npos || $3->node_data.find("double")!=string::npos){
+																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
+																			exit(-1);
+																		}
+																		type = "int*";
+																	}
+																	else if(p2.second){
+																		if($1->node_data.find("float")!=string::npos || $1->node_data.find("double")!=string::npos){
+																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
+																			exit(-1);
+																		}
+																		type = "int*";
+																	}
+																	//if(!(p1.second && p2.second))
+																	//	type = arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
+																	//else{
+																	//	if($1->node_data != $3->node_data){
+																	//		printf("\e[1;35mWarning [line %d]:\e[0m Comparison of pointers or types '%s' and '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
+																	//	}
+																	//}
 																	if($1->token == CONSTANT && $3->token == CONSTANT){
 																		evaluate_const($1, $3, *($2), "int");
 																		$$ = $1;
@@ -1199,18 +1222,42 @@ relational_expression
 																	}
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
 																	pair<string,int> p2 = get_equivalent_pointer($3->node_data);
-																	if((p1.second || p2.second) && (!p1.second || !p2.second)){
-																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
-																		exit(-1);
-																	}
+																	//if((p1.second || p2.second) && (!p1.second || !p2.second)){
+																	//	printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
+																	//	exit(-1);
+																	//}
 
+																	//string type;
+																	//if(!(p1.second && p2.second))
+																	//	type = arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
+																	//else{
+																	//	if($1->node_data != $3->node_data){
+																	//		printf("\e[1;35mWarning [line %d]:\e[0m Comparison of pointers or types '%s' and '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
+																	//	}
+																	//}
 																	string type;
-																	if(!(p1.second && p2.second))
+																	if(!p1.second && !p2.second){
 																		type = arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
-																	else{
+																	}
+																	else if(p1.second && p2.second){
 																		if($1->node_data != $3->node_data){
 																			printf("\e[1;35mWarning [line %d]:\e[0m Comparison of pointers or types '%s' and '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
 																		}
+																		type = "int*";
+																	}
+																	else if(p1.second){
+																		if($3->node_data.find("float")!=string::npos || $3->node_data.find("double")!=string::npos){
+																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
+																			exit(-1);
+																		}
+																		type = "int*";
+																	}
+																	else if(p2.second){
+																		if($1->node_data.find("float")!=string::npos || $1->node_data.find("double")!=string::npos){
+																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
+																			exit(-1);
+																		}
+																		type = "int*";
 																	}
 																	if($1->token == CONSTANT && $3->token == CONSTANT){
 																		evaluate_const($1, $3, *($2), "int");
@@ -1264,19 +1311,32 @@ relational_expression
 																	}
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
 																	pair<string,int> p2 = get_equivalent_pointer($3->node_data);
-																	if((p1.second || p2.second) && (!p1.second || !p2.second)){
-																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
-																		exit(-1);
-																	}
-
+																	
 																	string type;
-																	if(!(p1.second && p2.second))
+																	if(!p1.second && !p2.second){
 																		type = arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
-																	else{
+																	}
+																	else if(p1.second && p2.second){
 																		if($1->node_data != $3->node_data){
 																			printf("\e[1;35mWarning [line %d]:\e[0m Comparison of pointers or types '%s' and '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
 																		}
+																		type = "int*";
 																	}
+																	else if(p1.second){
+																		if($3->node_data.find("float")!=string::npos || $3->node_data.find("double")!=string::npos){
+																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
+																			exit(-1);
+																		}
+																		type = "int*";
+																	}
+																	else if(p2.second){
+																		if($1->node_data.find("float")!=string::npos || $1->node_data.find("double")!=string::npos){
+																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
+																			exit(-1);
+																		}
+																		type = "int*";
+																	}
+
 																	if($1->token == CONSTANT && $3->token == CONSTANT){
 																		evaluate_const($1, $3, LE_OP, "int");
 																		$$ = $1;
@@ -1329,19 +1389,32 @@ relational_expression
 																	}
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
 																	pair<string,int> p2 = get_equivalent_pointer($3->node_data);
-																	if((p1.second || p2.second) && (!p1.second || !p2.second)){
-																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
-																		exit(-1);
-																	}
-
+																	
 																	string type;
-																	if(!(p1.second && p2.second))
+																	if(!p1.second && !p2.second){
 																		type = arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
-																	else{
+																	}
+																	else if(p1.second && p2.second){
 																		if($1->node_data != $3->node_data){
 																			printf("\e[1;35mWarning [line %d]:\e[0m Comparison of pointers or types '%s' and '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
 																		}
+																		type = "int*";
 																	}
+																	else if(p1.second){
+																		if($3->node_data.find("float")!=string::npos || $3->node_data.find("double")!=string::npos){
+																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
+																			exit(-1);
+																		}
+																		type = "int*";
+																	}
+																	else if(p2.second){
+																		if($1->node_data.find("float")!=string::npos || $1->node_data.find("double")!=string::npos){
+																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
+																			exit(-1);
+																		}
+																		type = "int*";
+																	}
+																	
 																	if($1->token == CONSTANT && $3->token == CONSTANT){
 																		evaluate_const($1, $3, GE_OP, "int");
 																		$$ = $1;
@@ -1398,19 +1471,32 @@ equality_expression
 																	}
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
 																	pair<string,int> p2 = get_equivalent_pointer($3->node_data);
-																	if((p1.second || p2.second) && (!p1.second || !p2.second)){
-																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
-																		exit(-1);
-																	}
-
+																	
 																	string type;
-																	if(!(p1.second && p2.second))
+																	if(!p1.second && !p2.second){
 																		type = arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
-																	else{
+																	}
+																	else if(p1.second && p2.second){
 																		if($1->node_data != $3->node_data){
 																			printf("\e[1;35mWarning [line %d]:\e[0m Comparison of pointers or types '%s' and '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
 																		}
+																		type = "int*";
 																	}
+																	else if(p1.second){
+																		if($3->node_data.find("float")!=string::npos || $3->node_data.find("double")!=string::npos){
+																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
+																			exit(-1);
+																		}
+																		type = "int*";
+																	}
+																	else if(p2.second){
+																		if($1->node_data.find("float")!=string::npos || $1->node_data.find("double")!=string::npos){
+																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
+																			exit(-1);
+																		}
+																		type = "int*";
+																	}
+
 																	if($1->token == CONSTANT && $3->token == CONSTANT){
 																		evaluate_const($1, $3, EQ_OP, "int");
 																		$$ = $1;
@@ -1463,19 +1549,32 @@ equality_expression
 																	}
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
 																	pair<string,int> p2 = get_equivalent_pointer($3->node_data);
-																	if((p1.second || p2.second) && (!p1.second || !p2.second)){
-																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
-																		exit(-1);
-																	}
-
+																	
 																	string type;
-																	if(!(p1.second && p2.second))
+																	if(!p1.second && !p2.second){
 																		type = arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
-																	else{
+																	}
+																	else if(p1.second && p2.second){
 																		if($1->node_data != $3->node_data){
 																			printf("\e[1;35mWarning [line %d]:\e[0m Comparison of pointers or types '%s' and '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
 																		}
+																		type = "int*";
 																	}
+																	else if(p1.second){
+																		if($3->node_data.find("float")!=string::npos || $3->node_data.find("double")!=string::npos){
+																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
+																			exit(-1);
+																		}
+																		type = "int*";
+																	}
+																	else if(p2.second){
+																		if($1->node_data.find("float")!=string::npos || $1->node_data.find("double")!=string::npos){
+																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
+																			exit(-1);
+																		}
+																		type = "int*";
+																	}
+
 																	if($1->token == CONSTANT && $3->token == CONSTANT){
 																		evaluate_const($1, $3, NE_OP, "int");
 																		$$ = $1;
