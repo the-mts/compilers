@@ -457,7 +457,7 @@ int opt_dead_expr(){
 				if (istemp(var)) temp[var] = 1;
 				l--;
 			}
-			while (l && blocks[b].code[l].op == "PARAM") {
+			while (l>=0 && blocks[b].code[l].op == "PARAM") {
 				var = blocks[b].code[l].op1.first;
 				if (istemp(var)) temp[var] = 1;
 				l--;
