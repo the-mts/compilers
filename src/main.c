@@ -313,7 +313,7 @@ int main(int argc, char const* argv[]){
 
 //	cout<<"Check me\n";
 	make_blocks();
-	//optimize();
+	optimize();
 
 	freopen("bin/basic_blocks.txt", "w", stdout);
 	print_blocks();

@@ -250,8 +250,17 @@ void make_blocks(){
 				s = blocks[i].succ;
 				blocks[s].pred.erase(remove(blocks[s].pred.begin(), blocks[s].pred.end(), i), blocks[s].pred.end());
 				blocks[i].succ = -1;
+				if (blocks[i].cond_succ != -1){
+					s = blocks[i].cond_succ;
+					blocks[s].pred.erase(remove(blocks[s].pred.begin(), blocks[s].pred.end(), i), blocks[s].pred.end());
+				}
 			}
 			blocks[i].pred.clear();
+			int temp =i;
+			do {
+				temp--;
+				blocks[temp].next = blocks[temp+1].next;
+			}while(!blocks[temp].alive);
 		}
 	}
 //printf("chick6\n");
@@ -259,10 +268,9 @@ void make_blocks(){
 }
 
 void opt_ret_dead(){
-	if (blocks.size() == 0) return;
 	int c = 1, s;
 	int temp;
-	int lim = 1000;
+	int lim = 10;
 	while (lim-- && c) {
 		c = 0;
 		for (int b = 0; b != -1; b = blocks[b].next){
@@ -272,15 +280,14 @@ void opt_ret_dead(){
 				if (blocks[b].succ != -1){
 					s = blocks[b].succ;
 					blocks[s].pred.erase(remove(blocks[s].pred.begin(), blocks[s].pred.end(), b), blocks[s].pred.end());
+					blocks[b].succ = -1;
 					c = 1;
+					if (blocks[b].cond_succ != -1){
+						s = blocks[b].cond_succ;
+						blocks[s].pred.erase(remove(blocks[s].pred.begin(), blocks[s].pred.end(), b), blocks[s].pred.end());
+						blocks[b].cond_succ = -1;
+					}
 				}
-				if (blocks[b].cond_succ != -1){
-					s = blocks[b].cond_succ;
-					blocks[s].pred.erase(remove(blocks[s].pred.begin(), blocks[s].pred.end(), b), blocks[s].pred.end());
-					c = 1;
-				}
-				blocks[b].succ = -1;
-				blocks[b].cond_succ = -1;
 				temp = b;
 				do {
 					temp--;
@@ -300,7 +307,6 @@ void print_map(const map<pair<string, pair<string, string>>, qi>& m)
 }
 
 int opt_cse(){
-	if (blocks.size() == 0) return 0;
 	map<pair<string, pair<string, string>>, qi> expr;
 	//map<string, vector<pair<string, pair<string, string>>>> used;
 	int i;
@@ -363,7 +369,6 @@ void print_copy_map(const map<string, qi>& m)
 }
 
 int opt_copy(){
-	if (blocks.size() == 0) return 0;
 	map<string, qi> expr;
 	//map<string, vector<pair<string, pair<string, string>>>> used;
 	int i;
@@ -382,16 +387,16 @@ int opt_copy(){
 			res = blocks[b].code[i].res.first;
 			if (op == "GOTO" || op == "CALL" ||
 			    op == "RETURN_VOID") break;
-			if (expr.find(op1) != expr.end()){
+			if (expr.find(op1) != expr.end() && (op == "=" || (expr[op1].first)[0] != '$')){
 				//cout<<"Found expr\n";
 				blocks[b].code[i].op1 = expr[op1];
 				c = 1;
 			}
-			if (expr.find(op2) != expr.end()){
+			if (expr.find(op2) != expr.end() && (expr[op2].first)[0] != '$'){
 				blocks[b].code[i].op2 = expr[op2];
 				c = 1;
 			}
-			if (op == "=" && op1[0] != '$' && op1[0] != '.'){
+			if (op == "=" && op1[0] != '.'){
 				//cout<<"Adding expr\n";
 				expr[res] = blocks[b].code[i].op1;
 			}
@@ -422,7 +427,6 @@ int istemp(string v){
 
 int opt_dead_expr(){
 	int n = blocks.size();
-	if (n==0) return 0;
 	vector<map<string, int>> gtemp(n);
 	map<string, int> user;
 	map<string, int> temp;
@@ -430,18 +434,20 @@ int opt_dead_expr(){
 	int c = 0;
 	string var, op;
 	for (int b = n-1; b >= 0; b--){
-		if (blocks[b].alive && !blocks[b].isglobal && blocks[b].code[0].op != "FUNC_END" && blocks[b].code[0].op != "FUNC_START"){
+		if (blocks[b].alive && blocks[b].code[0].op != "FUNC_END" && blocks[b].code[0].op != "FUNC_START"){
 			user.clear();
 			temp.clear();
-			if ((blocks[b].succ != -1 && blocks[b].succ <= b) || (blocks[b].cond_succ != -1 && blocks[b].cond_succ <= b)){
-				for (int l = blocks[b].varstart; l < blocks[b].varend; l++)
-				temp[to_string(l)+"_tmp"] = 1;
-			}
-			else if (blocks[b].succ != -1){
-				temp = gtemp[blocks[b].succ];
-				if (blocks[b].cond_succ != -1){
-					for (auto s: gtemp[blocks[b].cond_succ])
-						if (s.second) temp[s.first] = 1;
+			if (!blocks[b].isglobal) {
+				if ((blocks[b].succ != -1 && blocks[b].succ <= b) || (blocks[b].cond_succ != -1 && blocks[b].cond_succ <= b)){
+					for (int l = blocks[b].varstart; l < blocks[b].varend; l++)
+					temp[to_string(l)+"_tmp"] = 1;
+				}
+				else if (blocks[b].succ != -1){
+					temp = gtemp[blocks[b].succ];
+					if (blocks[b].cond_succ != -1){
+						for (auto s: gtemp[blocks[b].cond_succ])
+							if (s.second) temp[s.first] = 1;
+					}
 				}
 			}
 			l = blocks[b].code.size() - 1;
@@ -498,6 +504,44 @@ int opt_dead_expr(){
 			}
 			gtemp[b] = temp;
 			blocks[b].code.erase(remove_if(blocks[b].code.begin(), blocks[b].code.end(), [](quad q){return q.op == "DUMMY";}), blocks[b].code.end());
+			if (blocks[b].code.size() == 0){
+				blocks[b].alive = 0;
+				blocks[b-1].next = blocks[b].next;
+				for (auto j: blocks[b].pred){
+					int f = 1;
+					if (blocks[j].succ == b){
+						f = 0;
+						if (blocks[j].code.back().op == "GOTO"){
+							blocks[j].code.back().goto_addr = blocks[b].succ;
+						}
+						blocks[j].succ = blocks[b].succ;
+						if (blocks[b].succ != -1) {
+							blocks[blocks[b].succ].pred.push_back(j);
+						}
+					}
+					if (blocks[j].cond_succ == b){
+						f = 0;
+						blocks[j].code.back().goto_addr = blocks[b].succ;
+						blocks[j].cond_succ = blocks[b].succ;
+						if (blocks[b].succ != -1) blocks[blocks[b].succ].pred.push_back(j);
+					}
+					if (f){
+						printf("Something went horribly wrong and I don't know what");
+						exit(-1);
+					}
+				}
+				if (blocks[b].succ != -1){
+					int s = blocks[b].succ;
+					blocks[s].pred.erase(remove(blocks[s].pred.begin(), blocks[s].pred.end(), b), blocks[s].pred.end());
+					blocks[b].succ = -1;
+				}
+				blocks[b].pred.clear();
+				int temp =b;
+				do {
+					temp--;
+					blocks[temp].next = blocks[temp+1].next;
+				}while(!blocks[temp].alive);
+			}
 		}
 	}
 	return c;
@@ -506,6 +550,7 @@ int opt_dead_expr(){
 
 
 void optimize(){
+	if (blocks.size() == 0) return;
 	opt_ret_dead();
 	int limit = 10;
 	int c = 1, l = limit;
