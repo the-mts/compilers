@@ -341,70 +341,78 @@ void codegen(){
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1.back() == '*' && (type2 == "char")){
-					type1.pop_back();
+					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1);
 					cout<<"movsbq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rax"<<endl;
 					cout<<"addq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2.back() == '*' && (type1 == "char")){
 					swap(t1,t2);
 					swap(type1,type2);
-					type1.pop_back();
+					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1);
 					cout<<"movsbq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rax"<<endl;
 					cout<<"addq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1.back() == '*' && (type2 == "short int")){
-					type1.pop_back();
+					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1);
 					cout<<"movswq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rax"<<endl;
 					cout<<"addq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2.back() == '*' && (type1 == "short int")){
 					swap(t1,t2);
 					swap(type1,type2);
-					type1.pop_back();
+					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1);
 					cout<<"movswq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rax"<<endl;
 					cout<<"addq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 
 				else if(type1.back() == '*' && (type2 == "int")){
-					type1.pop_back();
+					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1);
 					cout<<"movslq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rax"<<endl;
 					cout<<"addq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2.back() == '*' && (type1 == "int")){
 					swap(t1,t2);
 					swap(type1,type2);
-					type1.pop_back();
+					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1);
 					cout<<"movslq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rax"<<endl;
 					cout<<"addq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 
 				else if(type1.back() == '*' && (type2 == "long int")){
-					type1.pop_back();
+					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1);
 					cout<<"movq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rax"<<endl;
 					cout<<"addq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2.back() == '*' && (type1 == "long int")){
 					swap(t1,t2);
 					swap(type1,type2);
-					type1.pop_back();
+					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1);
 					cout<<"movq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rax"<<endl;
 					cout<<"addq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 			}
 
@@ -500,39 +508,43 @@ void codegen(){
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1.back() == '*' && (type2 == "char")){
-					type1.pop_back();
+					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1);
 					cout<<"movsbq "<<-t2.second->offset<<"(%rbp), "<<"%rcx"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rcx"<<endl;
 					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
 					cout<<"subq "<<"%rcx, "<<"%rax"<<endl;
+					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1.back() == '*' && (type2 == "short int")){
-					type1.pop_back();
+					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1);
 					cout<<"movswq "<<-t2.second->offset<<"(%rbp), "<<"%rcx"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rcx"<<endl;
 					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
 					cout<<"subq "<<"%rcx, "<<"%rax"<<endl;
+					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1.back() == '*' && (type2 == "int")){
-					type1.pop_back();
+					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1);
 					cout<<"movslq "<<-t2.second->offset<<"(%rbp), "<<"%rcx"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rcx"<<endl;
 					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
 					cout<<"subq "<<"%rcx, "<<"%rax"<<endl;
+					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1.back() == '*' && (type2 == "long int")){
-					type1.pop_back();
+					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1);
 					cout<<"movq "<<-t2.second->offset<<"(%rbp), "<<"%rcx"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rcx"<<endl;
 					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
 					cout<<"subq "<<"%rcx, "<<"%rax"<<endl;
+					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1.back() == '*' && type2.back() == '*'){
-					type1.pop_back();
+					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1);
 					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
 					cout<<"subq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
@@ -1228,7 +1240,7 @@ void codegen(){
 				}
 
 				else if(type1.back() == '*'){
-					type1.pop_back();
+					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1);
 					cout<<"addq $"<<size<<", "<<-t1.second->offset<<"(%rbp)"<<endl;
 					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
@@ -1261,7 +1273,7 @@ void codegen(){
 				}
 
 				else if(type1.back() == '*'){
-					type1.pop_back();
+					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1);
 					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
@@ -1294,7 +1306,7 @@ void codegen(){
 				}
 
 				else if(type1.back() == '*'){
-					type1.pop_back();
+					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1);
 					cout<<"subq $"<<size<<", "<<-t1.second->offset<<"(%rbp)"<<endl;
 					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
@@ -1327,7 +1339,7 @@ void codegen(){
 				}
 
 				else if(type1.back() == '*'){
-					type1.pop_back();
+					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1);
 					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
@@ -1684,14 +1696,6 @@ void codegen(){
 				}
 			}
 
-			else if(instr.op == "UNARY&"){
-				qi t1 = instr.op1;
-				qi t2 = instr.res;
-				string type1 = t1.second->type;
-				cout<<"leaq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
-				cout<<"movq "<<"%rax, "<<-t2.second->offset<<"(%rbp)"<<endl;
-			}
-
 			else if(instr.op == "UNARY~"){
 				qi t1 = instr.op1;
 				qi t2 = instr.res;
@@ -1715,6 +1719,37 @@ void codegen(){
 					cout<<"movb "<<-t1.second->offset<<"(%rbp), "<<"%al"<<endl;
 					cout<<"notb "<<"%al"<<endl;
 					cout<<"movb "<<"%al"<<", "<<-t2.second->offset<<"(%rbp)"<<endl;
+				}
+			}
+
+			else if(instr.op == "UNARY&"){
+				qi t1 = instr.op1;
+				qi t2 = instr.res;
+				string type1 = t1.second->type;
+				cout<<"leaq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+				cout<<"movq "<<"%rax, "<<-t2.second->offset<<"(%rbp)"<<endl;
+			}
+
+			else if(instr.op == "UNARY*"){
+				qi t1 = instr.op1;
+				qi t2 = instr.res;
+				string type1 = t1.second->type;
+				cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+				if(type1 == "int" || type1 == "unsigned int"){
+					cout<<"movl "<<"(%rax), "<<"%eax"<<endl;
+					cout<<"movl "<<"%eax, "<<-t2.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1 == "short int" || type1 == "unsigned short int"){
+					cout<<"movw "<<"(%rax), "<<"%ax"<<endl;
+					cout<<"movw "<<"%ax, "<<-t2.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1 == "long int" || type1 == "unsigned long int" || type1.back()=='*'){
+					cout<<"movq "<<"(%rax), "<<"%rax"<<endl;
+					cout<<"movq "<<"%rax, "<<-t2.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1 == "char"){
+					cout<<"movb "<<"(%rax), "<<"%al"<<endl;
+					cout<<"movb "<<"%al, "<<-t2.second->offset<<"(%rbp)"<<endl;
 				}
 			}
 

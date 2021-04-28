@@ -1,13 +1,7 @@
 int main(){
-	int y, yy, yyy;
-	printf("Enter First Number: ");
-	scanf("%d", &y);
-	printf("Enter Second Number: ");
-	scanf("%d", &yy);
-	printf("Enter Third Number: ");
-	scanf("%d", &yyy);
-	// int * x = &y;
-	printf("Sum of the three number is ----> %d\n", y+yy+yyy);
-	return 0;
+	int y = 5;
+	int yy = 10;
+	int * x = &y;
+	int * xx = &yy;
+	printf("Akhilesh lodu %p  %d\n", x, *(x-2));
 }
-
