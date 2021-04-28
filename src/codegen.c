@@ -1684,6 +1684,14 @@ void codegen(){
 				}
 			}
 
+			else if(instr.op == "UNARY&"){
+				qi t1 = instr.op1;
+				qi t2 = instr.res;
+				string type1 = t1.second->type;
+				cout<<"leaq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+				cout<<"movq "<<"%rax, "<<-t2.second->offset<<"(%rbp)"<<endl;
+			}
+
 			else if(instr.op == "UNARY~"){
 				qi t1 = instr.op1;
 				qi t2 = instr.res;
