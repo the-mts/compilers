@@ -457,13 +457,12 @@ int opt_dead_expr(){
 				if (istemp(var)) temp[var] = 1;
 				l--;
 			}
-			else {
-				while (l && blocks[b].code[l].op == "PARAM") {
-					var = blocks[b].code[l].op1.first;
-					if (istemp(var)) temp[var] = 1;
-					l--;
-				}
+			while (l && blocks[b].code[l].op == "PARAM") {
+				var = blocks[b].code[l].op1.first;
+				if (istemp(var)) temp[var] = 1;
+				l--;
 			}
+			
 			for (;l >= 0; l--){
 				var = blocks[b].code[l].res.first;
 				if (istemp(var)){
@@ -552,7 +551,7 @@ int opt_dead_expr(){
 void optimize(){
 	if (blocks.size() == 0) return;
 	opt_ret_dead();
-	int limit = 10;
+	int limit = 1;
 	int c = 1, l = limit;
 	while (l-- && c){
 		c = 0;
