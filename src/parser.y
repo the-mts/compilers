@@ -3726,6 +3726,10 @@ function_definition
 
 
 	| declarator 						{	
+											string datatype = "int";
+											if($1->node_data!=""){
+												datatype += " "+$1->node_data;
+											}
 											curr_width = 0;
 											for(auto p : func_params){
 												if(p.first.second == ""){
@@ -3740,6 +3744,10 @@ function_definition
 											}
 											if(tmp != NULL && tmp->type_name == IS_FUNC && tmp->is_init==1){
 												printf("\e[1;31mError [line %d]:\e[0m Conflicting definitions of '%s'.\n", line ,($1->node_name).c_str());
+												exit(-1);
+											}
+											if(tmp!=NULL && tmp->type != ($1->node_data)){
+												printf("\e[1;31mError [line %d]:\e[0m Conflicting definitions of '%s'.\n", line ,($3->node_name).c_str());
 												exit(-1);
 											}
 											if(tmp!=NULL){
@@ -3763,7 +3771,7 @@ function_definition
 											}
 											else{
 												check_param_list(func_params);
-												st_entry* func_entry = add_entry($1->node_name, "int", 0, accumulate(offset.begin()+1, offset.end(), 0), IS_FUNC);
+												st_entry* func_entry = add_entry($1->node_name, datatype, 0, accumulate(offset.begin()+1, offset.end(), 0), IS_FUNC);
 												printf("\e[1;35mWarning [line %d]:\e[0m Function return type defaults to \"int\"\n", line);
 												if(!func_params.empty() && func_params[0].first.first == ""){
 													printf("\e[1;35mWarning [line %d]:\e[0m Function parameter type defaults to \"int\"\n", line);
