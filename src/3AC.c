@@ -528,18 +528,47 @@ int opt_dead_expr(){
 	return c;
 }
 
+int opt_gotos(){
+	int c = 0;
+	int n = blocks.size();
+	for (int b = n-1; b >= 0; b--){
+		if (blocks[b].alive && !blocks[b].isglobal){
+			if (blocks[b].code.back().op == "GOTO"){
+				if (blocks[b].succ == blocks[b].next){
+					blocks[b].code.pop_back();
+					handle_dead_block(b);
+					c = 1;
+				}
+			}
+			else if (blocks[b].code.back().op == "IF_TRUE_GOTO"){
+				if (blocks[b].succ != blocks[b].next){
+					printf("Succ for block %d not handled correctly\n.", b);
+					exit(-1);
+				}
+				if (blocks[b].cond_succ == blocks[b].next){
+					blocks[b].code.pop_back();
+					handle_dead_block(b);
+					c = 1;
+				}
+			}
+		}
+	}
+	return c;
+}
+
 
 
 void optimize(){
 	if (blocks.size() == 0) return;
 	opt_ret_dead();
-	int limit = 1;
+	int limit = 10;
 	int c = 1, l = limit;
 	while (l-- && c){
 		c = 0;
 		c = c | opt_cse();
 		c = c | opt_copy();
 		c = c | opt_dead_expr();
+		c = c | opt_gotos();
 	}
 	//cout<<"Opt time: "<< limit-1-l << endl;
 }
