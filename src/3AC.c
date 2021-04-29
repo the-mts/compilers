@@ -438,13 +438,14 @@ int opt_dead_expr(){
 			user.clear();
 			temp.clear();
 			if (!blocks[b].isglobal) {
-				if ((blocks[b].succ != -1 && blocks[b].succ <= b) || (blocks[b].cond_succ != -1 && blocks[b].cond_succ <= b)){
+				/*if ((blocks[b].succ != -1 && blocks[b].succ <= b) || (blocks[b].cond_succ != -1 && blocks[b].cond_succ <= b)){
 					for (int l = blocks[b].varstart; l < blocks[b].varend; l++)
 					temp[to_string(l)+"_tmp"] = 1;
 				}
-				else if (blocks[b].succ != -1){
+				else*/ 
+				if (blocks[b].succ != -1 && blocks[b].succ > b){
 					temp = gtemp[blocks[b].succ];
-					if (blocks[b].cond_succ != -1){
+					if (blocks[b].cond_succ != -1 && blocks[b].cond_succ > b){
 						for (auto s: gtemp[blocks[b].cond_succ])
 							if (s.second) temp[s.first] = 1;
 					}
@@ -484,9 +485,12 @@ int opt_dead_expr(){
 
 			for (;l >= 0; l--){
 				var = blocks[b].code[l].res.first;
+				op = blocks[b].code[l].op1.first;
 				if (istemp(var)){
 					// Check if var is dead
-					if (temp.find(var) == temp.end() || temp[var] == 0) {
+					if ((temp.find(var) == temp.end() || temp[var] == 0) && 
+						((blocks[b].code[l].op != "x++" && blocks[b].code[l].op != "++x" && blocks[b].code[l].op != "x--" && blocks[b].code[l].op != "--x") || 
+						(user.find(op) != user.end() && user[op] == 0))) {
 						blocks[b].code[l].op = "DUMMY";
 						c = 1;
 					}
@@ -503,7 +507,9 @@ int opt_dead_expr(){
 					}
 				}
 				else {
-					if (user.find(var)!=user.end() && user[var] == 0) {
+					if ((user.find(var)!=user.end() && user[var] == 0) &&
+						((blocks[b].code[l].op != "x++" && blocks[b].code[l].op != "++x" && blocks[b].code[l].op != "x--" && blocks[b].code[l].op != "--x") || 
+						(user.find(op) != user.end() && user[op] == 0))) {
 						blocks[b].code[l].op = "DUMMY";
 						c = 1;
 					}
