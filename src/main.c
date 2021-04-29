@@ -73,7 +73,7 @@ void print_blocks(int only_alive = 1){
 	    	    cout<<endl;
 				j++;
     		}
-			cout<<"varstart: "<< blocks[b].varstart<<", varend: "<< blocks[b].varend << endl;
+			//cout<<"varstart: "<< blocks[b].varstart<<", varend: "<< blocks[b].varend << endl;
 			cout<<"succ: " << blocks[b].succ << ", cond_succ: " << blocks[b].cond_succ << endl;
 			cout<<"next: "<< blocks[b].next << endl << endl;
 			c++;
@@ -108,7 +108,7 @@ void print_blocks(int only_alive = 1){
 	    	    cout<<endl;
 				j++;
     		}
-			cout<<"varstart: " << b.varstart << ", varend: " << b.varend << endl;
+			//cout<<"varstart: " << b.varstart << ", varend: " << b.varend << endl;
 			cout<<"succ: " << b.succ << ", cond_succ: " << b.cond_succ << endl;
 			cout<<"next: "<< b.next << endl << endl;
 			c++;
@@ -316,7 +316,7 @@ int main(int argc, char const* argv[]){
 	optimize();
 
  	freopen("bin/basic_blocks.txt", "w", stdout);
- 	print_blocks();
+ 	print_blocks(0);
  	freopen("bin/assembly.s", "w", stdout);
  	codegen();
 	return 0;

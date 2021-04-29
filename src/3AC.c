@@ -151,8 +151,8 @@ void make_blocks(){
 	blocks.push_back(block(0));
 	if (code_array[0].op == "FUNC_START") {
 		f = 1;
-		vstart = code_array[0].goto_addr;
-		prev = 0;
+		//vstart = code_array[0].goto_addr;
+		//prev = 0;
 	}
 	for (int i = 0; i < n; i++){
 		if (curr < blocknum[i]){
@@ -170,18 +170,18 @@ void make_blocks(){
 				blocks[curr].succ = -1;
 			else if (code_array[i-1].op == "FUNC_END"){
 				blocks[curr].succ = -1;
-				for (int j = prev; j <= curr; j++){
+				/*for (int j = prev; j <= curr; j++){
 					blocks[j].varend = code_array[i-1].goto_addr;
 					blocks[j].varstart = vstart;
-				}
+				}*/
 				f = 0;
 			}
 			curr++;
 			blocks.push_back(block(curr));
 			if (code_array[i].op == "FUNC_START") {
 				f = 1;
-				vstart = code_array[i].goto_addr;
-				prev = curr;
+				//vstart = code_array[i].goto_addr;
+				//prev = curr;
 			}
 		}
 		blocks[curr].code.push_back(code_array[i]);
@@ -195,12 +195,12 @@ void make_blocks(){
 		blocks[curr].code[blocks[curr].code.size()-1].goto_addr = blocks[curr].cond_succ;
 	}
 	else{
-		if (code_array[n-1].op == "FUNC_END") {
+		/*if (code_array[n-1].op == "FUNC_END") {
 			for (int j = prev; j <= curr; j++){
 				blocks[j].varend = code_array[n-1].goto_addr;
 				blocks[j].varstart = vstart;
 			}
-		}
+		}*/
 		blocks[curr].succ = -1;
 	}
 	blocks[curr].next = -1;
