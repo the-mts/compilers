@@ -31,10 +31,10 @@ void push_front(node* par, node* add){
 
 void evaluate_const(node* node1, node* node2, int op, string type){
 	int flag1 = 0, flag2 = 0;
-	if(arithmetic_type_upgrade(node1->node_data,"long int","evaluate_const").find("int") == string::npos && arithmetic_type_upgrade(node1->node_data,"long int","evaluate_const").find("char") == string::npos){
+	if(arithmetic_type_upgrade(node1->node_data,"long int","evaluate_const",node1->ttentry).find("int") == string::npos && arithmetic_type_upgrade(node1->node_data,"long int","evaluate_const",node1->ttentry).find("char") == string::npos){
 		flag1 =1;
 	}
-	if(arithmetic_type_upgrade(node2->node_data,"long int","evaluate_const").find("int") == string::npos && arithmetic_type_upgrade(node2->node_data,"long int","evaluate_const").find("char") == string::npos){
+	if(arithmetic_type_upgrade(node2->node_data,"long int","evaluate_const",node2->ttentry).find("int") == string::npos && arithmetic_type_upgrade(node2->node_data,"long int","evaluate_const",node2->ttentry).find("char") == string::npos){
 		flag2 =1;
 	}
 	long long tmp1,tmp2;

@@ -102,18 +102,18 @@ void codegen(){
 				auto args = *(instr.op1.second->arg_list);
 				for(auto p: args){
 					int flag = 0;
-					if(p.first.find("int") != string::npos || p.first.find("char") != string::npos || p.first.back() == ']' || p.first.back() == '*'){
+					if(p.first.first.find("int") != string::npos || p.first.first.find("char") != string::npos || p.first.first.back() == ']' || p.first.first.back() == '*'){
 						flag = 1;
 					}
-					else if(p.first.find("double") != string::npos || p.first.find("float") != string::npos){
+					else if(p.first.first.find("double") != string::npos || p.first.first.find("float") != string::npos){
 						flag = 2;
 					}
 					else{
 						flag = 3;
 					}
 					if(flag == 1 && int_char<6){
-						int size = get_size(p.first);
-						moveintarg(int_char+1, - (*(instr.op1.second->sym_table))[p.second]->offset, size);
+						int size = get_size(p.first.first);
+						moveintarg(int_char+1, - (*(instr.op1.second->sym_table))[p.first.second]->offset, size);
 						int_char++;
 					}
 					else if(flag == 2 && double_float<8){

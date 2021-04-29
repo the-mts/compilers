@@ -242,7 +242,7 @@ void make_blocks(){
 					if (blocks[i].succ != -1) blocks[blocks[i].succ].pred.push_back(j);
 				}
 				if (f){
-					printf("Something went horribly wrong and I don't know what");
+					printf("Something went horribly wrong while resolving dead blocks");
 					exit(-1);
 				}
 			}
@@ -449,20 +449,39 @@ int opt_dead_expr(){
 							if (s.second) temp[s.first] = 1;
 					}
 				}
-			}
-			l = blocks[b].code.size() - 1;
-			if (blocks[b].code[l].op == "RETURN_VOID" || blocks[b].code[l].op == "GOTO" || blocks[b].code[l].op == "CALL") l--;
-			else if (blocks[b].code[l].op == "RETURN" || blocks[b].code[l].op == "IF_TRUE_GOTO") {
-				var = blocks[b].code[l].op1.first;
-				if (istemp(var)) temp[var] = 1;
-				l--;
-			}
-			while (l>=0 && blocks[b].code[l].op == "PARAM") {
-				var = blocks[b].code[l].op1.first;
-				if (istemp(var)) temp[var] = 1;
-				l--;
-			}
 			
+				l = blocks[b].code.size() - 1;
+				if (blocks[b].succ == -1 || (blocks[b].cond_succ == -1 && blocks[blocks[b].succ].code[0].op == "FUNC_END")){
+					for (int i = 0; i <= l; i++){
+						var = blocks[b].code[i].op1.first;
+						if (var != "" && !istemp(var)) user[var] = 0;
+						var = blocks[b].code[i].op2.first;
+						if (var != "" && !istemp(var)) user[var] = 0;
+						var = blocks[b].code[i].res.first;
+						if (var != "" && !istemp(var)) user[var] = 0;
+					}
+				}
+				if (blocks[b].code[l].op == "RETURN_VOID" || blocks[b].code[l].op == "GOTO") l--;
+				else if (blocks[b].code[l].op == "RETURN" || blocks[b].code[l].op == "IF_TRUE_GOTO") {
+					var = blocks[b].code[l].op1.first;
+					if (istemp(var)) temp[var] = 1;
+					else user[var] = 1;
+					l--;
+				}
+				else if (blocks[b].code[l].op == "CALL"){
+					//var = blocks[b].code[l].res.first;
+					//temp[var] = 0;
+					l--;
+					while (l>=0 && blocks[b].code[l].op == "PARAM") {
+						var = blocks[b].code[l].op1.first;
+						if (istemp(var)) temp[var] = 1;
+						else user[var] = 1;
+						l--;
+					}
+				}
+			}
+			else l = blocks[b].code.size() - 1;
+
 			for (;l >= 0; l--){
 				var = blocks[b].code[l].res.first;
 				if (istemp(var)){
@@ -525,7 +544,7 @@ int opt_dead_expr(){
 						if (blocks[b].succ != -1) blocks[blocks[b].succ].pred.push_back(j);
 					}
 					if (f){
-						printf("Something went horribly wrong and I don't know what");
+						printf("Something went horribly wrong in opt_dead_expr()");
 						exit(-1);
 					}
 				}

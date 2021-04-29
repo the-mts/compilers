@@ -134,7 +134,7 @@ void print_table(typtab* table){
 		if(temp->mem_list!=NULL){
 			cout<< "\t\t\t" <<temp->mem_list->size()<< " members: " << endl;
 			for(auto i : *(temp->mem_list)){
-				cout<< "\t\t\t\t" << i.second << " (" << i.first << ")\n";
+				cout<< "\t\t\t\t" << i.first.second << " (" << i.first.first << ")\n";
 			}
 		}
 	}
@@ -167,7 +167,7 @@ void print_table(symtab* table){
 		if(temp->type_name == IS_FUNC){
 			cout<< "\t\t\t" << temp->arg_list->size() <<" arguments " << (temp->arg_list->size()? "{\n" : "\n");
 			for(auto i : *(temp->arg_list)){
-				cout << "\t\t\t\t" << i.second << " (" << i.first << ")\n";
+				cout << "\t\t\t\t" << i.first.second << " (" << i.first.first << ")\n";
 			}
 			if(temp->arg_list->size()) cout << "\t\t\t" << "}\n";
 		}
@@ -313,11 +313,11 @@ int main(int argc, char const* argv[]){
 
 //	cout<<"Check me\n";
 	make_blocks();
-	// optimize();
+	optimize();
 
-	freopen("bin/basic_blocks.txt", "w", stdout);
-	print_blocks();
-	freopen("bin/assembly.s", "w", stdout);
-	codegen();
+ 	freopen("bin/basic_blocks.txt", "w", stdout);
+ 	print_blocks();
+ 	freopen("bin/assembly.s", "w", stdout);
+ 	codegen();
 	return 0;
 }

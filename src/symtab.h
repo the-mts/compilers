@@ -49,8 +49,9 @@ struct st_entry{
 	int is_init;
 	enum sym_type type_name;
 	symtab* sym_table;
-	vector<pair<string, string>> *arg_list;
+	vector<pair<pair<string, string>,tt_entry*>> *arg_list;
 	vector<int> * dim = NULL;
+	tt_entry* ttentry;
 	st_entry(string type, unsigned long size, long offset, enum sym_type type_name = UNDEFINED){
 		this->type = type;
 		this->size = size;
@@ -63,7 +64,7 @@ struct st_entry{
 
 struct tt_entry{
 	string type;
-	vector<pair<string, string>> * mem_list = NULL;
+	vector<pair<pair<string, string>,tt_entry*>> * mem_list = NULL;
 	int is_init = 0;
 	int is_typedef = 0;
 	typtab* typ_table = NULL;
@@ -105,14 +106,16 @@ extern void scope_cleanup();
 extern pair<constant, enum const_type> parse_constant(string s);
 extern pair<string, int> get_equivalent_pointer(string s);
 extern string reduce_pointer_level(string s);
-extern string arithmetic_type_upgrade(string type1, string type2, string op);
+extern string arithmetic_type_upgrade(string type1, string type2, string op, tt_entry* ttentry1 = NULL, tt_entry* ttentry2 = NULL);
 extern string increase_array_level(string s);
-extern void check_param_list(vector<pair<string, string>> v);
+extern void check_param_list(vector<pair<pair<string, string>,tt_entry*>> v);
 extern void check_valid_array(string s);
 extern st_entry* current_lookup(string key);
 extern void struct_init_check(string type);
 extern tt_entry* current_type_lookup(string key);
-extern unsigned long get_size(string s);
-extern void check_mem_list(vector<pair<string, string>> v, string s);
+extern unsigned long get_size(string s, tt_entry* entry = NULL);
+extern void check_mem_list(vector<pair<pair<string, string>,tt_entry*>> v, string s);
+
+extern tt_entry* global_type_lookup(string key);
 
 #endif
