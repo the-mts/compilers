@@ -1,8 +1,7 @@
 int main(){
-	int *x, y;
-	char z[2], *z1;
-	float w;
-	
-	z!=x;
-	return 0;
+	int y = 5;
+	int yy = 10;
+	int * x = &y;
+	int * xx = &yy;
+	printf("Akhilesh lodu %p  %d\n", x, *(x-2));
 }
