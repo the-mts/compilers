@@ -327,7 +327,7 @@ int opt_cse(){
 				blocks[b].code[i].op2 = {"", NULL};
 				c = 1;
 			}
-			else {
+			else if (op != "[]" && op != "UNARY*"){
 				//cout<<"Adding expr\n";
 				expr[{op, {op1, op2}}] = blocks[b].code[i].res;	
 			}
