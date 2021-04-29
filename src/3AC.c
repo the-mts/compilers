@@ -547,6 +547,7 @@ int opt_gotos(){
 				}
 				if (blocks[b].cond_succ == blocks[b].next){
 					blocks[b].code.pop_back();
+					blocks[b].cond_succ = -1;
 					handle_dead_block(b);
 					c = 1;
 				}
