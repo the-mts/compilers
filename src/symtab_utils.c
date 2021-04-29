@@ -46,7 +46,7 @@ void init_equiv_types(){
 	equiv_types.insert({"unsigned char", "char"});
 }
 
-unsigned long get_size(string s){
+unsigned long get_size(string s, tt_entry* entry){
 	if(s.find("[]") != string :: npos){
 		return 8ul;
 	}
@@ -81,7 +81,6 @@ unsigned long get_size(string s){
 		s.pop_back();
 	}
 	s = get_eqtype(s);
-	tt_entry* entry = type_lookup(s);
 	if(entry == NULL){
 		string tmp = "";
 		vector<string> v;
@@ -129,12 +128,12 @@ unsigned long get_size(string s){
 			return 0ul;
 		if(entry->type == "struct")
 			for(auto x : *(entry->mem_list)){
-				unsigned long f = get_size(x.first);
+				unsigned long f = get_size(x.first.first, x.second);
 				ans+=f;
 			}
 		else
 			for(auto x : *(entry->mem_list)){
-				ans=max(ans,get_size(x.first));
+				ans=max(ans,get_size(x.first.first, x.second));
 			}
 		return ans*elements;
 	}
@@ -198,38 +197,38 @@ string get_eqtype(string type, int is_only_type){
 	return equiv_types[new_type];
 }
 
-void check_param_list(vector<pair<string, string>> v){
+void check_param_list(vector<pair<pair<string, string>,tt_entry*>> v){
 	map<string, int> m;
 	for(auto p: v){
-		if(p.first == "void"){
-			printf("\e[1;31mError [line %d]:\e[0m Parameter '%s' has incomplete type.\n", line, p.second.c_str());
+		if(p.first.first == "void"){
+			printf("\e[1;31mError [line %d]:\e[0m Parameter '%s' has incomplete type.\n", line, p.first.second.c_str());
 			exit(-1);
 		}
-		if(p.second=="")
+		if(p.first.second=="")
 			continue;
-		if(m.find(p.second)!=m.end()){
-			printf("\e[1;31mError [line %d]:\e[0m Redefinition of parameter '%s'.\n", line, p.second.c_str());
+		if(m.find(p.first.second)!=m.end()){
+			printf("\e[1;31mError [line %d]:\e[0m Redefinition of parameter '%s'.\n", line, p.first.second.c_str());
 			exit(-1);
 		}
-		m.insert({p.second,1});
+		m.insert({p.first.second,1});
 	}
 	return;
 }
 
-void check_mem_list(vector<pair<string, string>> v, string s){
+void check_mem_list(vector<pair<pair<string, string>,tt_entry*>> v, string s){
 	map<string, int> m;
 	for(auto p: v){
-		if(p.first == "void"){
-			printf("\e[1;31mError [line %d]:\e[0m Parameter '%s' has incomplete type in '%s'.\n", line, p.second.c_str(), s.c_str());
+		if(p.first.first == "void"){
+			printf("\e[1;31mError [line %d]:\e[0m Parameter '%s' has incomplete type in '%s'.\n", line, p.first.second.c_str(), s.c_str());
 			exit(-1);
 		}
-		if(p.second=="")
+		if(p.first.second=="")
 			continue;
-		if(m.find(p.second)!=m.end()){
-			printf("\e[1;31mError [line %d]:\e[0m Redefinition of parameter '%s' in '%s'.\n", line, p.second.c_str(), s.c_str());
+		if(m.find(p.first.second)!=m.end()){
+			printf("\e[1;31mError [line %d]:\e[0m Redefinition of parameter '%s' in '%s'.\n", line, p.first.second.c_str(), s.c_str());
 			exit(-1);
 		}
-		m.insert({p.second,1});
+		m.insert({p.first.second,1});
 	}
 	return;
 }
@@ -349,6 +348,13 @@ tt_entry* type_lookup(string key){
 
 tt_entry* current_type_lookup(string key){
 	auto it = type_scope.back()->find(key);
+	if(it != type_scope.back()->end())
+		return it->second;
+	return NULL;
+}
+
+tt_entry* global_type_lookup(string key){
+	auto it = type_scope[0]->find(key);
 	if(it != type_scope.back()->end())
 		return it->second;
 	return NULL;
@@ -518,10 +524,10 @@ string increase_array_level(string s){
 	return s1;
 }
 
-string arithmetic_type_upgrade(string type1, string type2, string op){
+string arithmetic_type_upgrade(string type1, string type2, string op, tt_entry* ttentry1, tt_entry* ttentry2){
 	// float double long double int long unsigned int unsigned long int char pointer
 	// printf("Entered upgrade with '%s'.\n", op.c_str());
-	if(type_lookup(type1) || type_lookup(type2)){
+	if((ttentry1!=NULL && type1.back()!='*' && type1.back()!=']') || (ttentry2!=NULL && type2.back()!='*' && type2.back()!=']')){
 		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, op.c_str());
 		exit(-1);
 	}
@@ -716,7 +722,11 @@ string arithmetic_type_upgrade(string type1, string type2, string op){
 			return type1;
 		}
 	}
-	if(op == "-" && (type1 == type2) && (type1.back() == '*')){
+	if(op == "-" && (type1 == type2) && (type1.back() == '*') && (ttentry1 == ttentry2)){
+		return "int";
+	}
+	if(op == "-=" && (type1 == type2) && (type1.back() == '*') && (ttentry1 == ttentry2)){
+		printf("\e[1;35mWarning [line %d]:\e[0m Assignment to ‘%s’ from ‘long int’ makes pointer from integer without a cast\n", line, type1.c_str());
 		return "int";
 	}
 	printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, op.c_str());

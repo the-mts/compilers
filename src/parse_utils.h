@@ -21,6 +21,7 @@ typedef struct node{
 	enum val_type value_type;
 	string node_name = "";
 	string node_data = "";
+	tt_entry* ttentry = NULL;
 
 	// 3AC Attributes:
 	qi place;

@@ -2,6 +2,8 @@
 	#include<string.h>
 	#include<stdlib.h>
 	#include<numeric>
+	#include<iostream>
+	#include<stdlib.h>
 	#include "parse_utils.h"
 	#include "3AC.h"
 	using namespace std;
@@ -13,11 +15,12 @@
 	int unnamed_var = 0;
 	string data_type = "";
 	string params = "";
-	vector<pair<string, string>> func_params;
+	vector<pair<pair<string, string>, tt_entry*	>> func_params;
 	int break_level=0;
 	int continue_level=0;
 	string next_name;
 	string func_ret_type = "";
+	int temp_var;
 %}
 %union {
 	struct node* nodes;
@@ -70,6 +73,7 @@ primary_expression
 																	$$->node_name = $1;
 																	$$->node_data = entry->type;
 																	$$->value_type = LVALUE;
+																	$$->ttentry = entry->ttentry;
 
 																	//////////////// 3AC ////////////////
 																	$$->place = { string((const char*)$1), entry };
@@ -115,7 +119,6 @@ primary_expression
 																	}
 																	$$->val = parsed.first;
 																	$$->value_type = RVALUE;
-
 																	//////////////// 3AC ////////////////
 																	
 																	/////////////////////////////////////
@@ -160,6 +163,7 @@ postfix_expression
 																		exit(-1);
 																	}
 																	$$->node_data = reduce_pointer_level($1->node_data);
+																	$$->ttentry = $1->ttentry;
 
 																	//////////////// 3AC ////////////////
 																	if($3->token == CONSTANT){
@@ -198,6 +202,7 @@ postfix_expression
 																	}
 																	$$->node_data = entry->type;
 																	$$->value_type = RVALUE;
+																	$$->ttentry = entry->ttentry;
 
 																	//////////////// 3AC ////////////////
 																	$$->place = getNewTemp($$->node_data);
@@ -219,7 +224,7 @@ postfix_expression
 																	}
 
 																	vector<qi> arg_names;
-																	vector<pair<string,string>> arg_list;
+																	vector<pair<pair<string,string>,tt_entry*>> arg_list;
 																	if(entry->type_name == IS_BUILTIN_FUNC){
 																		// arg_names = $3->v;
 																		for(auto i : $3->v) arg_names.push_back(i->place);
@@ -242,34 +247,49 @@ postfix_expression
 																	for(int i = 0; i < $3->sz; i++){
 																		string type = $3->v[i]->node_data;
 
-																		if(arg_list[i].first.back() == ']'){
+																		if(arg_list[i].first.first.back() == ']'){
 																			if($3->v[i]->node_data.back() != ']'){
-																				printf("\e[1;31mError [line %d]:\e[0m For function '%s', argument %d should be of type '%s', '%s' provided.\n",line,$1->name,i+1,arg_list[i].first.c_str(),type.c_str());
+																				printf("\e[1;31mError [line %d]:\e[0m For function '%s', argument %d should be of type '%s', '%s' provided.\n",line,$1->name,i+1,arg_list[i].first.first.c_str(),type.c_str());
 																				exit(-1);
 																			}
 																			type = increase_array_level(reduce_pointer_level($3->v[i]->node_data));
-																			if(type != arg_list[i].first){
-																				printf("\e[1;31mError [line %d]:\e[0m For function '%s', argument %d should be of type '%s', '%s' provided.\n",line,$1->name,i+1,arg_list[i].first.c_str(),type.c_str());
+																			if(type != arg_list[i].first.first){
+																				printf("\e[1;31mError [line %d]:\e[0m For function '%s', argument %d should be of type '%s', '%s' provided.\n",line,$1->name,i+1,arg_list[i].first.first.c_str(),type.c_str());
 																				exit(-1);
 																			}
 																			arg_names.push_back($3->v[i]->place);
 																		}
 																		else if($3->v[i]->node_data.back() == ']'){
-																			printf("\e[1;31mError [line %d]:\e[0m For function '%s', argument %d should be of type '%s', '%s' provided.\n",line,$1->name,i+1,arg_list[i].first.c_str(),type.c_str());
+																			printf("\e[1;31mError [line %d]:\e[0m For function '%s', argument %d should be of type '%s', '%s' provided.\n",line,$1->name,i+1,arg_list[i].first.first.c_str(),type.c_str());
 																			exit(-1);
 																		}
 
 																		else{
 																			string tmp1 = $3->v[i]->node_data;
-																			string tmp2 = arg_list[i].first;
+																			string tmp2 = arg_list[i].first.first;
 																			string type1, type2;
 																			pair<string, int> p1 = get_equivalent_pointer(tmp1);
 																			pair<string, int> p2 = get_equivalent_pointer(tmp2);
 																			type1 = p1.first, type2 = p2.first;
-																			tt_entry* entry1 = type_lookup(type1);
-																			tt_entry* entry2 = type_lookup(type2);
+
+
+																			string type11=type1, type22=type2;
+																			while(type11.back()=='*'){
+																				type11 = reduce_pointer_level(type11);
+																			}
+																			while(type22.back()=='*'){
+																				type22 = reduce_pointer_level(type22);
+																			}
+																			tt_entry* entry1 = $3->v[i]->ttentry;
+																			tt_entry* entry2 = global_type_lookup(type22);
+																			
+
 																			if(entry1 && entry2){
 																				if(entry1 != entry2){
+																					printf("\e[1;31mError [line %d]:\e[0m For function '%s', argument %d should be of type '%s', '%s' provided.\n",line, $1->name, i+1, tmp2.c_str(), tmp1.c_str());
+																					exit(-1);
+																				}
+																				if((p1.second && !p2.second) || (p2.second && !p1.second)){
 																					printf("\e[1;31mError [line %d]:\e[0m For function '%s', argument %d should be of type '%s', '%s' provided.\n",line, $1->name, i+1, tmp2.c_str(), tmp1.c_str());
 																					exit(-1);
 																				}
@@ -320,6 +340,7 @@ postfix_expression
 																	skip_arg_check:
 																	$$->node_data = entry->type;
 																	$$->value_type = RVALUE;
+																	$$->ttentry = entry->ttentry;
 
 																	//////////////// 3AC ////////////////
 																	for(auto i: arg_names){
@@ -333,7 +354,10 @@ postfix_expression
 																	$$ = node_(2,".",'.');
 																	$$->v[0] = $1;
 																	$$->v[1] = node_(0,$3,IDENTIFIER);
-																	tt_entry * type_entry = type_lookup($1->node_data);
+																	tt_entry * type_entry = NULL;
+																	if($1->node_data.back() != '*' && $1->node_data.back()!=']'){
+																		type_entry = $1->ttentry;
+																	}
 																	if(type_entry == NULL){
 																		printf("\e[1;31mError [line %d]:\e[0m '.' operator applied on non-struct or non-union type.\n",line);
 																		exit(-1);
@@ -342,10 +366,12 @@ postfix_expression
 																	int flag = 0;
 																	string name = string((const char*)$3);
 																	string type;
+																	tt_entry* entry = NULL;
 																	for(auto it : *(type_entry->mem_list))
-																		if(it.second == name){
-																			type = it.first;
+																		if(it.first.second == name){
+																			type = it.first.first;
 																			flag = 1;
+																			entry = it.second;
 																			break;
 																		}
 																	if(!flag){
@@ -357,6 +383,7 @@ postfix_expression
 																		$$->value_type = RVALUE;
 																	else
 																		$$->value_type = LVALUE;
+																	$$->ttentry = entry;
 
 																	//////////////// 3AC ////////////////
 																	
@@ -374,18 +401,20 @@ postfix_expression
 																		exit(-1);
 																	}
 																	type = p.first.substr(0,type.length() - 2);
-																	tt_entry * type_entry = type_lookup(type);
+																	tt_entry * type_entry = $1->ttentry;
 																	if(type_entry == NULL){
 																		printf("\e[1;31mError [line %d]:\e[0m '->' operator applied on non-struct or non-union pointer type.\n",line);
 																		exit(-1);
 																	}
 																	int flag = 0;
+																	tt_entry* tmp_entry = NULL;
 																	string type1 = type;
 																	string name = string((const char*)$3);
 																	for(auto it : *(type_entry->mem_list))
-																		if(it.second == name){
-																			type = it.first;
+																		if(it.first.second == name){
+																			type = it.first.first;
 																			flag = 1;
+																			tmp_entry = it.second;
 																			break;
 																		}
 																	if(!flag){
@@ -397,6 +426,7 @@ postfix_expression
 																		$$->value_type = RVALUE;
 																	else
 																		$$->value_type = LVALUE;
+																	$$->ttentry = tmp_entry;
 																	
 																	//////////////// 3AC ////////////////
 
@@ -420,6 +450,7 @@ postfix_expression
 																		exit(-1);
 																	}
 																	$$->value_type = RVALUE;
+																	$$->ttentry = $1->ttentry;
 
 																	//////////////// 3AC ////////////////
 																	$$->place = getNewTemp($$->node_data);
@@ -445,6 +476,7 @@ postfix_expression
 																		exit(-1);
 																	}
 																	$$->value_type = RVALUE;
+																	$$->ttentry = $1->ttentry;
 
 																	//////////////// 3AC ////////////////
 																	$$->place = getNewTemp($$->node_data);
@@ -494,6 +526,7 @@ unary_expression
 																		exit(-1);
 																	}
 																	$$->value_type = RVALUE;
+																	$$->ttentry = $2->ttentry;
 
 																	//////////////// 3AC ////////////////
 																	$$->place = getNewTemp($$->node_data);
@@ -518,6 +551,7 @@ unary_expression
 																		exit(-1);
 																	}
 																	$$->value_type = RVALUE;
+																	$$->ttentry = $2->ttentry;
 
 																	//////////////// 3AC ////////////////
 																	$$->place = getNewTemp($$->node_data);
@@ -545,6 +579,7 @@ unary_expression
 																				else{
 																					$$->node_data = $2->node_data + " *";
 																				}
+																				$$->ttentry = $2->ttentry;
 																			}
 																			else{
 																				printf("\e[1;31mError [line %d]:\e[0m Address-of operator cannot be applied on rvalue.\n",line);
@@ -565,6 +600,7 @@ unary_expression
 																			else{
 																				$$->node_data = reduce_pointer_level($2->node_data);
 																				$$->value_type = LVALUE;
+																				$$->ttentry = $2->ttentry;
 
 																				//////////////// 3AC ////////////////
 																				$$->place = getNewTemp($$->node_data);
@@ -595,6 +631,7 @@ unary_expression
 																			if(temp_data.back() == '*'){
 																				$$->value_type = RVALUE;
 																				$$->node_data = "int";
+																				$$->ttentry = NULL;
 
 																				//////////////// 3AC ////////////////
 																				$$->place = getNewTemp($$->node_data);
@@ -703,7 +740,7 @@ unary_expression
 																	$$->val.u_long_const = sz;
 																}
 	| SIZEOF '(' type_name ')'									{
-																	long unsigned sz = get_size($3->node_data);
+																	long unsigned sz = get_size($3->node_data, $3->ttentry);
 																	$$ = node_(0,(char*)to_string(sz).c_str(),CONSTANT);
 																	$$->node_data = "unsigned long int";
 																	$$->val_dt = IS_U_LONG;
@@ -728,8 +765,16 @@ cast_expression
 																	$$->v[1] = $4;
 																	pair<string,int> p1 = get_equivalent_pointer($2->node_data);
 																	pair<string,int> p2 = get_equivalent_pointer($4->node_data);
-																	tt_entry * entry1 = type_lookup(p1.first);
-																	tt_entry * entry2 = type_lookup(p2.first);
+																	//tt_entry * entry1 = type_lookup(p1.first);
+																	//tt_entry * entry2 = type_lookup(p2.first);
+																	tt_entry * entry1 = NULL;
+																	tt_entry * entry2 = NULL;
+																	if(p1.second == 0){
+																		entry1 = $2->ttentry;
+																	}
+																	if(p2.second == 0){
+																		entry2 = $4->ttentry;
+																	}
 																	if(entry1 || entry2){
 																		printf("\e[1;31mError [line %d]:\e[0m Typecasts forbidden for non-scalar types.\n",line);
 																		exit(-1);
@@ -755,6 +800,7 @@ cast_expression
 																		printf("\e[1;35mWarning [line %d]:\e[0m Cast from '%s' to incompatible type '%s'.\n",line, $4->node_data.c_str(), $2->node_data.c_str());
 																	}
 																	$$->node_data = $2->node_data;
+																	$$->ttentry = $2->ttentry;
 
 																	//////////////// 3AC ////////////////
 																	$$->place = getNewTemp($$->node_data);
@@ -775,7 +821,7 @@ multiplicative_expression
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
 																	}
-																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2));
+																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2),$1->ttentry,$3->ttentry);
 																	if(type.back() == '*'){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																		exit(-1);
@@ -830,7 +876,7 @@ multiplicative_expression
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
 																	}
-																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2));
+																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2),$1->ttentry,$3->ttentry);
 																	if(type.back() == '*'){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																		exit(-1);
@@ -885,7 +931,7 @@ multiplicative_expression
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
 																	}
-																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2));
+																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2),$1->ttentry,$3->ttentry);
 																	if(type.back() == '*'){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																		exit(-1);
@@ -932,8 +978,15 @@ additive_expression
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
 																	}
-																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2));
-																
+																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2),$1->ttentry,$3->ttentry);
+																	
+																	if($1->ttentry){
+																		$$->ttentry = $1->ttentry;
+																	}
+																	else if($3->ttentry){
+																		$$->ttentry = $3->ttentry;
+																	}
+
 																	if($1->token == CONSTANT && $3->token == CONSTANT){
 																		evaluate_const($1, $3, *($2), type);
 																		$$ = $1;
@@ -984,11 +1037,19 @@ additive_expression
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
 																	}
-																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2));
+																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2),$1->ttentry,$3->ttentry);
 																	if(type.back() == '*' && get_equivalent_pointer($1->node_data).first.back() != '*'){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, "-");
 																		exit(-1);
 																	}
+
+																	if($1->ttentry){
+																		$$->ttentry = $1->ttentry;
+																	}
+																	else if($3->ttentry){
+																		$$->ttentry = $3->ttentry;
+																	}
+
 																	if($1->token == CONSTANT && $3->token == CONSTANT){
 																		evaluate_const($1, $3, *($2), type);
 																		$$ = $1;
@@ -1043,7 +1104,7 @@ shift_expression
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
 																	}
-																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2));
+																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2),$1->ttentry,$3->ttentry);
 																	// printf("TYPE: %s\n", type.c_str());
 																	if(type.back() == '*'){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
@@ -1086,7 +1147,7 @@ shift_expression
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
 																	}
-																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2));
+																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2),$1->ttentry,$3->ttentry);
 																	if(type.back() == '*'){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																		exit(-1);
@@ -1141,7 +1202,7 @@ relational_expression
 
 																	string type;
 																	if(!p1.second && !p2.second){
-																		type = arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
+																		type = arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2),$1->ttentry,$3->ttentry);
 																	}
 																	else if(p1.second && p2.second){
 																		if($1->node_data != $3->node_data){
@@ -1154,12 +1215,18 @@ relational_expression
 																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																			exit(-1);
 																		}
+																		if($1->node_data != $3->node_data){
+																			printf("\e[1;35mWarning [line %d]:\e[0m Comparison of pointers or types '%s' and '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
+																		}
 																		type = "int*";
 																	}
 																	else if(p2.second){
 																		if($1->node_data.find("float")!=string::npos || $1->node_data.find("double")!=string::npos){
 																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																			exit(-1);
+																		}
+																		if($1->node_data != $3->node_data){
+																			printf("\e[1;35mWarning [line %d]:\e[0m Comparison of pointers or types '%s' and '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
 																		}
 																		type = "int*";
 																	}
@@ -1237,7 +1304,7 @@ relational_expression
 																	//}
 																	string type;
 																	if(!p1.second && !p2.second){
-																		type = arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
+																		type = arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2),$1->ttentry,$3->ttentry);
 																	}
 																	else if(p1.second && p2.second){
 																		if($1->node_data != $3->node_data){
@@ -1250,12 +1317,18 @@ relational_expression
 																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																			exit(-1);
 																		}
+																		if($1->node_data != $3->node_data){
+																			printf("\e[1;35mWarning [line %d]:\e[0m Comparison of pointers or types '%s' and '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
+																		}
 																		type = "int*";
 																	}
 																	else if(p2.second){
 																		if($1->node_data.find("float")!=string::npos || $1->node_data.find("double")!=string::npos){
 																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																			exit(-1);
+																		}
+																		if($1->node_data != $3->node_data){
+																			printf("\e[1;35mWarning [line %d]:\e[0m Comparison of pointers or types '%s' and '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
 																		}
 																		type = "int*";
 																	}
@@ -1314,7 +1387,7 @@ relational_expression
 																	
 																	string type;
 																	if(!p1.second && !p2.second){
-																		type = arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
+																		type = arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2),$1->ttentry,$3->ttentry);
 																	}
 																	else if(p1.second && p2.second){
 																		if($1->node_data != $3->node_data){
@@ -1327,12 +1400,18 @@ relational_expression
 																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																			exit(-1);
 																		}
+																		if($1->node_data != $3->node_data){
+																			printf("\e[1;35mWarning [line %d]:\e[0m Comparison of pointers or types '%s' and '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
+																		}
 																		type = "int*";
 																	}
 																	else if(p2.second){
 																		if($1->node_data.find("float")!=string::npos || $1->node_data.find("double")!=string::npos){
 																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																			exit(-1);
+																		}
+																		if($1->node_data != $3->node_data){
+																			printf("\e[1;35mWarning [line %d]:\e[0m Comparison of pointers or types '%s' and '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
 																		}
 																		type = "int*";
 																	}
@@ -1392,7 +1471,7 @@ relational_expression
 																	
 																	string type;
 																	if(!p1.second && !p2.second){
-																		type = arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
+																		type = arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2),$1->ttentry,$3->ttentry);
 																	}
 																	else if(p1.second && p2.second){
 																		if($1->node_data != $3->node_data){
@@ -1405,12 +1484,18 @@ relational_expression
 																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																			exit(-1);
 																		}
+																		if($1->node_data != $3->node_data){
+																			printf("\e[1;35mWarning [line %d]:\e[0m Comparison of pointers or types '%s' and '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
+																		}
 																		type = "int*";
 																	}
 																	else if(p2.second){
 																		if($1->node_data.find("float")!=string::npos || $1->node_data.find("double")!=string::npos){
 																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																			exit(-1);
+																		}
+																		if($1->node_data != $3->node_data){
+																			printf("\e[1;35mWarning [line %d]:\e[0m Comparison of pointers or types '%s' and '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
 																		}
 																		type = "int*";
 																	}
@@ -1474,7 +1559,7 @@ equality_expression
 																	
 																	string type;
 																	if(!p1.second && !p2.second){
-																		type = arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
+																		type = arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2),$1->ttentry,$3->ttentry);
 																	}
 																	else if(p1.second && p2.second){
 																		if($1->node_data != $3->node_data){
@@ -1487,12 +1572,18 @@ equality_expression
 																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																			exit(-1);
 																		}
+																		if($1->node_data != $3->node_data){
+																			printf("\e[1;35mWarning [line %d]:\e[0m Comparison of pointers or types '%s' and '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
+																		}
 																		type = "int*";
 																	}
 																	else if(p2.second){
 																		if($1->node_data.find("float")!=string::npos || $1->node_data.find("double")!=string::npos){
 																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																			exit(-1);
+																		}
+																		if($1->node_data != $3->node_data){
+																			printf("\e[1;35mWarning [line %d]:\e[0m Comparison of pointers or types '%s' and '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
 																		}
 																		type = "int*";
 																	}
@@ -1552,7 +1643,7 @@ equality_expression
 																	
 																	string type;
 																	if(!p1.second && !p2.second){
-																		type = arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
+																		type = arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2),$1->ttentry,$3->ttentry);
 																	}
 																	else if(p1.second && p2.second){
 																		if($1->node_data != $3->node_data){
@@ -1565,12 +1656,18 @@ equality_expression
 																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																			exit(-1);
 																		}
+																		if($1->node_data != $3->node_data){
+																			printf("\e[1;35mWarning [line %d]:\e[0m Comparison of pointers or types '%s' and '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
+																		}
 																		type = "int*";
 																	}
 																	else if(p2.second){
 																		if($1->node_data.find("float")!=string::npos || $1->node_data.find("double")!=string::npos){
 																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																			exit(-1);
+																		}
+																		if($1->node_data != $3->node_data){
+																			printf("\e[1;35mWarning [line %d]:\e[0m Comparison of pointers or types '%s' and '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
 																		}
 																		type = "int*";
 																	}
@@ -1629,7 +1726,7 @@ and_expression
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
 																	}
-																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2));
+																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2),$1->ttentry,$3->ttentry);
 																	if(type.back() == '*'){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																		exit(-1);
@@ -1675,7 +1772,7 @@ exclusive_or_expression
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
 																	}
-																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2));
+																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2),$1->ttentry,$3->ttentry);
 																	if(type.back() == '*'){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																		exit(-1);
@@ -1720,7 +1817,7 @@ inclusive_or_expression
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
 																	}
-																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2));
+																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2),$1->ttentry,$3->ttentry);
 																	if(type.back() == '*'){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																		exit(-1);
@@ -1783,31 +1880,25 @@ logical_and_expression
 																	}
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
 																	pair<string,int> p2 = get_equivalent_pointer($4->node_data);
-																	if((p1.second || p2.second) && (!p1.second || !p2.second)){
-																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
-																		exit(-1);
+																	arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2),$1->ttentry,$4->ttentry);
+																	
+																	$$ = node_(2,$2,-1);
+																	$$->v[0] = $1;
+																	$$->v[1] = $4;
+
+																	//////////////// 3AC ////////////////
+																	
+																	 if($4->token == CONSTANT){
+																		$4->place = emitConstant($4);
 																	}
-																	arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2));
-																																			$$ = node_(2,$2,-1);
-																		$$->v[0] = $1;
-																		$$->v[1] = $4;
 
-																		//////////////// 3AC ////////////////
-																		
-																		 if($4->token == CONSTANT){
-																			$4->place = emitConstant($4);
-																		}
+																	int x = emit("IF_TRUE_GOTO", $4->place, {"", NULL}, {"", NULL});
+																	int y = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
+																	$$->falselist.push_back(y);
+																	$$->truelist.push_back(x);
+																	$$->falselist.insert($$->falselist.end(), $1->falselist.begin(), $1->falselist.end());
 
-																		//$$->place = getNewTemp("int");
-																		//emit("&&", $1->place, $3->place, $$->place);
-
-																		int x = emit("IF_TRUE_GOTO", $4->place, {"", NULL}, {"", NULL});
-																		int y = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
-																		$$->falselist.push_back(y);
-																		$$->truelist.push_back(x);
-																		$$->falselist.insert($$->falselist.end(), $1->falselist.begin(), $1->falselist.end());
-
-																		/////////////////////////////////////
+																	/////////////////////////////////////
 																	
 																	$$->node_data = "int";
 																	$$->value_type = RVALUE;
@@ -1843,33 +1934,30 @@ logical_or_expression
 																	}
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
 																	pair<string,int> p2 = get_equivalent_pointer($4->node_data);
-																	if((p1.second || p2.second) && (!p1.second || !p2.second)){
-																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
-																		exit(-1);
+																	arithmetic_type_upgrade(p1.first,p2.first,string((const char*)$2),$1->ttentry,$4->ttentry);
+																	
+																	$$ = node_(2,$2,-1);
+																	$$->v[0] = $1;
+																	$$->v[1] = $4;
+
+																	//////////////// 3AC ////////////////
+																	
+																	if($4->token == CONSTANT){
+																		$4->place = emitConstant($4);
 																	}
-																	arithmetic_type_upgrade(p1.first,p2.first,string((const char*)$2));
-																																			$$ = node_(2,$2,-1);
-																		$$->v[0] = $1;
-																		$$->v[1] = $4;
 
-																		//////////////// 3AC ////////////////
-																		
-																		if($4->token == CONSTANT){
-																			$4->place = emitConstant($4);
-																		}
+																	//$$->place = getNewTemp("int");
+																	//emit("||", $1->place, $3->place, $$->place);
 
-																		//$$->place = getNewTemp("int");
-																		//emit("||", $1->place, $3->place, $$->place);
-
-																		if ($4->truelist.empty()){
-																			int x = emit("IF_TRUE_GOTO", $4->place, {"", NULL}, {"", NULL});
-																			int y = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
-																			$4->truelist.push_back(x);
-																			$4->falselist.push_back(y);
-																		}
-																		$$->falselist = $4->falselist;
-																		$$->truelist.insert($$->truelist.end(), $1->truelist.begin(), $1->truelist.end());
-																		$$->truelist.insert($$->truelist.end(), $4->truelist.begin(), $4->truelist.end());
+																	if ($4->truelist.empty()){
+																		int x = emit("IF_TRUE_GOTO", $4->place, {"", NULL}, {"", NULL});
+																		int y = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
+																		$4->truelist.push_back(x);
+																		$4->falselist.push_back(y);
+																	}
+																	$$->falselist = $4->falselist;
+																	$$->truelist.insert($$->truelist.end(), $1->truelist.begin(), $1->truelist.end());
+																	$$->truelist.insert($$->truelist.end(), $4->truelist.begin(), $4->truelist.end());
 
 																		/////////////////////////////////////
 																	
@@ -1905,7 +1993,7 @@ conditional_expression
 																backpatch($1->truelist, x);
 																backpatch($1->falselist, y);
 															}
-
+															$$->ttentry = $1->ttentry;
 														}
 	| logical_or_expression '?'	 						{
 															//////////////// 3AC ////////////////
@@ -2014,11 +2102,19 @@ assignment_expression
 																			pair<string, int> p1 = get_equivalent_pointer($1->node_data);
 																			pair<string, int> p2 = get_equivalent_pointer($3->node_data);
 																			type1 = p1.first, type2 = p2.first;
-																			tt_entry* entry1 = type_lookup(type1);
-																			tt_entry* entry2 = type_lookup(type2);
+																			//tt_entry* entry1 = type_lookup(type1);
+																			//tt_entry* entry2 = type_lookup(type2);
+																			tt_entry* entry1 = NULL;
+																			tt_entry* entry2 = NULL;
+																			if(p1.second==0){
+																				entry1 = $1->ttentry;
+																			}
+																			if(p2.second==0){
+																				entry2 = $3->ttentry;
+																			}
 																			if(entry1 && entry2){
 																				if(entry1 != entry2 || $2->name[0] != '='){
-																					printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2->name);
+																					printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operators '%s'.\n",line, $2->name);
 																					exit(-1);
 																				}
 																				break;
@@ -2074,7 +2170,7 @@ assignment_expression
 																			break;
 																			case MUL_ASSIGN:
 																			case DIV_ASSIGN:
-																				type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2->name));
+																				type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2->name),$1->ttentry,$3->ttentry);
 																				if(type.back() == '*'){
 																					printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2->name);
 																					exit(-1);
@@ -2147,7 +2243,7 @@ assignment_expression
 																			break;
 																			case ADD_ASSIGN:
 																			case SUB_ASSIGN:
-																				type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2->name));
+																				type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2->name),$1->ttentry,$3->ttentry);
 																				
 																				//////////////// 3AC ////////////////
 																				backpatch($3->nextlist, nextquad); // CHECK THIS!!!!!
@@ -2223,7 +2319,7 @@ assignment_expression
 																			case AND_ASSIGN:
 																			case XOR_ASSIGN:
 																			case OR_ASSIGN:{
-																				type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2->name));
+																				type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2->name),$1->ttentry,$3->ttentry);
 																				if(type.back() == '*'){
 																					printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2->name);
 																					exit(-1);
@@ -2259,6 +2355,7 @@ assignment_expression
 																				/////////////////////////////////////
 																			}
 																		}
+																		$$->ttentry = $1->ttentry;
 																		$$->node_data = $1->node_data;
 																		$$->value_type = RVALUE;
 																	}
@@ -2279,7 +2376,7 @@ assignment_operator
 	;
 
 expression
-	: assignment_expression										{$$ = $1;}
+	: assignment_expression						{$$ = $1;}
 	| expression ',' 							{
 													//////////////// 3AC ////////////////
 													backpatch($1->nextlist, nextquad);
@@ -2294,6 +2391,7 @@ expression
 													$$->val = $4->val;
 													$$->val_dt = $4->val_dt;
 													$$->token = $4->token;
+													$$->ttentry = $4->ttentry;
 
 													//////////////// 3AC ////////////////
 													$$->nextlist = $4->nextlist;
@@ -2330,7 +2428,7 @@ declaration
 																	if(tmp2=="struct" || tmp2=="union"){
 																		tt_entry * entry = current_type_lookup(tmp);
 																		if(entry==NULL){
-																			add_type_entry(tmp,tmp2);
+																			entry = add_type_entry(tmp,tmp2);
 																		}
 																	}
 																	else if(tmp2=="enum"){
@@ -2347,7 +2445,7 @@ declaration_specifiers
 																	$$ = node_(1,"type_name",-1);
 																	$$->v[0] = $1;
 																	// $$->node_data+=" ";
-																	$$->node_data+=$1->node_data;
+																	$$->node_data=$1->node_data;
 																}
 	| type_specifier declaration_specifiers						{
 																	push_front($2,$1);
@@ -2407,8 +2505,9 @@ init_declarator
 																		st_entry* tmp = add_entry($1->node_name, data_type_,get_size(data_type_),accumulate(offset.begin()+1, offset.end(), 0),IS_FUNC);
 																		tmp->type_name = IS_FUNC;
 																		check_param_list(func_params);
-																		vector<pair<string, string>> *temp = new vector<pair<string, string>>(func_params);
+																		vector<pair<pair<string, string>,tt_entry*>> *temp = new vector<pair<pair<string, string>,tt_entry*>>(func_params);
 																		tmp->arg_list = temp;
+																		tmp->ttentry = type_lookup(data_type);
 																	}
 																	else{
 																		st_entry* tmp = add_entry($1->node_name, data_type_, get_size(data_type_),accumulate(offset.begin()+1, offset.end(), 0),IS_VAR);
@@ -2417,6 +2516,7 @@ init_declarator
 																			exit(-1);
 																		}
 																		tmp->type_name = IS_VAR;
+																		tmp->ttentry = type_lookup(data_type);
 																	}
 																	$$ = NULL; free($1);
 																}
@@ -2443,6 +2543,8 @@ init_declarator
 																		}
 																		st_entry* tmp = add_entry($1->name, data_type_, get_size(data_type_), accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);/*change IS_VAR*/
 																		$1->place = {$1->node_name, tmp};
+																		tmp->ttentry = type_lookup(data_type);
+																		$1->ttentry = tmp->ttentry;
 																		if(data_type_ == "void"){
 																			printf("\e[1;31mError [line %d]:\e[0m Variable or field '%s' declared void.\n", line, $1->node_name.c_str());
 																			exit(-1);
@@ -2453,7 +2555,10 @@ init_declarator
 																		pair<string, int> p2 = get_equivalent_pointer($3->node_data);
 																		type1 = p1.first, type2 = p2.first;
 																		tt_entry* entry1 = type_lookup(type1);
-																		tt_entry* entry2 = type_lookup(type2);
+																		tt_entry* entry2 = NULL;
+																		if($3->node_data.back() != '*'){
+																			entry2 = $3->ttentry;
+																		}
 																		if(entry1 && entry2){
 																			if(entry1 != entry2){
 																				printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '='.\n",line);
@@ -2525,7 +2630,7 @@ type_specifier
 	| UNSIGNED													{$$ = node_(0,$1,-1); $$->node_data = $1;}
 	| struct_or_union_specifier									{$$ = $1;}
 	| enum_specifier											{$$ = $1;}
-	| TYPE_NAME													{}
+	| TYPE_NAME													{printf("\e[1;31mError [line %d]:\e[0m Typedef not handled\n", line);exit(-1);}
 	;
 
 struct_or_union_specifier
@@ -2536,11 +2641,19 @@ struct_or_union_specifier
 																		$$ = node_(1,ch,-1); free(ch);
 																		$$->v[0] = $5;
 																		$$->node_data = string((const char*)$1) + " " + string((const char*)$2);
+																		string temp1((const char*)$1);
+																		string temp2((const char*)$2);
+																		tt_entry* tmp2 = current_type_lookup(temp2+" "+temp1); 
+																		$$->ttentry = tmp2;
 																	}	
 
 	| struct_or_union M6 M4 '{' struct_declaration_list M5 '}'		{
 																		$$ = node_(1,$1,-1); $$->v[0]=$5;
 																		$$->node_data = string((const char*)$1) + " " + string((const char*)$2);
+																		string temp1((const char*)$1);
+																		string temp2((const char*)$2);
+																		tt_entry* tmp2 = current_type_lookup(temp2+" "+temp1); 
+																		$$->ttentry = tmp2;
 																	}
 
 	| struct_or_union IDENTIFIER 									{
@@ -2548,6 +2661,7 @@ struct_or_union_specifier
 																		strcpy(ch,$1); strcat(ch," "); strcat(ch,$2);
 																		$$ = node_(0,ch,-1); free(ch);
 																		$$->node_data = string((const char*)$1)+" "+string((const char*)$2);
+																		$$->ttentry = type_lookup($$->node_data);
 																	}
 	;
 
@@ -2578,11 +2692,12 @@ M5
 																				type += j->node_data;
 																				string name = j->node_name;
 																				if(struct_entry->mem_list == NULL){
-																					vector<pair<string, string>> *tmp =  new vector<pair<string, string>>;
+																					vector<pair<pair<string, string>,tt_entry*>> *tmp =  new vector<pair<pair<string, string>,tt_entry*>>;
 																					struct_entry->mem_list = tmp;
 																				}
 																				struct_init_check(type);
-																				struct_entry->mem_list->push_back({type, name});
+																				i->v[1]->ttentry = type_lookup(type);
+																				struct_entry->mem_list->push_back({{type, name},i->v[1]->ttentry});
 																			}
 																		}
 																		check_mem_list(*(struct_entry->mem_list), string($<id>-4)+" "+string($<id>-3));
@@ -2613,9 +2728,9 @@ struct_declaration_list
 	;
 
 struct_declaration
-	: specifier_qualifier_list struct_declarator_list ';'		{
+	: specifier_qualifier_list M3 struct_declarator_list ';'	{
 																	$1->node_data = get_eqtype($1->node_data);
-																	$$ = node_(2,"struct_decl",-1); $$->v[0] = $1; $$->v[1] = $2;
+																	$$ = node_(2,"struct_decl",-1); $$->v[0] = $1; $$->v[1] = $3;
 																}
 	;
 
@@ -2625,11 +2740,13 @@ specifier_qualifier_list
 														if($$->node_data != "")
 															$$->node_data = " " + $$->node_data;
 														$$->node_data = $1->node_data + $$->node_data;
+														$$->ttentry = type_lookup($$->node_data);
 													}
 
 	| type_specifier								{
 														$$ = node_(1,"type_list",-1); $$->v[0] = $1;
 														$$->node_data = $1->node_data;
+														$$->ttentry = type_lookup($$->node_data);
 													}
 
 	| type_qualifier specifier_qualifier_list		{$$ = $2; push_front($$, $1); /* Not propagating in node_data */}
@@ -2642,7 +2759,12 @@ struct_declarator_list
 	;
 
 struct_declarator
-	: declarator 									{$$ = $1;}
+	: declarator 									{
+														$$ = $1;
+														string data_type_ = data_type;
+														while(data_type_.back() == '*')
+															data_type_ = reduce_pointer_level(data_type_);
+													}
 	| ':' constant_expression						{$$ = node_(2,"bit_field",-1); $$->v[0]=node_(0,$1,-1); $$->v[1]=$2; printf("Bit-fields are not supported\n"); exit(-1);}
 	| declarator ':' constant_expression			{$$ = node_(3,"bit_field",-1); $$->v[0]=$1; $$->v[1]=node_(0,$2,-1); $$->v[2]=$3; printf("Bit-fields are not supported\n"); exit(-1);}
 	;
@@ -2683,7 +2805,6 @@ declarator /**/
 														if(data_type_!="" && $2->node_data!="") data_type_+= " ";
 														data_type_ += $2->node_data;
 														$$->node_data = data_type_;
-														
 													}
 
 	| direct_declarator								{
@@ -2795,6 +2916,7 @@ parameter_declaration
 															exit(-1);
 														}
 														$$ = $2;
+														tt_entry * entry = type_lookup($1->node_data);
 														string data_type_ = get_eqtype($1->node_data);
 														if($2->node_data!=""){
 															data_type_+=" ";
@@ -2805,13 +2927,14 @@ parameter_declaration
 															check_valid_array(data_type_);
 															data_type_ = increase_array_level(data_type_);
 														}
-														func_params.push_back({data_type_,$2->node_name});
+														func_params.push_back({{data_type_,$2->node_name},entry});
 														check_param_list(func_params);
 													}
 	| declaration_specifiers abstract_declarator	{
 														$1->node_data = get_eqtype($1->node_data);
 														$$ = $2;
 														string data_type_ = get_eqtype($1->node_data);
+														tt_entry * entry = type_lookup($1->node_data);
 														if($2->node_data!=""){
 															data_type_+=" ";
 															data_type_+=$2->node_data;
@@ -2821,7 +2944,7 @@ parameter_declaration
 															check_valid_array(data_type_);
 															data_type_ = increase_array_level(data_type_);
 														}
-														func_params.push_back({data_type_,""});
+														func_params.push_back({{data_type_,""}, entry});
 														check_param_list(func_params);
 														//$$ = $1;
 														//if($2->node_data != ""){
@@ -2833,7 +2956,7 @@ parameter_declaration
 														$$ = NULL;
 														$1->node_data = get_eqtype($1->node_data);
 														string data_type_ = get_eqtype($1->node_data);
-														func_params.push_back({data_type_,""});
+														func_params.push_back({{data_type_,""},NULL});
 													}
 	;
 
@@ -2841,12 +2964,12 @@ identifier_list
 	: IDENTIFIER									{
 														$$ = node_(1,"id_list",-1); 
 														$$->v[0] = node_(0,$1,IDENTIFIER);
-														func_params.push_back({"", $1});
+														func_params.push_back({{"", $1},NULL});
 													}
 	| identifier_list ',' IDENTIFIER				{
 														add_node($1,node_(0,$3,IDENTIFIER)); 
 														$$ = $1;
-														func_params.push_back({"", $3});
+														func_params.push_back({{"", $3},NULL});
 													}
 	;
 
@@ -3050,34 +3173,34 @@ M1
 																	int curr_offset = -16;
 																	for(auto p: func_params){
 																		int flag = 0;
-																		if(p.first.find("int") != string::npos || p.first.find("char") != string::npos || p.first.back() == ']' || p.first.back() == '*'){
+																		if(p.first.first.find("int") != string::npos || p.first.first.find("char") != string::npos || p.first.first.back() == ']' || p.first.first.back() == '*'){
 																			flag = 1;
 																		}
-																		else if(p.first.find("double") != string::npos || p.first.find("float") != string::npos){
+																		else if(p.first.first.find("double") != string::npos || p.first.first.find("float") != string::npos){
 																			flag = 2;
 																		}
 																		else{
 																			flag = 3;
 																		}
 																		if(flag == 1 && int_char<6){
-																			st_entry* st = add_entry(p.second, p.first, get_size(p.first), accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
+																			st_entry* st = add_entry(p.first.second, p.first.first, get_size(p.first.first), accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
 																			int_char++;
 																		}
 																		else if(flag == 2 && double_float<8){
-																			st_entry* st = add_entry(p.second, p.first, get_size(p.first), accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
+																			st_entry* st = add_entry(p.first.second, p.first.first, get_size(p.first.first), accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
 																			double_float++;
 																		}
 																		else if(flag == 1 && int_char == 6){
-																			st_entry* st = add_entry(p.second, p.first, 0, accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
-																			st->size = get_size(p.first);
+																			st_entry* st = add_entry(p.first.second, p.first.first, 0, accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
+																			st->size = get_size(p.first.first);
 																			curr_offset -= (8-(-curr_offset)%8)%8;
 																			st->offset = curr_offset;
 																			curr_offset -= 8;
 																		}
 																		else if(flag == 2 && double_float == 8){
-																			st_entry* st = add_entry(p.second, p.first, 0, accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
-																			st->size = get_size(p.first);
-																			if(p.first == "long double"){
+																			st_entry* st = add_entry(p.first.second, p.first.first, 0, accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
+																			st->size = get_size(p.first.first);
+																			if(p.first.first == "long double"){
 																				curr_offset -= (16-(-curr_offset)%16)%16;
 																				st->offset = curr_offset;
 																				curr_offset-=16;
@@ -3089,11 +3212,12 @@ M1
 																			}
 																		}
 																		else if(flag == 3){
-																			st_entry* st = add_entry(p.second, p.first, 0, accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
-																			st->size = get_size(p.first);
+																			st_entry* st = add_entry(p.first.second, p.first.first, 0, accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
+																			st->ttentry = p.second;
+																			st->size = get_size(p.first.first);
 																			curr_offset -= (8-(-curr_offset)%8)%8;
 																			st->offset = curr_offset;
-																			curr_offset-=get_size(p.first);
+																			curr_offset-=get_size(p.first.first);
 																		}
 																	}
 																	func_params.clear();
@@ -3204,7 +3328,7 @@ selection_statement
 							for(auto i : $6->caselist){
 								pair<string,int> p1 = get_equivalent_pointer($3->node_data);
 								pair<string,int> p2 = get_equivalent_pointer(i.second->node_data);
-								string type = arithmetic_type_upgrade(p1.first,p2.first, "==");
+								string type = arithmetic_type_upgrade(p1.first,p2.first, "==",$3->ttentry,i.second->ttentry);
 								qi tmp = emitConstant(i.second);
 								if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.find("*")!=string::npos){
 									int x = emit("==int", $3->place, tmp, tmp2);
@@ -3446,14 +3570,16 @@ jump_statement
 																		pair<string, int> p1 = get_equivalent_pointer(tmp1);
 																		pair<string, int> p2 = get_equivalent_pointer(tmp2);
 																		type1 = p1.first, type2 = p2.first;
-																		tt_entry* entry1 = type_lookup(type1);
-																		tt_entry* entry2 = type_lookup(type2);
+																		tt_entry* entry1 = global_type_lookup(type1);
+																		tt_entry* entry2 = NULL;
+																		if($2->node_data.back()!='*'){
+																			entry2 = $2->ttentry;
+																		}
 																		if(entry1 && entry2){
 																			if(entry1 != entry2){
 																				printf("\e[1;31mError [line %d]:\e[0m Incompatible types when returning type ‘%s’ but ‘%s’ was expected.\n",line, tmp2.c_str(), tmp1.c_str());
 																				exit(-1);
 																			}
-																			break;
 																		}
 																		if(entry1 || entry2){
 																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types when returning type ‘%s’ but ‘%s’ was expected.\n",line, tmp2.c_str(), tmp1.c_str());
@@ -3520,9 +3646,12 @@ function_definition
 	: declaration_specifiers M3 declarator {	
 												curr_width = 0;
 												$1->node_data = get_eqtype($1->node_data);
+												if($3->node_data!=""){
+													$1->node_data += " "+$3->node_data;
+												}
 												st_entry* tmp = lookup($3->node_name);
 												for(auto p : func_params){
-													if(p.second == ""){
+													if(p.first.second == ""){
 														printf("\e[1;31mError [line %d]:\e[0m Parameter name omitted\n", line);
 														exit(-1);
 													}
@@ -3535,7 +3664,7 @@ function_definition
 													printf("\e[1;31mError [line %d]:\e[0m Conflicting definitions of '%s'.\n", line ,($3->node_name).c_str());
 													exit(-1);
 												}
-												if(tmp!=NULL && tmp->type != get_eqtype($1->node_data)){
+												if(tmp!=NULL && tmp->type != ($1->node_data)){
 													printf("\e[1;31mError [line %d]:\e[0m Conflicting definitions of '%s'.\n", line ,($3->node_name).c_str());
 													exit(-1);
 												}
@@ -3545,14 +3674,14 @@ function_definition
 														exit(-1);
 													}
 													for(int i = 0; i < func_params.size(); i++){
-														if(func_params[i].first == ""){
-															func_params[i].first = (*(tmp->arg_list))[i].first; 
+														if(func_params[i].first.first == ""){
+															func_params[i].first.first = (*(tmp->arg_list))[i].first.first; 
 														}
-														else if(func_params[i].first != (*(tmp->arg_list))[i].first){
+														else if(func_params[i].first.first != (*(tmp->arg_list))[i].first.first){
 															printf("\e[1;31mError [line %d]:\e[0m Conflicting parameter types in declaration and definition of '%s'.\n", line ,($3->node_name).c_str());	
 															exit(-1);
 														}
-														(*(tmp->arg_list))[i].second = func_params[i].second;
+														(*(tmp->arg_list))[i].first.second = func_params[i].first.second;
 													}
 													tmp->is_init = 1;
 													tmp->offset = offset.back();
@@ -3560,20 +3689,24 @@ function_definition
 												}
 												else{
 													check_param_list(func_params);
-													st_entry* func_entry = add_entry($3->node_name, get_eqtype($1->node_data), 0, accumulate(offset.begin()+1, offset.end(), 0), IS_FUNC);
-													if(!func_params.empty() && func_params[0].first == ""){
+													st_entry* func_entry = add_entry($3->node_name, ($1->node_data), 0, accumulate(offset.begin()+1, offset.end(), 0), IS_FUNC);
+													if(!func_params.empty() && func_params[0].first.first == ""){
 														printf("\e[1;35mWarning [line %d]:\e[0m Function parameter type defaults to \"int\"\n", line);
 													}
 													for(int i = 0; i < func_params.size(); i++){
-														if(func_params[i].first == ""){
-															func_params[i].first = "int";
+														if(func_params[i].first.first == ""){
+															func_params[i].first.first = "int";
 														}
 													}
 													data_type = "";
 													func_entry->type_name = IS_FUNC;
 													func_entry->is_init = 1;										//added func_params
-													vector<pair<string, string>> *tmp = new vector<pair<string, string>>(func_params);
+													vector<pair<pair<string, string>,tt_entry*>> *tmp = new vector<pair<pair<string, string>,tt_entry*>>(func_params);
 													func_entry->arg_list = tmp;
+													string tmpp = $1->node_data;
+													while(tmpp.back()=='*' || tmpp.back()==' ')
+														tmpp.pop_back();
+													func_entry->ttentry = type_lookup(tmpp);
 												}
 												next_name = $3->node_name;
 												func_ret_type = $1->node_data;
@@ -3595,7 +3728,7 @@ function_definition
 	| declarator 						{	
 											curr_width = 0;
 											for(auto p : func_params){
-												if(p.second == ""){
+												if(p.first.second == ""){
 													printf("\e[1;31mError [line %d]:\e[0m Parameter name omitted\n", line);
 													exit(-1);
 												}
@@ -3615,14 +3748,14 @@ function_definition
 													exit(-1);
 												}
 												for(int i = 0; i < func_params.size(); i++){
-													if(func_params[i].first == ""){
-														func_params[i].first = (*(tmp->arg_list))[i].first; 
+													if(func_params[i].first.first == ""){
+														func_params[i].first.first = (*(tmp->arg_list))[i].first.first; 
 													}
-													else if(func_params[i].first != (*(tmp->arg_list))[i].first){
+													else if(func_params[i].first.first != (*(tmp->arg_list))[i].first.first){
 														printf("\e[1;31mError [line %d]:\e[0m Conflicting parameter types in declaration and definition of '%s'.\n", line ,($1->node_name).c_str());	
 														exit(-1);
 													}
-													(*(tmp->arg_list))[i].second = func_params[i].second;
+													(*(tmp->arg_list))[i].first.second = func_params[i].first.second;
 												}
 												tmp->is_init = 1;
 												tmp->offset = offset.back();
@@ -3632,17 +3765,17 @@ function_definition
 												check_param_list(func_params);
 												st_entry* func_entry = add_entry($1->node_name, "int", 0, accumulate(offset.begin()+1, offset.end(), 0), IS_FUNC);
 												printf("\e[1;35mWarning [line %d]:\e[0m Function return type defaults to \"int\"\n", line);
-												if(!func_params.empty() && func_params[0].first == ""){
+												if(!func_params.empty() && func_params[0].first.first == ""){
 													printf("\e[1;35mWarning [line %d]:\e[0m Function parameter type defaults to \"int\"\n", line);
 												}
 												for(int i = 0; i < func_params.size(); i++){
-													if(func_params[i].first == ""){
-														func_params[i].first = "int";
+													if(func_params[i].first.first == ""){
+														func_params[i].first.first = "int";
 													}
 												}
 												func_entry->type_name = IS_FUNC;
 												func_entry->is_init = 1;										//added func_params
-												vector<pair<string, string>> *tmp = new vector<pair<string, string>>(func_params);
+												vector<pair<pair<string, string>,tt_entry*>> *tmp = new vector<pair<pair<string, string>,tt_entry*>>(func_params);
 												func_entry->arg_list = tmp;
 												next_name = $1->node_name;
 											}
