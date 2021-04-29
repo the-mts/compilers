@@ -98,6 +98,47 @@ qi emitConstant(node* tmp){
     return temp;
 }
 
+void handle_dead_block(int b){
+	int temp, f, s;
+	if (blocks[b].code.size() == 0){
+		blocks[b].alive = 0;
+		blocks[b-1].next = blocks[b].next;
+		for (auto j: blocks[b].pred){
+			f = 1;
+			if (blocks[j].succ == b){
+				f = 0;
+				if (blocks[j].code.back().op == "GOTO"){
+					blocks[j].code.back().goto_addr = blocks[b].succ;
+				}
+				blocks[j].succ = blocks[b].succ;
+				if (blocks[b].succ != -1) {
+					blocks[blocks[b].succ].pred.push_back(j);
+				}
+			}
+			if (blocks[j].cond_succ == b){
+				f = 0;
+				blocks[j].code.back().goto_addr = blocks[b].succ;
+				blocks[j].cond_succ = blocks[b].succ;
+				if (blocks[b].succ != -1) blocks[blocks[b].succ].pred.push_back(j);
+			}
+			if (f){
+				printf("Something went horribly wrong in handle_dead_block(%d)", b);
+				exit(-1);
+			}
+		}
+		if (blocks[b].succ != -1){
+			s = blocks[b].succ;
+			blocks[s].pred.erase(remove(blocks[s].pred.begin(), blocks[s].pred.end(), b), blocks[s].pred.end());
+			blocks[b].succ = -1;
+		}
+		blocks[b].pred.clear();
+		temp =b;
+		do {
+			temp--;
+			blocks[temp].next = blocks[temp+1].next;
+		}while(!blocks[temp].alive);
+	}
+}
 
 void make_blocks(){
 //	printf("chick0\n");
@@ -128,16 +169,11 @@ void make_blocks(){
 			leader[i+1] = 1;
 			leader[code_array[i].goto_addr] = 1;
 		}
-		else if (code_array[i].op == "FUNC_START") {
+		else if (code_array[i].op == "FUNC_START" || code_array[i].op == "FUNC_END") {
 			leader[i] = 1;
 			leader[i+1] = 1;
 		}
-		else if (code_array[i].op == "CALL") leader[i+1] = 1;
-		else if (code_array[i].op == "RETURN" || code_array[i].op == "RETURN_VOID") leader[i+1] = 1;
-		else if (code_array[i].op == "FUNC_END") {
-			leader[i] = 1;
-			leader[i+1] = 1;
-		}
+		else if (code_array[i].op == "RETURN" || code_array[i].op == "RETURN_VOID" || code_array[i].op == "CALL") leader[i+1] = 1;	
 	}
 	if (code_array[n-1].op == "IF_TRUE_GOTO" || code_array[n-1].op == "GOTO") leader[code_array[n-1].goto_addr] = 1;
 	else if (code_array[n-1].op == "FUNC_END") leader[n-1] = 1;
@@ -170,11 +206,11 @@ void make_blocks(){
 				blocks[curr].succ = -1;
 			else if (code_array[i-1].op == "FUNC_END"){
 				blocks[curr].succ = -1;
+				f = 0;
 				/*for (int j = prev; j <= curr; j++){
 					blocks[j].varend = code_array[i-1].goto_addr;
 					blocks[j].varstart = vstart;
 				}*/
-				f = 0;
 			}
 			curr++;
 			blocks.push_back(block(curr));
@@ -219,49 +255,7 @@ void make_blocks(){
 //	printf("chick5\n");
 	//return;
 	for (int i = blocks.size()-1; i >= 0; i--){
-		if (blocks[i].code.size() == 0){
-			blocks[i].alive = 0;
-			blocks[i-1].next = blocks[i].next;
-			for (auto j: blocks[i].pred){
-				int f = 1;
-				if (blocks[j].succ == i){
-					f = 0;
-					if (blocks[j].code.back().op == "GOTO"){
-						blocks[j].code.back().goto_addr = blocks[i].succ;
-					}
-					blocks[j].succ = blocks[i].succ;
-					if (blocks[i].succ != -1) {
-						blocks[blocks[i].succ].pred.push_back(j);
-					}
-
-				}
-				if (blocks[j].cond_succ == i){
-					f = 0;
-					blocks[j].code.back().goto_addr = blocks[i].succ;
-					blocks[j].cond_succ = blocks[i].succ;
-					if (blocks[i].succ != -1) blocks[blocks[i].succ].pred.push_back(j);
-				}
-				if (f){
-					printf("Something went horribly wrong while resolving dead blocks");
-					exit(-1);
-				}
-			}
-			if (blocks[i].succ != -1){
-				s = blocks[i].succ;
-				blocks[s].pred.erase(remove(blocks[s].pred.begin(), blocks[s].pred.end(), i), blocks[s].pred.end());
-				blocks[i].succ = -1;
-				if (blocks[i].cond_succ != -1){
-					s = blocks[i].cond_succ;
-					blocks[s].pred.erase(remove(blocks[s].pred.begin(), blocks[s].pred.end(), i), blocks[s].pred.end());
-				}
-			}
-			blocks[i].pred.clear();
-			int temp =i;
-			do {
-				temp--;
-				blocks[temp].next = blocks[temp+1].next;
-			}while(!blocks[temp].alive);
-		}
+		handle_dead_block(i);		
 	}
 //printf("chick6\n");
 
@@ -528,44 +522,7 @@ int opt_dead_expr(){
 			}
 			gtemp[b] = temp;
 			blocks[b].code.erase(remove_if(blocks[b].code.begin(), blocks[b].code.end(), [](quad q){return q.op == "DUMMY";}), blocks[b].code.end());
-			if (blocks[b].code.size() == 0){
-				blocks[b].alive = 0;
-				blocks[b-1].next = blocks[b].next;
-				for (auto j: blocks[b].pred){
-					int f = 1;
-					if (blocks[j].succ == b){
-						f = 0;
-						if (blocks[j].code.back().op == "GOTO"){
-							blocks[j].code.back().goto_addr = blocks[b].succ;
-						}
-						blocks[j].succ = blocks[b].succ;
-						if (blocks[b].succ != -1) {
-							blocks[blocks[b].succ].pred.push_back(j);
-						}
-					}
-					if (blocks[j].cond_succ == b){
-						f = 0;
-						blocks[j].code.back().goto_addr = blocks[b].succ;
-						blocks[j].cond_succ = blocks[b].succ;
-						if (blocks[b].succ != -1) blocks[blocks[b].succ].pred.push_back(j);
-					}
-					if (f){
-						printf("Something went horribly wrong in opt_dead_expr()");
-						exit(-1);
-					}
-				}
-				if (blocks[b].succ != -1){
-					int s = blocks[b].succ;
-					blocks[s].pred.erase(remove(blocks[s].pred.begin(), blocks[s].pred.end(), b), blocks[s].pred.end());
-					blocks[b].succ = -1;
-				}
-				blocks[b].pred.clear();
-				int temp =b;
-				do {
-					temp--;
-					blocks[temp].next = blocks[temp+1].next;
-				}while(!blocks[temp].alive);
-			}
+			handle_dead_block(b);	
 		}
 	}
 	return c;
