@@ -454,9 +454,29 @@ postfix_expression
 
 																	//////////////// 3AC ////////////////
 																	$$->place = getNewTemp($$->node_data);
-																	// st_entry* new_entry = add_entry($$->place.first, $$->node_data, 0, accumulate(offset.begin()+1, offset.end(), 0), IS_TEMP);
-																	// $$->place.second = new_entry;
-																	int x = emit("x++", $1->place, {"", NULL}, $$->place);
+																	// int x = emit("x++", $1->place, {"", NULL}, $$->place);
+
+																	string type = $1->node_data;
+																	if(!strcmp($1->name, "UNARY*")){
+																		emit("=", $1->place, {"", NULL}, $$->place);
+																		auto consttmp = getNewTemp("char");
+																		emit("=", {"$1", NULL}, {"", NULL}, consttmp);
+																		if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.find("*")!=string::npos){
+																			auto tmp = getNewTemp($1->node_data);
+																			int x = emit("+int", $1->place, consttmp, tmp);
+																			emit("ADDR=", tmp, {"", NULL}, $1->v[0]->place);
+																		}
+																		else{
+																			auto tmp = getNewTemp(type);
+																			auto tmp2 = getNewTemp(type);
+																			int x = emit("inttoreal", consttmp, {"", NULL}, tmp);
+																			emit("+real", $1->place, tmp, tmp2);
+																			emit("ADDR=", tmp2, {"", NULL}, $1->v[0]->place);
+																		}
+																	}
+																	else{
+																		int x = emit("x++", $1->place, {"", NULL}, $$->place);
+																	}
 																	/////////////////////////////////////
 																}
 	| postfix_expression DEC_OP									{
@@ -480,7 +500,30 @@ postfix_expression
 
 																	//////////////// 3AC ////////////////
 																	$$->place = getNewTemp($$->node_data);
-																	int x = emit("x--", $1->place, {"", NULL}, $$->place);
+																	// int x = emit("x--", $1->place, {"", NULL}, $$->place);
+
+																	
+																	string type = $1->node_data;
+																	if(!strcmp($1->name, "UNARY*")){
+																		emit("=", $1->place, {"", NULL}, $$->place);
+																		auto consttmp = getNewTemp("char");
+																		emit("=", {"$1", NULL}, {"", NULL}, consttmp);
+																		if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.find("*")!=string::npos){
+																			auto tmp = getNewTemp($1->node_data);
+																			int x = emit("-int", $1->place, consttmp, tmp);
+																			emit("ADDR=", tmp, {"", NULL}, $1->v[0]->place);
+																		}
+																		else{
+																			auto tmp = getNewTemp(type);
+																			auto tmp2 = getNewTemp(type);
+																			int x = emit("inttoreal", consttmp, {"", NULL}, tmp);
+																			emit("-real", $1->place, tmp, tmp2);
+																			emit("ADDR=", tmp2, {"", NULL}, $1->v[0]->place);
+																		}
+																	}
+																	else{
+																		int x = emit("x--", $1->place, {"", NULL}, $$->place);
+																	}
 																	/////////////////////////////////////
 																}
 	;
@@ -530,7 +573,30 @@ unary_expression
 
 																	//////////////// 3AC ////////////////
 																	$$->place = getNewTemp($$->node_data);
-																	int x = emit("++x", $2->place, {"", NULL}, $$->place);
+																	// int x = emit("++x", $2->place, {"", NULL}, $$->place);
+																	
+																	string type = $2->node_data;
+																	if(!strcmp($2->name, "UNARY*")){
+																		auto consttmp = getNewTemp("char");
+																		emit("=", {"$1", NULL}, {"", NULL}, consttmp);
+																		if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.find("*")!=string::npos){
+																			auto tmp = getNewTemp($2->node_data);
+																			int x = emit("+int", $2->place, consttmp, tmp);
+																			emit("ADDR=", tmp, {"", NULL}, $2->v[0]->place);
+																			emit("=", tmp, {"", NULL}, $$->place);
+																		}
+																		else{
+																			auto tmp = getNewTemp(type);
+																			auto tmp2 = getNewTemp(type);
+																			int x = emit("inttoreal", consttmp, {"", NULL}, tmp);
+																			emit("+real", $2->place, tmp, tmp2);
+																			emit("ADDR=", tmp2, {"", NULL}, $2->v[0]->place);
+																			emit("=", tmp2, {"", NULL}, $$->place);
+																		}
+																	}
+																	else{
+																		int x = emit("++x", $2->place, {"", NULL}, $$->place);
+																	}
 																	/////////////////////////////////////
 																}
 	| DEC_OP unary_expression									{
@@ -555,7 +621,30 @@ unary_expression
 
 																	//////////////// 3AC ////////////////
 																	$$->place = getNewTemp($$->node_data);
-																	int x = emit("--x", $2->place, {"", NULL}, $$->place);
+																	// int x = emit("--x", $2->place, {"", NULL}, $$->place);
+
+																	string type = $2->node_data;
+																	if(!strcmp($2->name, "UNARY*")){
+																		auto consttmp = getNewTemp("char");
+																		emit("=", {"$1", NULL}, {"", NULL}, consttmp);
+																		if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.find("*")!=string::npos){
+																			auto tmp = getNewTemp($2->node_data);
+																			int x = emit("-int", $2->place, consttmp, tmp);
+																			emit("ADDR=", tmp, {"", NULL}, $2->v[0]->place);
+																			emit("=", tmp, {"", NULL}, $$->place);
+																		}
+																		else{
+																			auto tmp = getNewTemp(type);
+																			auto tmp2 = getNewTemp(type);
+																			int x = emit("inttoreal", consttmp, {"", NULL}, tmp);
+																			emit("-real", $2->place, tmp, tmp2);
+																			emit("ADDR=", tmp2, {"", NULL}, $2->v[0]->place);
+																			emit("=", tmp2, {"", NULL}, $$->place);
+																		}
+																	}
+																	else{
+																		int x = emit("--x", $2->place, {"", NULL}, $$->place);
+																	}
 																	/////////////////////////////////////
 																}
 	| unary_operator cast_expression							{
@@ -2213,14 +2302,27 @@ assignment_expression
 																					int x = emit(op+"int", $1->place, $3->place, tmp);
 
 																					// Typecasting before assignment
-																					if($1->node_data!=$3->node_data){
+																					if($1->node_data!=type){
 																						auto tmp2 = getNewTemp($1->node_data);
-																						string cast = "("+ $3->node_data +"-to-"+ $1->node_data +")";
+																						string cast = "("+ type +"-to-"+ $1->node_data +")";
 																						emit(cast, tmp, {"", NULL}, tmp2);
-																						emit("=", tmp2, {"", NULL}, $1->place);
+																						// emit("=", tmp2, {"", NULL}, $1->place);
+
+																						if(!strcmp($1->name, "UNARY*")){
+																							emit("ADDR=", tmp2, {"", NULL}, $1->v[0]->place);
+																						}
+																						else{
+																							emit("=", tmp2, {"", NULL}, $1->place);
+																						}
 																					}
 																					else{
-																						emit("=", tmp, {"", NULL}, $1->place);
+																						// emit("=", tmp, {"", NULL}, $1->place);
+																						if(!strcmp($1->name, "UNARY*")){
+																							emit("ADDR=", tmp, {"", NULL}, $1->v[0]->place);
+																						}
+																						else{
+																							emit("=", tmp, {"", NULL}, $1->place);
+																						}
 																					}
 																				}
 																				else {
@@ -2231,20 +2333,39 @@ assignment_expression
 																						emit(op+"real", tmp, $3->place, tmp2);
 																						
 																						// Typecasting before assignment
-																						if($1->node_data!=$3->node_data){
+																						if($1->node_data!=type){
 																							auto tmp3 = getNewTemp($1->node_data);
-																							string cast = "("+ $3->node_data +"-to-"+ $1->node_data +")";
+																							string cast = "("+ type +"-to-"+ $1->node_data +")";
 																							emit(cast, tmp2, {"", NULL}, tmp3);
-																							emit("=", tmp3, {"", NULL}, $1->place);
+																							// emit("=", tmp3, {"", NULL}, $1->place);
+																							if(!strcmp($1->name, "UNARY*")){
+																								emit("ADDR=", tmp3, {"", NULL}, $1->v[0]->place);
+																							}
+																							else{
+																								emit("=", tmp3, {"", NULL}, $1->place);
+																							}
 																						}
 																						else{
-																							emit("=", tmp2, {"", NULL}, $1->place);
+																							// emit("=", tmp2, {"", NULL}, $1->place);
+																							if(!strcmp($1->name, "UNARY*")){
+																								emit("ADDR=", tmp2, {"", NULL}, $1->v[0]->place);
+																							}
+																							else{
+																								emit("=", tmp2, {"", NULL}, $1->place);
+																							}
 																						}
 																					}
 																					else if ($3->node_data.find("int")!=string::npos || $3->node_data.find("char")!=string::npos){
 																						auto tmp = getNewTemp(type);
+																						auto tmp2 = getNewTemp(type);
 																						int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
-																						emit(op+"real", $1->place, tmp, $1->place);
+																						emit(op+"real", $1->place, tmp, tmp2);
+																						if(!strcmp($1->name, "UNARY*")){
+																							emit("ADDR=", tmp2, {"", NULL}, $1->v[0]->place);
+																						}
+																						else{
+																							emit("=", tmp2, {"", NULL}, $1->place);
+																						}
 																					}
 																					else {
 																						/* emit(op+"real", $1->place, $3->place, $1->place); */
@@ -2252,14 +2373,26 @@ assignment_expression
 																						int x = emit(op+"real", $1->place, $3->place, tmp);
 
 																						// Typecasting before assignment
-																						if($1->node_data!=$3->node_data){
+																						if($1->node_data!=type){
 																							auto tmp2 = getNewTemp($1->node_data);
-																							string cast = "("+ $3->node_data +"-to-"+ $1->node_data +")";
+																							string cast = "("+ type +"-to-"+ $1->node_data +")";
 																							emit(cast, tmp, {"", NULL}, tmp2);
-																							emit("=", tmp2, {"", NULL}, $1->place);
+																							// emit("=", tmp2, {"", NULL}, $1->place);
+																							if(!strcmp($1->name, "UNARY*")){
+																								emit("ADDR=", tmp2, {"", NULL}, $1->v[0]->place);
+																							}
+																							else{
+																								emit("=", tmp2, {"", NULL}, $1->place);
+																							}
 																						}
 																						else{
-																							emit("=", tmp, {"", NULL}, $1->place);
+																							// emit("=", tmp, {"", NULL}, $1->place);
+																							if(!strcmp($1->name, "UNARY*")){
+																								emit("ADDR=", tmp, {"", NULL}, $1->v[0]->place);
+																							}
+																							else{
+																								emit("=", tmp, {"", NULL}, $1->place);
+																							}
 																						}
 																					}
 																				}
@@ -2284,14 +2417,26 @@ assignment_expression
 																					int x = emit(op+"int", $1->place, $3->place, tmp);
 
 																					// Typecasting before assignment
-																					if($1->node_data!=$3->node_data){
+																					if($1->node_data!=type){
 																						auto tmp2 = getNewTemp($1->node_data);
-																						string cast = "("+ $3->node_data +"-to-"+ $1->node_data +")";
+																						string cast = "("+ type +"-to-"+ $1->node_data +")";
 																						emit(cast, tmp, {"", NULL}, tmp2);
-																						emit("=", tmp2, {"", NULL}, $1->place);
+																						// emit("=", tmp2, {"", NULL}, $1->place);
+																						if(!strcmp($1->name, "UNARY*")){
+																							emit("ADDR=", tmp2, {"", NULL}, $1->v[0]->place);
+																						}
+																						else{
+																							emit("=", tmp2, {"", NULL}, $1->place);
+																						}
 																					}
 																					else{
-																						emit("=", tmp, {"", NULL}, $1->place);
+																						// emit("=", tmp, {"", NULL}, $1->place);
+																						if(!strcmp($1->name, "UNARY*")){
+																							emit("ADDR=", tmp, {"", NULL}, $1->v[0]->place);
+																						}
+																						else{
+																							emit("=", tmp, {"", NULL}, $1->place);
+																						}
 																					}
 																				}
 																				else {
@@ -2302,20 +2447,39 @@ assignment_expression
 																						emit(op+"real", tmp, $3->place, tmp2);
 
 																						// Typecasting before assignment
-																						if($1->node_data!=$3->node_data){
+																						if($1->node_data!=type){
 																							auto tmp3 = getNewTemp($1->node_data);
-																							string cast = "("+ $3->node_data +"-to-"+ $1->node_data +")";
+																							string cast = "("+ type +"-to-"+ $1->node_data +")";
 																							emit(cast, tmp2, {"", NULL}, tmp3);
-																							emit("=", tmp3, {"", NULL}, $1->place);
+																							// emit("=", tmp3, {"", NULL}, $1->place);
+																							if(!strcmp($1->name, "UNARY*")){
+																								emit("ADDR=", tmp3, {"", NULL}, $1->v[0]->place);
+																							}
+																							else{
+																								emit("=", tmp3, {"", NULL}, $1->place);
+																							}
 																						}
 																						else{
-																							emit("=", tmp2, {"", NULL}, $1->place);
+																							// emit("=", tmp2, {"", NULL}, $1->place);
+																							if(!strcmp($1->name, "UNARY*")){
+																								emit("ADDR=", tmp2, {"", NULL}, $1->v[0]->place);
+																							}
+																							else{
+																								emit("=", tmp2, {"", NULL}, $1->place);
+																							}
 																						}
 																					}
 																					else if ($3->node_data.find("int")!=string::npos || $3->node_data.find("char")!=string::npos){
 																						auto tmp = getNewTemp(type);
+																						auto tmp2 = getNewTemp(type);
 																						int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
-																						emit(op+"real", $1->place, tmp, $1->place);
+																						emit(op+"real", $1->place, tmp, tmp2);
+																						if(!strcmp($1->name, "UNARY*")){
+																							emit("ADDR=", tmp2, {"", NULL}, $1->v[0]->place);
+																						}
+																						else{
+																							emit("=", tmp2, {"", NULL}, $1->place);
+																						}
 																					}
 																					else {
 																						/* emit(op+"real", $1->place, $3->place, $1->place); */
@@ -2323,14 +2487,26 @@ assignment_expression
 																						int x = emit(op+"real", $1->place, $3->place, tmp);
 
 																						// Typecasting before assignment
-																						if($1->node_data!=$3->node_data){
+																						if($1->node_data!=type){
 																							auto tmp2 = getNewTemp($1->node_data);
-																							string cast = "("+ $3->node_data +"-to-"+ $1->node_data +")";
+																							string cast = "("+ type +"-to-"+ $1->node_data +")";
 																							emit(cast, tmp, {"", NULL}, tmp2);
-																							emit("=", tmp2, {"", NULL}, $1->place);
+																							// emit("=", tmp2, {"", NULL}, $1->place);
+																							if(!strcmp($1->name, "UNARY*")){
+																								emit("ADDR=", tmp2, {"", NULL}, $1->v[0]->place);
+																							}
+																							else{
+																								emit("=", tmp2, {"", NULL}, $1->place);
+																							}
 																						}
 																						else{
-																							emit("=", tmp, {"", NULL}, $1->place);
+																							// emit("=", tmp, {"", NULL}, $1->place);
+																							if(!strcmp($1->name, "UNARY*")){
+																								emit("ADDR=", tmp, {"", NULL}, $1->v[0]->place);
+																							}
+																							else{
+																								emit("=", tmp, {"", NULL}, $1->place);
+																							}
 																						}
 																						
 																					}
@@ -2649,7 +2825,7 @@ init_declarator
 																			}
 																		}
 																		
-																		int x = emit("=", $3->place, {"", NULL}, $1->place);
+																		// int x = emit("=", $3->place, {"", NULL}, $1->place);
 																		$$->place = $1->place;
 																		$$->nextlist.insert($$->nextlist.end(), $3->nextlist.begin(), $3->nextlist.end());
 																		/////////////////////////////////////
