@@ -27,7 +27,8 @@ void print_code(){
 	int j=0;
     for(auto i: code_array){
 		cout<<j<<"\t\t";
-        if(i.op.find("UNARY")!= string::npos) cout<<i.res.first<< " = " << i.op<< ' '<<i.op1.first;
+		if(i.op == "ADDR=")	cout<<i.res.first<< ' '<<i.op << ' '<<i.op1.first;
+        else if(i.op.find("UNARY")!= string::npos) cout<<i.res.first<< " = " << i.op<< ' '<<i.op1.first;
 		else if(i.op == "IF_TRUE_GOTO") cout<<"IF "<< i.op1.first << " IS TRUE GOTO " << i.goto_addr;
 		else if(i.op == "GOTO") cout<<"GOTO " << i.goto_addr;
 		else if(i.op == "PARAM") cout<<"PARAM " << i.op1.first;
@@ -313,7 +314,7 @@ int main(int argc, char const* argv[]){
 
 //	cout<<"Check me\n";
 	make_blocks();
-	optimize();
+	// optimize();
 
  	freopen("bin/basic_blocks.txt", "w", stdout);
  	print_blocks(0);

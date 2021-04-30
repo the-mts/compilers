@@ -563,7 +563,9 @@ unary_expression
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
 																	}
-																	$$ = node_(1,$1,*($1));
+																	string ch = "UNARY";
+																	ch += *($1);
+																	$$ = node_(1,(char*)ch.c_str(),*($1));
 																	$$->v[0] = $2;
 																	string temp_data = get_equivalent_pointer($2->node_data).first;
 																	switch(*($1)){
@@ -587,8 +589,13 @@ unary_expression
 																			}
 
 																			//////////////// 3AC ////////////////
-																			$$->place = getNewTemp($$->node_data);
-																			int x = emit("UNARY" + string((const char*)$1), $2->place, {"", NULL}, $$->place);
+																			if(!strcmp($2->name, "UNARY*")){
+																				$$->place = $2->v[0]->place;
+																			}
+																			else{
+																				$$->place = getNewTemp($$->node_data);
+																				emit("UNARY" + string((const char*)$1), $2->place, {"", NULL}, $$->place);
+																			}
 																			/////////////////////////////////////																			
 																		}
 																		break;
@@ -601,6 +608,7 @@ unary_expression
 																				$$->node_data = reduce_pointer_level($2->node_data);
 																				$$->value_type = LVALUE;
 																				$$->ttentry = $2->ttentry;
+
 
 																				//////////////// 3AC ////////////////
 																				$$->place = getNewTemp($$->node_data);
@@ -2149,8 +2157,13 @@ assignment_expression
 																					}
 																					printf("\e[1;35mWarning [line %d]:\e[0m Assignment to '%s' from incompatible type '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
 																				}
+
+
+
 																				//////////////// 3AC ////////////////
 																				backpatch($3->nextlist, nextquad); // CHECK THIS!!!!!
+
+
 																				if($3->token == CONSTANT){
 																					$3->place = emitConstant($3);
 																				}
@@ -2159,12 +2172,23 @@ assignment_expression
 																					qi tmpvar = getNewTemp($1->node_data);
 																					string cast = "("+ type2 +"-to-"+ type1 +")";
 																					emit(cast, $3->place, {"", NULL}, tmpvar);
-																					emit("=", tmpvar, {"", NULL}, $1->place);
+
+																					if(!strcmp($1->name, "UNARY*")){
+																						emit("ADDR=", tmpvar, {"", NULL}, $1->v[0]->place);
+																					}
+																					else{
+																						emit("=", tmpvar, {"", NULL}, $1->place);
+																					}
 																				}
 																				else{
-																					emit("=", $3->place, {"", NULL}, $1->place);
+																					if(!strcmp($1->name, "UNARY*")){
+																						emit("ADDR=", $3->place, {"", NULL}, $1->v[0]->place);
+																					}
+																					else{
+																						emit("=", $3->place, {"", NULL}, $1->place);
+																					}
 																				}
-																				$$->place = $1->place;
+																				$$->place = $3->place;
 																				$$->nextlist.insert($$->nextlist.end(), $3->nextlist.begin(), $3->nextlist.end());
 																				/////////////////////////////////////
 																			break;
@@ -2597,8 +2621,32 @@ init_declarator
 																		$$->value_type = RVALUE;
 
 																		//////////////// 3AC ////////////////
+
+
+
+
 																		if($3->token == CONSTANT){
 																			$3->place = emitConstant($3);
+																		}
+																		if(type1 != type2){
+																			qi tmpvar = getNewTemp($1->node_data);
+																			string cast = "("+ type2 +"-to-"+ type1 +")";
+																			emit(cast, $3->place, {"", NULL}, tmpvar);
+
+																			if(!strcmp($1->name, "UNARY*")){
+																				emit("ADDR=", tmpvar, {"", NULL}, $1->v[0]->place);
+																			}
+																			else{
+																				emit("=", tmpvar, {"", NULL}, $1->place);
+																			}
+																		}
+																		else{
+																			if(!strcmp($1->name, "UNARY*")){
+																				emit("ADDR=", $3->place, {"", NULL}, $1->v[0]->place);
+																			}
+																			else{
+																				emit("=", $3->place, {"", NULL}, $1->place);
+																			}
 																		}
 																		
 																		int x = emit("=", $3->place, {"", NULL}, $1->place);

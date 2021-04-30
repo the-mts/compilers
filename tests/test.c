@@ -1,4 +1,6 @@
 int main(){
-int x = 1 > 0 ? 10 : 100;
-//printf("%d\n", x);
+	int a = 2;
+	int *x = &a;
+	(*x)++;
+	printf("%d\n", a);
 }
