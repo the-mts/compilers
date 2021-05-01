@@ -2824,7 +2824,7 @@ init_declarator
 																	}
 																	$$ = NULL; free($1);
 																}
-	| declarator '=' initializer								{
+	| declarator '=' initializer								{	
 																	$$ = node_(2,"=",-1); $$->v[0] = $1; $$->v[1] = $3;
 																	if($1->node_type == 1){
 																		printf("Function pointers not supported\n");
@@ -2901,14 +2901,12 @@ init_declarator
 
 																		//////////////// 3AC ////////////////
 
-
-
-
 																		if($3->token == CONSTANT){
 																			$3->place = emitConstant($3);
 																		}
 																		if(type1 != type2){
-																			qi tmpvar = getNewTemp($1->node_data, $1->ttentry);
+																			qi tmpvar = getNewTemp($$->node_data, $$->ttentry);
+
 																			string cast = "("+ type2 +"-to-"+ type1 +")";
 																			emit(cast, $3->place, {"", NULL}, tmpvar);
 

@@ -4,6 +4,7 @@ vector<string> code;
 // unordered_map<int, string> gotoLabels;
 // unordered_map<string, > //
 map<pair<int, int>, string> intregs;
+map<int, string> retregs;
 vector<qi> params_list;
 
 void dump_const_labels(){
@@ -41,6 +42,12 @@ void setregmap(){
 	intregs[{4,8}] = "%rcx";
 	intregs[{5,8}] = "%r8";
 	intregs[{6,8}] = "%r9";
+
+
+	retregs[1] = "%al";
+	retregs[2] = "%ax";
+	retregs[4] = "%eax";
+	retregs[8] = "%rax";
 };
 
 char sizechar(int size){
@@ -1940,18 +1947,68 @@ void codegen(){
 			}
 
 			// (int-to-long int)
-			else if(instr.op[0] == '('){
+			else if(instr.op[0] == '(' || instr.op=="inttoreal"){
 				qi t1 = instr.op1;
 				qi t2 = instr.res;
 				string type1, type2;
-				int x = instr.op.find("-");
-				type1 = instr.op.substr(1, x-1);
-				type2 = instr.op.substr(x+4, instr.op.length()-x-5);
+				if(instr.op[0] == '('){
+					int x = instr.op.find("-");
+					type1 = instr.op.substr(1, x-1);
+					type2 = instr.op.substr(x+4, instr.op.length()-x-5);
+				}
+				else{
+					type1 = instr.op1.second->type;
+					type2 = instr.res.second->type;
+				}
 
+				// Between ints and pointers
 				if(type1.back()=='*' && type2.back()=='*'){
 					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-t2.second->offset<<"(%rbp)"<<endl;
 				}
+				else if((type1=="char" || type1=="short int" || type1=="int") && (type2=="long int" || type2.back()=='*')){
+					int size = get_size(type1);
+					cout<<"movs"<<sizechar(size)<<"q "<<-t1.second->offset<<"(%rbp)"<<", "<<retregs[size]<<endl;
+					cout<<"movq "<<"%rax, "<<-t2.second->offset<<"(%rbp)"<<endl;
+				}
+				else if((type1=="char" || type1=="short int") && type2=="int"){
+					int size = get_size(type1);
+					cout<<"movs"<<sizechar(size)<<"l "<<-t1.second->offset<<"(%rbp)"<<", "<<retregs[size]<<endl;
+					cout<<"movl "<<"%eax, "<<-t2.second->offset<<"(%rbp)"<<endl;
+				}
+				else if((type1=="char") && type2=="short int"){
+					int size = get_size(type1);
+					cout<<"movs"<<sizechar(size)<<"w "<<-t1.second->offset<<"(%rbp)"<<", "<<retregs[size]<<endl;
+					cout<<"movw "<<"%ax, "<<-t2.second->offset<<"(%rbp)"<<endl;
+				}
+				else if((type2=="char" || type2=="short int" || type2=="int") && (type1=="long int" || type1.back()=='*')){
+					int size = get_size(type2);
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"mov"<<sizechar(size)<<" "<<retregs[size]<<", "<<-t2.second->offset<<"(%rbp)"<<endl;
+				}
+				else if((type2=="char" || type2=="short int") && type1=="int"){
+					int size = get_size(type2);
+					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"mov"<<sizechar(size)<<" "<<retregs[size]<<", "<<-t2.second->offset<<"(%rbp)"<<endl;
+				}
+				else if((type2=="char") && type1=="short int"){
+					int size = get_size(type2);
+					cout<<"movw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
+					cout<<"mov"<<sizechar(size)<<" "<<retregs[size]<<", "<<-t2.second->offset<<"(%rbp)"<<endl;
+				}
+
+				// Between floats and doubles
+				else if(type1=="float" && type2=="double"){
+					cout<<"cvtss2sd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<"%xmm0, "<<-t2.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1=="double" && type2=="float"){
+					cout<<"cvtsd2ss "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movss "<<"%xmm0, "<<-t2.second->offset<<"(%rbp)"<<endl;
+				}
+
+				// Between ints and floats/doubles
+
 			}
 		}
 	}

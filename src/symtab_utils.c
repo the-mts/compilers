@@ -319,6 +319,10 @@ st_entry* add_entry(string key, string type, unsigned long size, long offset, en
 	// 	offset += size;
 	// 	offset += (8 - offset % 8) % 8;
 	// }
+	if(type=="" || type[0] == '*' || type[0] == ' '){
+		printf("\e[1;31mError [line %d]:\e[0m Type supplied is empty/invalid.\n", line);
+		exit(-1);
+	}
 	offset += size;
 	st_entry * new_entry = new st_entry(type, size, offset, type_name);
 	if(type_name != IS_FUNC)
