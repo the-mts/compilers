@@ -204,17 +204,17 @@ void codegen(){
 						int_char++;
 					}
 					else if(flag == 2 && double_float<8){
-						// if(p.find("float") != string::npos){
-						// 	if(instr.op1.second->type_name == IS_BUILTIN_FUNC){
-						// 		cout<<"cvtss2sd "<<-x.second->offset<<"(%rbp)"<<", "<<"%xmm"<<double_float;
-						// 	}
-						// 	else{
-						// 		cout<<"movss "<<-x.second->offset<<"(%rbp)"<<", "<<"%xmm"<<double_float;
-						// 	}
-						// }
-						// else if(p.find("double") != string::npos && p.find("long") == string::npos){
-						// 	cout<<"movsd "<<-x.second->offset<<"(%rbp)"<<", "<<"%xmm"<<double_float;
-						// }
+						if(p.find("float") != string::npos){
+							if(instr.op1.second->type_name == IS_BUILTIN_FUNC){
+								cout<<"cvtss2sd "<<-x.second->offset<<"(%rbp)"<<", "<<"%xmm"<<double_float<<endl;
+							}
+							else{
+								cout<<"movss "<<-x.second->offset<<"(%rbp)"<<", "<<"%xmm"<<double_float<<endl;
+							}
+						}
+						else if(p.find("double") != string::npos && p.find("long") == string::npos){
+							cout<<"movsd "<<-x.second->offset<<"(%rbp)"<<", "<<"%xmm"<<double_float<<endl;
+						}
 						double_float++;
 					}
 					else{
@@ -233,7 +233,7 @@ void codegen(){
 					param_stk_size += size;
 				}
 
-				cout<<"movq $0, %rax"<<endl;
+				cout<<"movl "<<"$"<<double_float<<", "<<"%eax"<<endl;
 				cout<<"call "<<instr.op1.first<<endl;
 				if(param_stk_size) cout<<"addq $"<<param_stk_size<<", %rsp"<<endl;
 
@@ -253,6 +253,13 @@ void codegen(){
 				}
 				else if(type1.back()=='*'){
 					cout<<"movq "<<"%rax, "<<-t1.second->offset<<"(%rbp)"<<endl;
+				}
+
+				else if(type1=="float"){
+					cout<<"movss "<<"%xmm0, "<<-t1.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1=="double"){
+					cout<<"movsd "<<"%xmm0, "<<-t1.second->offset<<"(%rbp)"<<endl;
 				}
 
 				stk_params.clear();
@@ -1893,6 +1900,15 @@ void codegen(){
 					else if(type1.back()=='*'){
 						cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 						cout<<"movq "<<"%rax, "<<-t2.second->offset<<"(%rbp)"<<endl;
+					}
+
+					else if(type1 == "float"){
+						cout<<"movss "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+						cout<<"movss "<<"%xmm0, "<<-t2.second->offset<<"(%rbp)"<<endl;
+					}
+					else if(type1 == "double"){
+						cout<<"movsd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+						cout<<"movsd "<<"%xmm0, "<<-t2.second->offset<<"(%rbp)"<<endl;
 					}
 				}
 			}
