@@ -328,6 +328,9 @@ int opt_cse(){
 				blocks[b].code[i].op2 = {"", NULL};
 				c = 1;
 			}
+			else if (op == "ADDR="){
+				expr.clear();
+			}
 			else if (op != "[]" && op != "UNARY*"){
 				//cout<<"Adding expr\n";
 				expr[{op, {op1, op2}}] = blocks[b].code[i].res;	
@@ -396,17 +399,20 @@ int opt_copy(){
 				expr[res] = blocks[b].code[i].op1;
 			}
 			else {
-				auto pred = [&](const auto& item) {
-        			auto const& [key, value] = item;
-			        return key == res;
-				};
+				if (op == "ADDR=") expr.clear();
+				else {
+					auto pred = [&](const auto& item) {
+    	    			auto const& [key, value] = item;
+				        return key == res;
+					};
 	
-				for (auto i = expr.begin(), last = expr.end(); i != last; ) {
-				  if (pred(*i)) {
-				      i = expr.erase(i);
-			  		} else {
-			      ++i;
-			  		}
+					for (auto i = expr.begin(), last = expr.end(); i != last; ) {
+				  		if (pred(*i)) {
+					      i = expr.erase(i);
+				  		} else {
+				      ++i;
+				  		}
+					}
 				}
 			}		
 		}
@@ -481,42 +487,50 @@ int opt_dead_expr(){
 			for (;l >= 0; l--){
 				var = blocks[b].code[l].res.first;
 				op = blocks[b].code[l].op1.first;
-				if (istemp(var)){
-					// Check if var is dead
-					if ((temp.find(var) == temp.end() || temp[var] == 0) && 
-						((blocks[b].code[l].op != "x++" && blocks[b].code[l].op != "++x" && blocks[b].code[l].op != "x--" && blocks[b].code[l].op != "--x") || 
-						(user.find(op) != user.end() && user[op] == 0))) {
-						blocks[b].code[l].op = "DUMMY";
-						c = 1;
-					}
-					else {
-						temp[var] = 0;
-						op = blocks[b].code[l].op1.first;
-						if (istemp(op))	temp[op] = 1;
-						else user[op] = 1;
-						op = blocks[b].code[l].op2.first;
-						if (op != ""){
+				if (blocks[b].code[l].op == "ADDR="){
+					if (istemp(op)) temp[op] = 1;
+					else user[op] = 1;
+					if (istemp(var)) temp[var] = 1;
+					else user[var] = 1;
+				}
+				else{
+					if (istemp(var)){
+						// Check if var is dead
+						if ((temp.find(var) == temp.end() || temp[var] == 0) && 
+							((blocks[b].code[l].op != "x++" && blocks[b].code[l].op != "++x" && blocks[b].code[l].op != "x--" && blocks[b].code[l].op != "--x") || 
+							(user.find(op) != user.end() && user[op] == 0))) {
+							blocks[b].code[l].op = "DUMMY";
+							c = 1;
+						}
+						else {
+							temp[var] = 0;
+							op = blocks[b].code[l].op1.first;
 							if (istemp(op))	temp[op] = 1;
 							else user[op] = 1;
+							op = blocks[b].code[l].op2.first;
+							if (op != ""){
+								if (istemp(op))	temp[op] = 1;
+								else user[op] = 1;
+							}
 						}
 					}
-				}
-				else {
-					if ((user.find(var)!=user.end() && user[var] == 0) &&
-						((blocks[b].code[l].op != "x++" && blocks[b].code[l].op != "++x" && blocks[b].code[l].op != "x--" && blocks[b].code[l].op != "--x") || 
-						(user.find(op) != user.end() && user[op] == 0))) {
-						blocks[b].code[l].op = "DUMMY";
-						c = 1;
-					}
 					else {
-						user[var] = 0;
-						op = blocks[b].code[l].op1.first;
-						if (istemp(op))	temp[op] = 1;
-						else user[op] = 1;
-						op = blocks[b].code[l].op2.first;
-						if (op != ""){
+						if ((user.find(var)!=user.end() && user[var] == 0) &&
+							((blocks[b].code[l].op != "x++" && blocks[b].code[l].op != "++x" && blocks[b].code[l].op != "x--" && blocks[b].code[l].op != "--x") || 
+							(user.find(op) != user.end() && user[op] == 0))) {
+							blocks[b].code[l].op = "DUMMY";
+							c = 1;
+						}
+						else {
+							user[var] = 0;
+							op = blocks[b].code[l].op1.first;
 							if (istemp(op))	temp[op] = 1;
 							else user[op] = 1;
+							op = blocks[b].code[l].op2.first;
+							if (op != ""){
+								if (istemp(op))	temp[op] = 1;
+								else user[op] = 1;
+							}
 						}
 					}
 				}
