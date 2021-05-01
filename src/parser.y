@@ -72,7 +72,7 @@ primary_expression
 																	}
 																	$$->node_name = $1;
 																	$$->node_data = entry->type;
-																	if(entry->type.back() == ']'){
+																	if(entry->type.back() == ']' && entry->type.find("[]")==string::npos){
 																		$$->value_type = RVALUE;
 																		$$->place = getNewTemp(entry->type, entry->ttentry);
 																		emit("UNARY&", {string((const char*)$1), entry}, {"", NULL}, $$->place);
@@ -879,18 +879,18 @@ unary_expression
 																	}
 																}
 	| SIZEOF unary_expression									{
-																	long unsigned sz = get_size($2->node_data);
+																	long sz = get_size($2->node_data);
 																	$$ = node_(0,(char*)to_string(sz).c_str(),CONSTANT);
-																	$$->node_data = "unsigned long int";
-																	$$->val_dt = IS_U_LONG;
-																	$$->val.u_long_const = sz;
+																	$$->node_data = "long int";
+																	$$->val_dt = IS_LONG;
+																	$$->val.long_const = sz;
 																}
 	| SIZEOF '(' type_name ')'									{
-																	long unsigned sz = get_size($3->node_data, $3->ttentry);
+																	long sz = get_size($3->node_data, $3->ttentry);
 																	$$ = node_(0,(char*)to_string(sz).c_str(),CONSTANT);
-																	$$->node_data = "unsigned long int";
-																	$$->val_dt = IS_U_LONG;
-																	$$->val.u_long_const = sz;
+																	$$->node_data = "long int";
+																	$$->val_dt = IS_LONG;
+																	$$->val.long_const = sz;
 																}
 	;
 
@@ -1136,6 +1136,9 @@ additive_expression
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
 																	}
+																	printf("Ye aaye: %s, %s, %d\n", $1->node_data.c_str(), $3->node_data.c_str(), line);
+																	printf("Ye arith me aaye: %p, %p, %d\n", $1->ttentry, $3->ttentry, line);
+
 																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2),$1->ttentry,$3->ttentry);
 																	
 																	if($1->ttentry){
@@ -2324,6 +2327,7 @@ assignment_expression
 																				printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2->name);
 																				exit(-1);
 																			}
+																			printf("Ye aaye: %s, %s, %d\n", $1->node_data.c_str(), $3->node_data.c_str(), line);
 																			if(($1->node_data.find("[") != string::npos && $1->node_data.find("[]") == string::npos)){
 																				printf("\e[1;31mError [line %d]:\e[0m Array variables cannot be reassigned.\n",line);
 																				exit(-1);
