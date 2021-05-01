@@ -1,8 +1,7 @@
 int main(){
-    int a = 9;
-    int *x = &a;
-    int z = --(*x);
-    printf("%d %d\n", a, z);
-    *x /= 2;
-    printf("%d %d\n", a, z);
+    int a[5][10];
+    a[2][4] = 10;
+    a[3][6] = 20;
+    a[4][9] = a[3][6] + a[2][4];
+    printf("%p\n", a, &a);
 }

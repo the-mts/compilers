@@ -72,11 +72,18 @@ primary_expression
 																	}
 																	$$->node_name = $1;
 																	$$->node_data = entry->type;
-																	$$->value_type = LVALUE;
+																	if(entry->type.back() == ']'){
+																		$$->value_type = RVALUE;
+																		$$->place = getNewTemp(entry->type, entry->ttentry);
+																		emit("UNARY&", {string((const char*)$1), entry}, {"", NULL}, $$->place);
+																	}
+																	else {
+																		$$->value_type = LVALUE;
+																		$$->place = { string((const char*)$1), entry };
+																	}
 																	$$->ttentry = entry->ttentry;
 
 																	//////////////// 3AC ////////////////
-																	$$->place = { string((const char*)$1), entry };
 																	/////////////////////////////////////
 																}
 
@@ -146,7 +153,7 @@ postfix_expression
 																		printf("\e[1;31mError [line %d]:\e[0m Array subscript is not an integer.\n",line);
 																		exit(-1);
 																	}
-																	$$ = node_(2, "[]", -1);
+																	$$ = node_(2, "+", -1);
 																	$$->v[0] = $1; $$->v[1] = $3;
 																	pair<string,int> p = get_equivalent_pointer($1->node_data);
 																	if(p.second == 0){
@@ -164,6 +171,12 @@ postfix_expression
 																	}
 																	$$->node_data = reduce_pointer_level($1->node_data);
 																	$$->ttentry = $1->ttentry;
+																	if($$->node_data.back() == ']'){
+																		$$->value_type = RVALUE;
+																	}
+																	else {
+																		$$->value_type = LVALUE;
+																	}
 
 																	//////////////// 3AC ////////////////
 																	if($3->token == CONSTANT){
@@ -171,9 +184,32 @@ postfix_expression
 																	}
 																	$$->place = getNewTemp($$->node_data, $$->ttentry);
 																	backpatch($3->nextlist, nextquad);
-																	int x = emit("[]", $1->place, $3->place, $$->place);
+																	// int x = emit("[]", $1->place, $3->place, $$->place);
 																	// backpatch($3->truelist, x);		// Have to check
 																	// backpatch($3->falselist, x);	// check
+
+																	if($$->node_data.back()==']'){
+																		emit("+int", $1->place, $3->place, $$->place);
+																	}
+																	else{
+																		auto tempnode = $$;
+																		$$ = node_(1, "UNARY*", -1);
+																		$$->v[0] = tempnode;
+																		$$->node_data = tempnode->node_data;
+																		if($1->node_data.back()=='*'){
+																			tempnode->node_data = $1->node_data+'*';
+																		}
+																		else{
+																			tempnode->node_data = $1->node_data+" *";
+																		}
+																		$$->value_type = LVALUE;
+																		$$->ttentry = tempnode->ttentry;
+																		$$->place = tempnode->place;
+																		tempnode->place = getNewTemp(tempnode->node_data, tempnode->ttentry);
+
+																		emit("+int", $1->place, $3->place, tempnode->place);
+																		emit("UNARY*", tempnode->place, {"", NULL}, $$->place);
+																	}
 																	/////////////////////////////////////
 																}
 	| postfix_expression '(' ')'								{
