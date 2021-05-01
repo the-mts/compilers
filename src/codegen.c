@@ -58,16 +58,16 @@ char sizechar(int size){
 void moveintarg(int arg, int offset, int size){
 	switch(size){
 		case 1:
-			cout<<"movb "<<intregs[{arg, size}]<<", "<<offset<<"(%rbp)\n";
+			cout<<"movb "<<intregs[{arg, size}]<<", "<<offset<<"(%rbp)"<<endl;
 			break;
 		case 2:
-			cout<<"movw "<<intregs[{arg, size}]<<", "<<offset<<"(%rbp)\n";
+			cout<<"movw "<<intregs[{arg, size}]<<", "<<offset<<"(%rbp)"<<endl;
 			break;
 		case 4:
-			cout<<"movl "<<intregs[{arg, size}]<<", "<<offset<<"(%rbp)\n";
+			cout<<"movl "<<intregs[{arg, size}]<<", "<<offset<<"(%rbp)"<<endl;
 			break;
 		case 8:
-			cout<<"movq "<<intregs[{arg, size}]<<", "<<offset<<"(%rbp)\n";
+			cout<<"movq "<<intregs[{arg, size}]<<", "<<offset<<"(%rbp)"<<endl;
 			break;
 	}
 }
@@ -81,31 +81,31 @@ void codegen(){
 		}
 
 		if(blocks[bno].pred.size()!=0 && !(blocks[bno].pred.size()==1 && blocks[bno].pred[0] == bno-1)){
-			cout<<".L"<<bno<<":\n";
+			cout<<".L"<<bno<<":"<<endl;
 		}
 
 		for(int i=0; i<blocks[bno].code.size(); i++){
 			quad instr = blocks[bno].code[i];
 			if (instr.op == "FUNC_START"){
 				string fname = instr.op1.first;
-				cout<<".text\n";
+				cout<<".text"<<endl;
 				cout<<".globl "<<fname<<endl;
 				cout<<".type "<<fname<<", @function"<<endl;
-				cout<<fname<<":\n";
-				cout<<"endbr64\n";
-				cout<<"pushq %rbp\n";
-				cout<<"movq %rsp, %rbp\n";
-				cout<<"subq $320, %rsp\n";
+				cout<<fname<<":"<<endl;
+				cout<<"endbr64"<<endl;
+				cout<<"pushq %rbp"<<endl;
+				cout<<"movq %rsp, %rbp"<<endl;
+				cout<<"subq $320, %rsp"<<endl;
 
 
 				int int_char = 0, double_float = 0;
 				auto args = *(instr.op1.second->arg_list);
 				for(auto p: args){
 					int flag = 0;
-					if(p.first.first.find("int") != string::npos || p.first.first.find("char") != string::npos || p.first.first.back() == ']' || p.first.first.back() == '*'){
+					if(!is_struct_or_union(p.first.first) && (p.first.first.find("int") != string::npos || p.first.first.find("char") != string::npos || p.first.first.back() == ']' || p.first.first.back() == '*')){
 						flag = 1;
 					}
-					else if(p.first.first.find("double") != string::npos || p.first.first.find("float") != string::npos){
+					else if(!is_struct_or_union(p.first.first) && (p.first.first.find("double") != string::npos || p.first.first.find("float") != string::npos)){
 						flag = 2;
 					}
 					else{
@@ -124,30 +124,30 @@ void codegen(){
 			}
 
 			else if(instr.op == "RETURN_VOID" || instr.op == "FUNC_END"){
-				cout<<"leave\n";
-				cout<<"ret\n";
+				cout<<"leave"<<endl;
+				cout<<"ret"<<endl;
 			}
 			
 			else if(instr.op == "RETURN"){
 				qi t1 = instr.op1;
 				string type1 = t1.second->type;
 				if(type1 == "int" || type1 == "unsigned int"){
-					cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 				}
 				else if(type1 == "short int" || type1 == "unsigned short int"){
-					cout<<"movw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 				}
 				else if(type1 == "long int" || type1 == "unsigned long int"){
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 				}
 				else if(type1 == "char"){
-					cout<<"movb "<<-t1.second->offset<<"(%rbp), "<<"%al"<<endl;
+					cout<<"movb "<<-t1.second->offset<<"(%rbp)"<<", "<<"%al"<<endl;
 				}
 				else if(type1.back()=='*'){
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 				}
-				cout<<"leave\n";
-				cout<<"ret\n";
+				cout<<"leave"<<endl;
+				cout<<"ret"<<endl;
 			}
 
 			if (instr.op == "GOTO"){
@@ -159,7 +159,7 @@ void codegen(){
 				if(p.find("int") != string::npos || p.find("char") != string::npos || p.back() == ']' || p.back() == '*'){
 					int size = get_size(p);
 					if(p.back() == ']') size = 8;
-					cout<<"cmp"<<sizechar(size)<<" $0, "<<-instr.op1.second->offset<<"(%rbp)\n";
+					cout<<"cmp"<<sizechar(size)<<" $0, "<<-instr.op1.second->offset<<"(%rbp)"<<endl;
 					cout<<"jne .L"<<instr.goto_addr<<endl;
 				}
 			}
@@ -177,7 +177,7 @@ void codegen(){
 						auto tmp = constLabels[x.first];
 						if (tmp.first == ".string"){
 							if(int_char<6){
-								cout<<"leaq "<<x.first<<"(%rip), "<<intregs[{int_char+1, 8}]<<endl;
+								cout<<"leaq "<<x.first<<"(%rip)"<<", "<<intregs[{int_char+1, 8}]<<endl;
 								int_char++;
 								continue;
 							}
@@ -200,7 +200,7 @@ void codegen(){
 					if(flag == 1 && int_char<6){
 						int size = get_size(p);
 						if(p.back() == ']') size = 8;
-						cout<<"mov"<<sizechar(size)<<" "<<-x.second->offset<<"(%rbp), "<<intregs[{int_char+1, size}]<<endl;
+						cout<<"mov"<<sizechar(size)<<" "<<-x.second->offset<<"(%rbp)"<<", "<<intregs[{int_char+1, size}]<<endl;
 						int_char++;
 					}
 					else if(flag == 2 && double_float<8){
@@ -215,7 +215,7 @@ void codegen(){
 					string p = stk_params[x].second->type;
 					int size = get_size(p);
 					if(p.back() == ']') size = 8;
-					if (size<=8) cout<<"pushq "<<-stk_params[x].second->offset<<"(%rbp)\n";
+					if (size<=8) cout<<"pushq "<<-stk_params[x].second->offset<<"(%rbp)"<<endl;
 					else{
 						// HANDLE LONG DOUBLE
 						;
@@ -224,8 +224,8 @@ void codegen(){
 				}
 
 				cout<<"movq $0, %rax"<<endl;
-				cout<<"call "<< instr.op1.first<<endl;
-				if(param_stk_size) cout<<"addq $"<<param_stk_size<<", %rsp\n";
+				cout<<"call "<<instr.op1.first<<endl;
+				if(param_stk_size) cout<<"addq $"<<param_stk_size<<", %rsp"<<endl;
 
 				qi t1 = instr.res;
 				string type1 = t1.second->type;
@@ -254,98 +254,98 @@ void codegen(){
 				qi t2 = instr.op2;
 				string type1 = instr.op1.second->type, type2 = instr.op2.second->type;
 				if((type1 == "int" && type2 == "int")){
-					cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"addl "<<-t2.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"addl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type1 == "long int" && type2 == "long int")){
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"addq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"addq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type1 == "short int" && type2 == "short int")){
-					cout<<"movw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
-					cout<<"addw "<<-t2.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
+					cout<<"addw "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type1 == "char" && type2 == "char")){
-					cout<<"movb "<<-t1.second->offset<<"(%rbp), "<<"%al"<<endl;
-					cout<<"addb "<<-t2.second->offset<<"(%rbp), "<<"%al"<<endl;
+					cout<<"movb "<<-t1.second->offset<<"(%rbp)"<<", "<<"%al"<<endl;
+					cout<<"addb "<<-t2.second->offset<<"(%rbp)"<<", "<<"%al"<<endl;
 					cout<<"movb "<<"%al, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type1 == "short int" && type2 == "char")){
-					cout<<"movsbw "<<-t2.second->offset<<"(%rbp), "<<"%ax"<<endl;
-					cout<<"addw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movsbw "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
+					cout<<"addw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type2 == "short int" && type1 == "char")){
 					swap(t1,t2);
-					cout<<"movsbw "<<-t2.second->offset<<"(%rbp), "<<"%ax"<<endl;
-					cout<<"addw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movsbw "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
+					cout<<"addw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type1 == "int" && type2 == "char")){
-					cout<<"movsbl "<<-t2.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"addl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movsbl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"addl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type2 == "int" && type1 == "char")){
 					swap(t1,t2);
-					cout<<"movsbl "<<-t2.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"addl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movsbl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"addl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type1 == "int" && type2 == "short int")){
-					cout<<"movswl "<<-t2.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"addl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movswl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"addl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type2 == "int" && type1 == "short int")){
 					swap(t1,t2);
-					cout<<"movswl "<<-t2.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"addl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movswl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"addl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type1 == "long int" && type2 == "char")){
-					cout<<"movsbq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"addq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movsbq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"addq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type2 == "long int" && type1 == "char")){
 					swap(t1,t2);
-					cout<<"movsbq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"addq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movsbq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"addq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type1 == "long int" && type2 == "short int")){
-					cout<<"movswq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"addq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movswq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"addq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type2 == "long int" && type1 == "short int")){
 					swap(t1,t2);
-					cout<<"movswq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"addq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movswq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"addq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 
 				else if((type1 == "long int" && type2 == "int")){
-					cout<<"movslq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"addq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movslq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"addq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type2 == "long int" && type1 == "int")){
 					swap(t1,t2);
-					cout<<"movslq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"addq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movslq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"addq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1.back() == '*' && (type2 == "char")){
 					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1);
-					cout<<"movsbq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movsbq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rax"<<endl;
-					cout<<"addq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"addq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2.back() == '*' && (type1 == "char")){
@@ -353,17 +353,17 @@ void codegen(){
 					swap(type1,type2);
 					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1);
-					cout<<"movsbq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movsbq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rax"<<endl;
-					cout<<"addq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"addq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1.back() == '*' && (type2 == "short int")){
 					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1);
-					cout<<"movswq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movswq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rax"<<endl;
-					cout<<"addq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"addq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2.back() == '*' && (type1 == "short int")){
@@ -371,18 +371,18 @@ void codegen(){
 					swap(type1,type2);
 					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1);
-					cout<<"movswq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movswq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rax"<<endl;
-					cout<<"addq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"addq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 
 				else if(type1.back() == '*' && (type2 == "int")){
 					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1);
-					cout<<"movslq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movslq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rax"<<endl;
-					cout<<"addq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"addq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2.back() == '*' && (type1 == "int")){
@@ -390,18 +390,18 @@ void codegen(){
 					swap(type1,type2);
 					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1);
-					cout<<"movslq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movslq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rax"<<endl;
-					cout<<"addq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"addq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 
 				else if(type1.back() == '*' && (type2 == "long int")){
 					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1);
-					cout<<"movq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rax"<<endl;
-					cout<<"addq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"addq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2.back() == '*' && (type1 == "long int")){
@@ -409,9 +409,9 @@ void codegen(){
 					swap(type1,type2);
 					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1);
-					cout<<"movq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rax"<<endl;
-					cout<<"addq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"addq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 			}
@@ -421,133 +421,133 @@ void codegen(){
 				qi t2 = instr.op2;
 				string type1 = instr.op1.second->type, type2 = instr.op2.second->type;
 				if((type1 == "int" && type2 == "int")){
-					cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"subl "<<-t2.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"subl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type1 == "long int" && type2 == "long int")){
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"subq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"subq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type1 == "short int" && type2 == "short int")){
-					cout<<"movw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
-					cout<<"subw "<<-t2.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
+					cout<<"subw "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type1 == "char" && type2 == "char")){
-					cout<<"movb "<<-t1.second->offset<<"(%rbp), "<<"%al"<<endl;
-					cout<<"subb "<<-t2.second->offset<<"(%rbp), "<<"%al"<<endl;
+					cout<<"movb "<<-t1.second->offset<<"(%rbp)"<<", "<<"%al"<<endl;
+					cout<<"subb "<<-t2.second->offset<<"(%rbp)"<<", "<<"%al"<<endl;
 					cout<<"movb "<<"%al, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type1 == "short int" && type2 == "char")){
-					cout<<"movsbw "<<-t2.second->offset<<"(%rbp), "<<"%cx"<<endl;
-					cout<<"movw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movsbw "<<-t2.second->offset<<"(%rbp)"<<", "<<"%cx"<<endl;
+					cout<<"movw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 					cout<<"subw "<<"%cx, "<<"%ax"<<endl;
 					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type2 == "short int" && type1 == "char")){
-					cout<<"movsbw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
-					cout<<"subw "<<-t2.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movsbw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
+					cout<<"subw "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type1 == "int" && type2 == "char")){
-					cout<<"movsbl "<<-t2.second->offset<<"(%rbp), "<<"%ecx"<<endl;
-					cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movsbl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ecx"<<endl;
+					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"subl "<<"%ecx, "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type2 == "int" && type1 == "char")){
-					cout<<"movsbl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"subl "<<-t2.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movsbl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"subl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type1 == "int" && type2 == "short int")){
-					cout<<"movswl "<<-t2.second->offset<<"(%rbp), "<<"%ecx"<<endl;
-					cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movswl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ecx"<<endl;
+					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"subl "<<"%ecx, "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type2 == "int" && type1 == "short int")){
-					cout<<"movswl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"subl "<<-t2.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movswl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"subl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type1 == "long int" && type2 == "char")){
-					cout<<"movsbq "<<-t2.second->offset<<"(%rbp), "<<"%rcx"<<endl;
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movsbq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rcx"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"subq "<<"%rcx, "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type2 == "long int" && type1 == "char")){
-					cout<<"movsbq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"subq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movsbq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"subq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type1 == "long int" && type2 == "short int")){
-					cout<<"movswq "<<-t2.second->offset<<"(%rbp), "<<"%rcx"<<endl;
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movswq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rcx"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"subq "<<"%rcx, "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type2 == "long int" && type1 == "short int")){
-					cout<<"movswq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"subq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movswq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"subq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 
 				else if((type1 == "long int" && type2 == "int")){
-					cout<<"movslq "<<-t2.second->offset<<"(%rbp), "<<"%rcx"<<endl;
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movslq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rcx"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"subq "<<"%rcx, "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type2 == "long int" && type1 == "int")){
-					cout<<"movslq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"subq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movslq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"subq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1.back() == '*' && (type2 == "char")){
 					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1);
-					cout<<"movsbq "<<-t2.second->offset<<"(%rbp), "<<"%rcx"<<endl;
+					cout<<"movsbq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rcx"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rcx"<<endl;
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"subq "<<"%rcx, "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1.back() == '*' && (type2 == "short int")){
 					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1);
-					cout<<"movswq "<<-t2.second->offset<<"(%rbp), "<<"%rcx"<<endl;
+					cout<<"movswq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rcx"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rcx"<<endl;
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"subq "<<"%rcx, "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1.back() == '*' && (type2 == "int")){
 					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1);
-					cout<<"movslq "<<-t2.second->offset<<"(%rbp), "<<"%rcx"<<endl;
+					cout<<"movslq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rcx"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rcx"<<endl;
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"subq "<<"%rcx, "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1.back() == '*' && (type2 == "long int")){
 					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1);
-					cout<<"movq "<<-t2.second->offset<<"(%rbp), "<<"%rcx"<<endl;
+					cout<<"movq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rcx"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rcx"<<endl;
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"subq "<<"%rcx, "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1.back() == '*' && type2.back() == '*'){
 					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1);
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"subq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"subq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"cqto"<<endl;
 					cout<<"movq $"<<size<<", %rcx"<<endl;
 					cout<<"idivq "<<"%rcx"<<endl;
@@ -560,90 +560,90 @@ void codegen(){
 				qi t2 = instr.op2;
 				string type1 = instr.op1.second->type, type2 = instr.op2.second->type;
 				if((type1 == "int" && type2 == "int")){
-					cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"imull "<<-t2.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"imull "<<-t2.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type1 == "long int" && type2 == "long int")){
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"imulq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"imulq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type1 == "short int" && type2 == "short int")){
-					cout<<"movw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
-					cout<<"imulw "<<-t2.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
+					cout<<"imulw "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type1 == "char" && type2 == "char")){
-					cout<<"movb "<<-t1.second->offset<<"(%rbp), "<<"%al"<<endl;
+					cout<<"movb "<<-t1.second->offset<<"(%rbp)"<<", "<<"%al"<<endl;
 					cout<<"imulb "<<-t2.second->offset<<"(%rbp)"<<endl;
 					cout<<"movb "<<"%al, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type1 == "short int" && type2 == "char")){
-					cout<<"movsbw "<<-t2.second->offset<<"(%rbp), "<<"%ax"<<endl;
-					cout<<"imulw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movsbw "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
+					cout<<"imulw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type2 == "short int" && type1 == "char")){
 					swap(t1,t2);
-					cout<<"movsbw "<<-t2.second->offset<<"(%rbp), "<<"%ax"<<endl;
-					cout<<"imulw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movsbw "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
+					cout<<"imulw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 
 				else if((type1 == "int" && type2 == "char")){
-					cout<<"movsbl "<<-t2.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"imull "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movsbl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"imull "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type2 == "int" && type1 == "char")){
 					swap(t1,t2);
-					cout<<"movsbl "<<-t2.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"imull "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movsbl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"imull "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type1 == "int" && type2 == "short int")){
-					cout<<"movswl "<<-t2.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"imull "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movswl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"imull "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type2 == "int" && type1 == "short int")){
 					swap(t1,t2);
-					cout<<"movswl "<<-t2.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"imull "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movswl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"imull "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type1 == "long int" && type2 == "char")){
-					cout<<"movsbq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"imulq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movsbq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"imulq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type2 == "long int" && type1 == "char")){
 					swap(t1,t2);
-					cout<<"movsbq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"imulq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movsbq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"imulq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type1 == "long int" && type2 == "short int")){
-					cout<<"movswq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"imulq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movswq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"imulq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type2 == "long int" && type1 == "short int")){
 					swap(t1,t2);
-					cout<<"movswq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"imulq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movswq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"imulq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type1 == "long int" && type2 == "int")){
-					cout<<"movslq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"imulq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movslq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"imulq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if((type2 == "long int" && type1 == "int")){
 					swap(t1,t2);
-					cout<<"movslq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"imulq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movslq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"imulq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 			}
@@ -653,118 +653,118 @@ void codegen(){
 				qi t2 = instr.op2;
 				string type1 = instr.op1.second->type, type2 = instr.op2.second->type;
 				if(type1 == "int" && type2 == "int"){
-					cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"cltd"<<endl;
 					cout<<"idivl "<<-t2.second->offset<<"(%rbp)"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int" && type2 == "long int"){
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"cqto"<<endl;
 					cout<<"idivq "<<-t2.second->offset<<"(%rbp)"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "short int" && type2 == "short int"){
-					cout<<"movw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 					cout<<"cwtd"<<endl;
 					cout<<"idivw "<<-t2.second->offset<<"(%rbp)"<<endl;
 					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "char" && type2 == "char"){
-					cout<<"movsbl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"movsbl "<<-t2.second->offset<<"(%rbp), "<<"%ecx"<<endl;
+					cout<<"movsbl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"movsbl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ecx"<<endl;
 					cout<<"cltd"<<endl;
 					cout<<"idivl "<<"%ecx"<<endl;
 					cout<<"movb "<<"%al, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "short int" && type2 == "char"){
-					cout<<"movw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
-					cout<<"movsbw "<<-t2.second->offset<<"(%rbp), "<<"%cx"<<endl;
+					cout<<"movw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
+					cout<<"movsbw "<<-t2.second->offset<<"(%rbp)"<<", "<<"%cx"<<endl;
 					cout<<"cwtd"<<endl;
 					cout<<"idivw "<<"%cx"<<endl;
 					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "short int" && type1 == "char"){
-					cout<<"movsbw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movsbw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 					cout<<"cwtd"<<endl;
 					cout<<"idivw "<<-t2.second->offset<<"(%rbp)"<<endl;
 					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "int" && type2 == "char"){
-					cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"movsbl "<<-t2.second->offset<<"(%rbp), "<<"%ecx"<<endl;
+					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"movsbl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ecx"<<endl;
 					cout<<"cltd"<<endl;
 					cout<<"idivl "<<"%ecx"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "int" && type1 == "char"){
-					cout<<"movsbl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movsbl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"cltd"<<endl;
 					cout<<"idivl "<<-t2.second->offset<<"(%rbp)"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "int" && type2 == "short int"){
-					cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"movswl "<<-t2.second->offset<<"(%rbp), "<<"%ecx"<<endl;
+					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"movswl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ecx"<<endl;
 					cout<<"cltd"<<endl;
 					cout<<"idivl "<<"%ecx"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "int" && type1 == "short int"){
-					cout<<"movswl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movswl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"cltd"<<endl;
 					cout<<"idivl "<<-t2.second->offset<<"(%rbp)"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int" && type2 == "char"){
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"movsbq "<<-t2.second->offset<<"(%rbp), "<<"%rcx"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"movsbq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rcx"<<endl;
 					cout<<"cqto"<<endl;
 					cout<<"idivq "<<"%rcx"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "long int" && type1 == "char"){
-					cout<<"movsbq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movsbq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"cqto"<<endl;
 					cout<<"idivq "<<-t2.second->offset<<"(%rbp)"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int" && type2 == "short int"){
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"movswq "<<-t2.second->offset<<"(%rbp), "<<"%rcx"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"movswq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rcx"<<endl;
 					cout<<"cqto"<<endl;
 					cout<<"idivq "<<"%rcx"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "long int" && type1 == "short int"){
-					cout<<"movswq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movswq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"cqto"<<endl;
 					cout<<"idivq "<<-t2.second->offset<<"(%rbp)"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int" && type2 == "int"){
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"movslq "<<-t2.second->offset<<"(%rbp), "<<"%rcx"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"movslq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rcx"<<endl;
 					cout<<"cqto"<<endl;
 					cout<<"idivq "<<"%rcx"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "long int" && type1 == "int"){
-					cout<<"movslq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movslq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"cqto"<<endl;
 					cout<<"idivq "<<-t2.second->offset<<"(%rbp)"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				// else if(type1 == "unsigned long int"){
 				// 	if(type2 == "unsigned long int" || type2 == "long int"){
-				// 		cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+				// 		cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 				// 		cout<<"movl $0, %edx"<<endl;
 				// 		cout<<"divq "<<-t2.second->offset<<"(%rbp)"<<endl;
 				// 		cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				// 	}
 				// 	else if(type2 == "unsigned int" || type2 == "int"){
-				// 		cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
-				// 		cout<<"movl "<<-t2.second->offset<<"(%rbp), "<<"%ecx"<<endl;
+				// 		cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+				// 		cout<<"movl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ecx"<<endl;
 				// 		cout<<"movl $0, %edx"<<endl;
 				// 		cout<<"divq "<<"%rcx"<<endl;
 				// 		cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
@@ -772,13 +772,13 @@ void codegen(){
 				// }
 				// else if(type2 == "unsigned long int"){
 				// 	if(type1 == "unsigned long int" || type1 == "long int"){
-				// 		cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+				// 		cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 				// 		cout<<"movl $0, %edx"<<endl;
 				// 		cout<<"divq "<<-t2.second->offset<<"(%rbp)"<<endl;
 				// 		cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				// 	}
 				// 	else if(type1 == "unsigned int" || type1 == "int"){
-				// 		cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+				// 		cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 				// 		cout<<"movl $0, %edx"<<endl;
 				// 		cout<<"divq "<<-t2.second->offset<<"(%rbp)"<<endl;
 				// 		cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
@@ -787,14 +787,14 @@ void codegen(){
 				/* CHECK THE NEXT TWO RULES */
 
 				// else if(type1 == "long int" && type2 == "unsigned int"){
-				// 	cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
-				// 	cout<<"movl "<<-t2.second->offset<<"(%rbp), "<<"%ecx"<<endl;
+				// 	cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+				// 	cout<<"movl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ecx"<<endl;
 				// 	cout<<"movl $0, %edx"<<endl;
 				// 	cout<<"divq "<<"%rcx"<<endl;
 				// 	cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				// }
 				// else if(type1 == "unsigned int" && type2 == "long int"){
-				// 	cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+				// 	cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 				// 	cout<<"movl $0, %edx"<<endl;
 				// 	cout<<"divq "<<-t2.second->offset<<"(%rbp)"<<endl;
 				// 	cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
@@ -802,13 +802,13 @@ void codegen(){
 
 				// else if(type1 == "unsigned int"){
 				// 	if(type2 == "unsigned int"){
-				// 		cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+				// 		cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 				// 		cout<<"mov $0, %edx"<<endl;
 				// 		cout<<"divl "<<-t2.second->offset<<"(%rbp)"<<endl;
 				// 		cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				// 	}
 				// 	else if(type2 == "int"){
-				// 		cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+				// 		cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 				// 		cout<<"mov $0, %edx"<<endl;
 				// 		cout<<"divl "<<-t2.second->offset<<"(%rbp)"<<endl;
 				// 		cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
@@ -816,13 +816,13 @@ void codegen(){
 				// }
 				// else if(type2 == "unsigned int"){
 				// 	if(type1 == "unsigned int"){
-				// 		cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+				// 		cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 				// 		cout<<"mov $0, %edx"<<endl;
 				// 		cout<<"divl "<<-t2.second->offset<<"(%rbp)"<<endl;
 				// 		cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				// 	}
 				// 	else if(type1 == "int"){
-				// 		cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+				// 		cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 				// 		cout<<"mov $0, %edx"<<endl;
 				// 		cout<<"divl "<<-t2.second->offset<<"(%rbp)"<<endl;
 				// 		cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
@@ -835,104 +835,104 @@ void codegen(){
 				qi t2 = instr.op2;
 				string type1 = instr.op1.second->type, type2 = instr.op2.second->type;
 				if(type1 == "int" && type2 == "int"){
-					cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"cltd"<<endl;
 					cout<<"idivl "<<-t2.second->offset<<"(%rbp)"<<endl;
 					cout<<"movl "<<"%edx, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int" && type2 == "long int"){
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"cqto"<<endl;
 					cout<<"idivq "<<-t2.second->offset<<"(%rbp)"<<endl;
 					cout<<"movq "<<"%rdx, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "short int" && type2 == "short int"){
-					cout<<"movw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 					cout<<"cwtd"<<endl;
 					cout<<"idivw "<<-t2.second->offset<<"(%rbp)"<<endl;
 					cout<<"movw "<<"%dx, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "char" && type2 == "char"){
-					cout<<"movsbl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"movsbl "<<-t2.second->offset<<"(%rbp), "<<"%ecx"<<endl;
+					cout<<"movsbl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"movsbl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ecx"<<endl;
 					cout<<"cltd"<<endl;
 					cout<<"idivl "<<"%ecx"<<endl;
 					cout<<"movb "<<"%dl, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "short int" && type2 == "char"){
-					cout<<"movw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
-					cout<<"movsbw "<<-t2.second->offset<<"(%rbp), "<<"%cx"<<endl;
+					cout<<"movw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
+					cout<<"movsbw "<<-t2.second->offset<<"(%rbp)"<<", "<<"%cx"<<endl;
 					cout<<"cwtd"<<endl;
 					cout<<"idivw "<<"%cx"<<endl;
 					cout<<"movw "<<"%dx, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "short int" && type1 == "char"){
-					cout<<"movsbw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movsbw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 					cout<<"cwtd"<<endl;
 					cout<<"idivw "<<-t2.second->offset<<"(%rbp)"<<endl;
 					cout<<"movw "<<"%dx, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "int" && type2 == "char"){
-					cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"movsbl "<<-t2.second->offset<<"(%rbp), "<<"%ecx"<<endl;
+					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"movsbl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ecx"<<endl;
 					cout<<"cltd"<<endl;
 					cout<<"idivl "<<"%ecx"<<endl;
 					cout<<"movl "<<"%edx, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "int" && type1 == "char"){
-					cout<<"movsbl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movsbl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"cltd"<<endl;
 					cout<<"idivl "<<-t2.second->offset<<"(%rbp)"<<endl;
 					cout<<"movl "<<"%edx, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "int" && type2 == "short int"){
-					cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"movswl "<<-t2.second->offset<<"(%rbp), "<<"%ecx"<<endl;
+					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"movswl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ecx"<<endl;
 					cout<<"cltd"<<endl;
 					cout<<"idivl "<<"%ecx"<<endl;
 					cout<<"movl "<<"%edx, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "int" && type1 == "short int"){
-					cout<<"movswl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movswl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"cltd"<<endl;
 					cout<<"idivl "<<-t2.second->offset<<"(%rbp)"<<endl;
 					cout<<"movl "<<"%edx, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int" && type2 == "char"){
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"movsbq "<<-t2.second->offset<<"(%rbp), "<<"%rcx"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"movsbq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rcx"<<endl;
 					cout<<"cqto"<<endl;
 					cout<<"idivq "<<"%rcx"<<endl;
 					cout<<"movq "<<"%rdx, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "long int" && type1 == "char"){
-					cout<<"movsbq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movsbq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"cqto"<<endl;
 					cout<<"idivq "<<-t2.second->offset<<"(%rbp)"<<endl;
 					cout<<"movq "<<"%rdx, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int" && type2 == "short int"){
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"movswq "<<-t2.second->offset<<"(%rbp), "<<"%rcx"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"movswq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rcx"<<endl;
 					cout<<"cqto"<<endl;
 					cout<<"idivq "<<"%rcx"<<endl;
 					cout<<"movq "<<"%rdx, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "long int" && type1 == "short int"){
-					cout<<"movswq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movswq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"cqto"<<endl;
 					cout<<"idivq "<<-t2.second->offset<<"(%rbp)"<<endl;
 					cout<<"movq "<<"%rdx, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int" && type2 == "int"){
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"movslq "<<-t2.second->offset<<"(%rbp), "<<"%rcx"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"movslq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rcx"<<endl;
 					cout<<"cqto"<<endl;
 					cout<<"idivq "<<"%rcx"<<endl;
 					cout<<"movq "<<"%rdx, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "long int" && type1 == "int"){
-					cout<<"movslq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movslq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"cqto"<<endl;
 					cout<<"idivq "<<-t2.second->offset<<"(%rbp)"<<endl;
 					cout<<"movq "<<"%rdx, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
@@ -944,89 +944,89 @@ void codegen(){
 				qi t2 = instr.op2;
 				string type1 = instr.op1.second->type, type2 = instr.op2.second->type;
 				if(type1 == "int" && type2 == "int"){
-					cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"andl "<<-t2.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"andl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int" && type2 == "long int"){
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"andq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"andq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "short int" && type2 == "short int"){
-					cout<<"movw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
-					cout<<"andw "<<-t2.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
+					cout<<"andw "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "char" && type2 == "char"){
-					cout<<"movb "<<-t1.second->offset<<"(%rbp), "<<"%al"<<endl;
-					cout<<"andb "<<-t2.second->offset<<"(%rbp), "<<"%al"<<endl;
+					cout<<"movb "<<-t1.second->offset<<"(%rbp)"<<", "<<"%al"<<endl;
+					cout<<"andb "<<-t2.second->offset<<"(%rbp)"<<", "<<"%al"<<endl;
 					cout<<"movb "<<"%al, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "short int" && type2 == "char"){
-					cout<<"movsbw "<<-t2.second->offset<<"(%rbp), "<<"%ax"<<endl;
-					cout<<"andw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movsbw "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
+					cout<<"andw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "short int" && type1 == "char"){
 					swap(t1, t2);
-					cout<<"movsbw "<<-t2.second->offset<<"(%rbp), "<<"%ax"<<endl;
-					cout<<"andw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movsbw "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
+					cout<<"andw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "int" && type2 == "char"){
-					cout<<"movsbl "<<-t2.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"andl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movsbl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"andl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "int" && type1 == "char"){
 					swap(t1,t2);
-					cout<<"movsbl "<<-t2.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"andl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movsbl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"andl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "int" && type2 == "short int"){
-					cout<<"movswl "<<-t2.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"andl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movswl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"andl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "int" && type1 == "short int"){
 					swap(t1,t2);
-					cout<<"movswl "<<-t2.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"andl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movswl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"andl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int" && type2 == "char"){
-					cout<<"movsbq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"andq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movsbq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"andq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "long int" && type1 == "char"){
 					swap(t1,t2);
-					cout<<"movsbq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"andq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movsbq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"andq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int" && type2 == "short int"){
-					cout<<"movswq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"andq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movswq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"andq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "long int" && type1 == "short int"){
 					swap(t1,t2);
-					cout<<"movswq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"andq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movswq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"andq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int" && type2 == "int"){
-					cout<<"movslq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"andq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movslq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"andq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "long int" && type1 == "int"){
 					swap(t1,t2);
-					cout<<"movslq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"andq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movslq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"andq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 			}
@@ -1036,89 +1036,89 @@ void codegen(){
 				qi t2 = instr.op2;
 				string type1 = instr.op1.second->type, type2 = instr.op2.second->type;
 				if(type1 == "int" && type2 == "int"){
-					cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"orl "<<-t2.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"orl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int" && type2 == "long int"){
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"orq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"orq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "short int" && type2 == "short int"){
-					cout<<"movw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
-					cout<<"orw "<<-t2.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
+					cout<<"orw "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "char" && type2 == "char"){
-					cout<<"movb "<<-t1.second->offset<<"(%rbp), "<<"%al"<<endl;
-					cout<<"orb "<<-t2.second->offset<<"(%rbp), "<<"%al"<<endl;
+					cout<<"movb "<<-t1.second->offset<<"(%rbp)"<<", "<<"%al"<<endl;
+					cout<<"orb "<<-t2.second->offset<<"(%rbp)"<<", "<<"%al"<<endl;
 					cout<<"movb "<<"%al, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "short int" && type2 == "char"){
-					cout<<"movsbw "<<-t2.second->offset<<"(%rbp), "<<"%ax"<<endl;
-					cout<<"orw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movsbw "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
+					cout<<"orw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "short int" && type1 == "char"){
 					swap(t1, t2);
-					cout<<"movsbw "<<-t2.second->offset<<"(%rbp), "<<"%ax"<<endl;
-					cout<<"orw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movsbw "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
+					cout<<"orw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "int" && type2 == "char"){
-					cout<<"movsbl "<<-t2.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"orl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movsbl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"orl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "int" && type1 == "char"){
 					swap(t1,t2);
-					cout<<"movsbl "<<-t2.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"orl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movsbl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"orl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "int" && type2 == "short int"){
-					cout<<"movswl "<<-t2.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"orl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movswl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"orl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "int" && type1 == "short int"){
 					swap(t1,t2);
-					cout<<"movswl "<<-t2.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"orl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movswl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"orl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int" && type2 == "char"){
-					cout<<"movsbq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"orq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movsbq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"orq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "long int" && type1 == "char"){
 					swap(t1,t2);
-					cout<<"movsbq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"orq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movsbq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"orq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int" && type2 == "short int"){
-					cout<<"movswq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"orq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movswq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"orq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "long int" && type1 == "short int"){
 					swap(t1,t2);
-					cout<<"movswq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"orq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movswq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"orq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int" && type2 == "int"){
-					cout<<"movslq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"orq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movslq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"orq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "long int" && type1 == "int"){
 					swap(t1,t2);
-					cout<<"movslq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"orq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movslq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"orq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 			}
@@ -1128,89 +1128,89 @@ void codegen(){
 				qi t2 = instr.op2;
 				string type1 = instr.op1.second->type, type2 = instr.op2.second->type;
 				if(type1 == "int" && type2 == "int"){
-					cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"xorl "<<-t2.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"xorl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int" && type2 == "long int"){
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"xorq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"xorq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "short int" && type2 == "short int"){
-					cout<<"movw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
-					cout<<"xorw "<<-t2.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
+					cout<<"xorw "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "char" && type2 == "char"){
-					cout<<"movb "<<-t1.second->offset<<"(%rbp), "<<"%al"<<endl;
-					cout<<"xorb "<<-t2.second->offset<<"(%rbp), "<<"%al"<<endl;
+					cout<<"movb "<<-t1.second->offset<<"(%rbp)"<<", "<<"%al"<<endl;
+					cout<<"xorb "<<-t2.second->offset<<"(%rbp)"<<", "<<"%al"<<endl;
 					cout<<"movb "<<"%al, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "short int" && type2 == "char"){
-					cout<<"movsbw "<<-t2.second->offset<<"(%rbp), "<<"%ax"<<endl;
-					cout<<"xorw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movsbw "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
+					cout<<"xorw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "short int" && type1 == "char"){
 					swap(t1, t2);
-					cout<<"movsbw "<<-t2.second->offset<<"(%rbp), "<<"%ax"<<endl;
-					cout<<"xorw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movsbw "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
+					cout<<"xorw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "int" && type2 == "char"){
-					cout<<"movsbl "<<-t2.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"xorl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movsbl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"xorl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "int" && type1 == "char"){
 					swap(t1,t2);
-					cout<<"movsbl "<<-t2.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"xorl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movsbl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"xorl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "int" && type2 == "short int"){
-					cout<<"movswl "<<-t2.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"xorl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movswl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"xorl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "int" && type1 == "short int"){
 					swap(t1,t2);
-					cout<<"movswl "<<-t2.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"xorl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movswl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"xorl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int" && type2 == "char"){
-					cout<<"movsbq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"xorq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movsbq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"xorq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "long int" && type1 == "char"){
 					swap(t1,t2);
-					cout<<"movsbq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"xorq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movsbq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"xorq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int" && type2 == "short int"){
-					cout<<"movswq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"xorq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movswq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"xorq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "long int" && type1 == "short int"){
 					swap(t1,t2);
-					cout<<"movswq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"xorq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movswq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"xorq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int" && type2 == "int"){
-					cout<<"movslq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"xorq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movslq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"xorq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "long int" && type1 == "int"){
 					swap(t1,t2);
-					cout<<"movslq "<<-t2.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"xorq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movslq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"xorq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 			}
@@ -1220,22 +1220,22 @@ void codegen(){
 				string type1 = instr.op1.second->type;
 				if(type1 == "int"){
 					cout<<"addl $1, "<<-t1.second->offset<<"(%rbp)"<<endl;
-					cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int"){
 					cout<<"addq $1, "<<-t1.second->offset<<"(%rbp)"<<endl;
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "short int"){
 					cout<<"addw $1, "<<-t1.second->offset<<"(%rbp)"<<endl;
-					cout<<"movw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "char"){
 					cout<<"addb $1, "<<-t1.second->offset<<"(%rbp)"<<endl;
-					cout<<"movb "<<-t1.second->offset<<"(%rbp), "<<"%al"<<endl;
+					cout<<"movb "<<-t1.second->offset<<"(%rbp)"<<", "<<"%al"<<endl;
 					cout<<"movb "<<"%al, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 
@@ -1243,7 +1243,7 @@ void codegen(){
 					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1);
 					cout<<"addq $"<<size<<", "<<-t1.second->offset<<"(%rbp)"<<endl;
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 			}
@@ -1252,22 +1252,22 @@ void codegen(){
 				qi t1 = instr.op1;
 				string type1 = instr.op1.second->type;
 				if(type1 == "int"){
-					cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 					cout<<"addl $1, "<<-t1.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "short int"){
-					cout<<"movw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 					cout<<"addw $1, "<<-t1.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int"){
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 					cout<<"addq $1, "<<-t1.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "char"){
-					cout<<"movb "<<-t1.second->offset<<"(%rbp), "<<"%al"<<endl;
+					cout<<"movb "<<-t1.second->offset<<"(%rbp)"<<", "<<"%al"<<endl;
 					cout<<"movb "<<"%al, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 					cout<<"addb $1, "<<-t1.second->offset<<"(%rbp)"<<endl;
 				}
@@ -1275,7 +1275,7 @@ void codegen(){
 				else if(type1.back() == '*'){
 					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1);
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 					cout<<"addq $"<<size<<", "<<-t1.second->offset<<"(%rbp)"<<endl;
 				}
@@ -1286,22 +1286,22 @@ void codegen(){
 				string type1 = instr.op1.second->type;
 				if(type1 == "int"){
 					cout<<"subl $1, "<<-t1.second->offset<<"(%rbp)"<<endl;
-					cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int"){
 					cout<<"subq $1, "<<-t1.second->offset<<"(%rbp)"<<endl;
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "short int"){
 					cout<<"subw $1, "<<-t1.second->offset<<"(%rbp)"<<endl;
-					cout<<"movw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "char"){
 					cout<<"subb $1, "<<-t1.second->offset<<"(%rbp)"<<endl;
-					cout<<"movb "<<-t1.second->offset<<"(%rbp), "<<"%al"<<endl;
+					cout<<"movb "<<-t1.second->offset<<"(%rbp)"<<", "<<"%al"<<endl;
 					cout<<"movb "<<"%al, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 
@@ -1309,7 +1309,7 @@ void codegen(){
 					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1);
 					cout<<"subq $"<<size<<", "<<-t1.second->offset<<"(%rbp)"<<endl;
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 			}
@@ -1318,22 +1318,22 @@ void codegen(){
 				qi t1 = instr.op1;
 				string type1 = instr.op1.second->type;
 				if(type1 == "int"){
-					cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 					cout<<"subl $1, "<<-t1.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int"){
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 					cout<<"subq $1, "<<-t1.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "short int"){
-					cout<<"movw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 					cout<<"subw $1, "<<-t1.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "char"){
-					cout<<"movb "<<-t1.second->offset<<"(%rbp), "<<"%al"<<endl;
+					cout<<"movb "<<-t1.second->offset<<"(%rbp)"<<", "<<"%al"<<endl;
 					cout<<"movb "<<"%al, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 					cout<<"subb $1, "<<-t1.second->offset<<"(%rbp)"<<endl;
 				}
@@ -1341,7 +1341,7 @@ void codegen(){
 				else if(type1.back() == '*'){
 					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1);
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 					cout<<"subq $"<<size<<", "<<-t1.second->offset<<"(%rbp)"<<endl;
 				}
@@ -1352,104 +1352,104 @@ void codegen(){
 				qi t2 = instr.op2;
 				string type1 = instr.op1.second->type, type2 = instr.op2.second->type;
 				if(type1 == "int" && type2 == "int"){
-					cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"movl "<<-t2.second->offset<<"(%rbp), "<<"%ecx"<<endl;
+					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"movl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ecx"<<endl;
 					cout<<"sall %cl, %eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int" && type2 == "long int"){
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"movq "<<-t2.second->offset<<"(%rbp), "<<"%rcx"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"movq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rcx"<<endl;
 					cout<<"salq %cl, %rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "short int" && type2 == "short int"){
-					cout<<"movw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
-					cout<<"movw "<<-t2.second->offset<<"(%rbp), "<<"%cx"<<endl;
+					cout<<"movw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
+					cout<<"movw "<<-t2.second->offset<<"(%rbp)"<<", "<<"%cx"<<endl;
 					cout<<"salw %cl, %ax"<<endl;
 					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "char" && type2 == "char"){
-					cout<<"movb "<<-t1.second->offset<<"(%rbp), "<<"%al"<<endl;
-					cout<<"movb "<<-t2.second->offset<<"(%rbp), "<<"%cl"<<endl;
+					cout<<"movb "<<-t1.second->offset<<"(%rbp)"<<", "<<"%al"<<endl;
+					cout<<"movb "<<-t2.second->offset<<"(%rbp)"<<", "<<"%cl"<<endl;
 					cout<<"salb %cl, %al"<<endl;
 					cout<<"movb "<<"%al, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "short int" && type2 == "char"){
-					cout<<"movsbw "<<-t2.second->offset<<"(%rbp), "<<"%cx"<<endl;
-					cout<<"movw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movsbw "<<-t2.second->offset<<"(%rbp)"<<", "<<"%cx"<<endl;
+					cout<<"movw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 					cout<<"salw %cl, %ax"<<endl;
 					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "short int" && type1 == "char"){
 					swap(t1,t2);
-					cout<<"movsbw "<<-t2.second->offset<<"(%rbp), "<<"%cx"<<endl;
-					cout<<"movw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movsbw "<<-t2.second->offset<<"(%rbp)"<<", "<<"%cx"<<endl;
+					cout<<"movw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 					cout<<"salw %cl, %ax"<<endl;
 					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "int" && type2 == "char"){
-					cout<<"movsbl "<<-t2.second->offset<<"(%rbp), "<<"%ecx"<<endl;
-					cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movsbl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ecx"<<endl;
+					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"sall %cl, %eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "int" && type1 == "char"){
 					swap(t1,t2);
-					cout<<"movsbl "<<-t2.second->offset<<"(%rbp), "<<"%ecx"<<endl;
-					cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movsbl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ecx"<<endl;
+					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"sall %cl, %eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "int" && type2 == "short int"){
-					cout<<"movswl "<<-t2.second->offset<<"(%rbp), "<<"%ecx"<<endl;
-					cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movswl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ecx"<<endl;
+					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"sall %cl, %eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "int" && type1 == "short int"){
 					swap(t1,t2);
-					cout<<"movswl "<<-t2.second->offset<<"(%rbp), "<<"%ecx"<<endl;
-					cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movswl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ecx"<<endl;
+					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"sall %cl, %eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int" && type2 == "char"){
-					cout<<"movsbq "<<-t2.second->offset<<"(%rbp), "<<"%rcx"<<endl;
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movsbq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rcx"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"salq %cl, %rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "long int" && type1 == "char"){
 					swap(t1,t2);
-					cout<<"movsbq "<<-t2.second->offset<<"(%rbp), "<<"%rcx"<<endl;
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movsbq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rcx"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"salq %cl, %rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int" && type2 == "short int"){
-					cout<<"movswq "<<-t2.second->offset<<"(%rbp), "<<"%rcx"<<endl;
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movswq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rcx"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"salq %cl, %rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "long int" && type1 == "short int"){
 					swap(t1,t2);
-					cout<<"movswq "<<-t2.second->offset<<"(%rbp), "<<"%rcx"<<endl;
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movswq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rcx"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"salq %cl, %rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int" && type2 == "int"){
-					cout<<"movslq "<<-t2.second->offset<<"(%rbp), "<<"%rcx"<<endl;
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movslq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rcx"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"salq %cl, %rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "long int" && type1 == "int"){
 					swap(t1,t2);
-					cout<<"movslq "<<-t2.second->offset<<"(%rbp), "<<"%rcx"<<endl;
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movslq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rcx"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"salq %cl, %rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
@@ -1460,104 +1460,104 @@ void codegen(){
 				qi t2 = instr.op2;
 				string type1 = instr.op1.second->type, type2 = instr.op2.second->type;
 				if(type1 == "int" && type2 == "int"){
-					cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
-					cout<<"movl "<<-t2.second->offset<<"(%rbp), "<<"%ecx"<<endl;
+					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+					cout<<"movl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ecx"<<endl;
 					cout<<"sarl %cl, %eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int" && type2 == "long int"){
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
-					cout<<"movq "<<-t2.second->offset<<"(%rbp), "<<"%rcx"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"movq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rcx"<<endl;
 					cout<<"sarq %cl, %rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "short int" && type2 == "short int"){
-					cout<<"movw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
-					cout<<"movw "<<-t2.second->offset<<"(%rbp), "<<"%cx"<<endl;
+					cout<<"movw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
+					cout<<"movw "<<-t2.second->offset<<"(%rbp)"<<", "<<"%cx"<<endl;
 					cout<<"sarw %cl, %ax"<<endl;
 					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "char" && type2 == "char"){
-					cout<<"movb "<<-t1.second->offset<<"(%rbp), "<<"%al"<<endl;
-					cout<<"movb "<<-t2.second->offset<<"(%rbp), "<<"%cl"<<endl;
+					cout<<"movb "<<-t1.second->offset<<"(%rbp)"<<", "<<"%al"<<endl;
+					cout<<"movb "<<-t2.second->offset<<"(%rbp)"<<", "<<"%cl"<<endl;
 					cout<<"sarb %cl, %al"<<endl;
 					cout<<"movb "<<"%al, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "short int" && type2 == "char"){
-					cout<<"movsbw "<<-t2.second->offset<<"(%rbp), "<<"%cx"<<endl;
-					cout<<"movw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movsbw "<<-t2.second->offset<<"(%rbp)"<<", "<<"%cx"<<endl;
+					cout<<"movw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 					cout<<"sarw %cl, %ax"<<endl;
 					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "short int" && type1 == "char"){
 					swap(t1,t2);
-					cout<<"movsbw "<<-t2.second->offset<<"(%rbp), "<<"%cx"<<endl;
-					cout<<"movw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movsbw "<<-t2.second->offset<<"(%rbp)"<<", "<<"%cx"<<endl;
+					cout<<"movw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 					cout<<"sarw %cl, %ax"<<endl;
 					cout<<"movw "<<"%ax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "int" && type2 == "char"){
-					cout<<"movsbl "<<-t2.second->offset<<"(%rbp), "<<"%ecx"<<endl;
-					cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movsbl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ecx"<<endl;
+					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"sarl %cl, %eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "int" && type1 == "char"){
 					swap(t1,t2);
-					cout<<"movsbl "<<-t2.second->offset<<"(%rbp), "<<"%ecx"<<endl;
-					cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movsbl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ecx"<<endl;
+					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"sarl %cl, %eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "int" && type2 == "short int"){
-					cout<<"movswl "<<-t2.second->offset<<"(%rbp), "<<"%ecx"<<endl;
-					cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movswl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ecx"<<endl;
+					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"sarl %cl, %eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "int" && type1 == "short int"){
 					swap(t1,t2);
-					cout<<"movswl "<<-t2.second->offset<<"(%rbp), "<<"%ecx"<<endl;
-					cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movswl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%ecx"<<endl;
+					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"sarl %cl, %eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int" && type2 == "char"){
-					cout<<"movsbq "<<-t2.second->offset<<"(%rbp), "<<"%rcx"<<endl;
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movsbq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rcx"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"sarq %cl, %rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "long int" && type1 == "char"){
 					swap(t1,t2);
-					cout<<"movsbq "<<-t2.second->offset<<"(%rbp), "<<"%rcx"<<endl;
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movsbq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rcx"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"sarq %cl, %rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int" && type2 == "short int"){
-					cout<<"movswq "<<-t2.second->offset<<"(%rbp), "<<"%rcx"<<endl;
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movswq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rcx"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"sarq %cl, %rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "long int" && type1 == "short int"){
 					swap(t1,t2);
-					cout<<"movswq "<<-t2.second->offset<<"(%rbp), "<<"%rcx"<<endl;
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movswq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rcx"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"sarq %cl, %rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int" && type2 == "int"){
-					cout<<"movslq "<<-t2.second->offset<<"(%rbp), "<<"%rcx"<<endl;
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movslq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rcx"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"sarq %cl, %rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type2 == "long int" && type1 == "int"){
 					swap(t1,t2);
-					cout<<"movslq "<<-t2.second->offset<<"(%rbp), "<<"%rcx"<<endl;
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movslq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rcx"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"sarq %cl, %rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 				}
@@ -1584,15 +1584,15 @@ void codegen(){
 					else if (op == ">=int") op = "<=int";
 				}
 
-				if (type1 == "char") 			cout<<"movsbq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
-				else if (type1 == "short int")  cout<<"movswq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
-				else if (type1 == "int") 		cout<<"movslq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
-				else if (type1 == "long int") 	cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+				if (type1 == "char") 			cout<<"movsbq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+				else if (type1 == "short int")  cout<<"movswq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+				else if (type1 == "int") 		cout<<"movslq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+				else if (type1 == "long int") 	cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 
-				if (type2 == "char") 			cout<<"cmpb "<<-t2.second->offset<<"(%rbp), %al"<<endl;	
-				else if (type2 == "short int")	cout<<"cmpw "<<-t2.second->offset<<"(%rbp), %ax"<<endl;	
-				else if (type2 == "int") 		cout<<"cmpl "<<-t2.second->offset<<"(%rbp), %eax"<<endl;	
-				else if (type2 == "long int") 	cout<<"cmpq "<<-t2.second->offset<<"(%rbp), %rax"<<endl;
+				if (type2 == "char") 			cout<<"cmpb "<<-t2.second->offset<<"(%rbp)"<<", %al"<<endl;	
+				else if (type2 == "short int")	cout<<"cmpw "<<-t2.second->offset<<"(%rbp)"<<", %ax"<<endl;	
+				else if (type2 == "int") 		cout<<"cmpl "<<-t2.second->offset<<"(%rbp)"<<", %eax"<<endl;	
+				else if (type2 == "long int") 	cout<<"cmpq "<<-t2.second->offset<<"(%rbp)"<<", %rax"<<endl;
 
 				cout<<"set";
 				if (op == "<int") 		cout<<"l";
@@ -1613,23 +1613,23 @@ void codegen(){
 				qi t2 = instr.res;
 				string type1 = t1.second->type;
 				if(type1 == "int" || type1 == "unsigned int"){
-					cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax"<<", "<<-t2.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "short int" || type1 == "unsigned short int"){
-					cout<<"movw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 					cout<<"movw "<<"%ax"<<", "<<-t2.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int" || type1 == "unsigned long int"){
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax"<<", "<<-t2.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "char"){
-					cout<<"movb "<<-t1.second->offset<<"(%rbp), "<<"%al"<<endl;
+					cout<<"movb "<<-t1.second->offset<<"(%rbp)"<<", "<<"%al"<<endl;
 					cout<<"movb "<<"%al"<<", "<<-t2.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1.back()=='*'){
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax"<<", "<<-t2.second->offset<<"(%rbp)"<<endl;
 				}
 			}
@@ -1639,22 +1639,22 @@ void codegen(){
 				qi t2 = instr.res;
 				string type1 = t1.second->type;
 				if(type1 == "int" || type1 == "unsigned int"){
-					cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"negl "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax"<<", "<<-t2.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "short int" || type1 == "unsigned short int"){
-					cout<<"movw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 					cout<<"negw "<<"%ax"<<endl;
 					cout<<"movw "<<"%ax"<<", "<<-t2.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int" || type1 == "unsigned long int"){
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"negq "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax"<<", "<<-t2.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "char"){
-					cout<<"movb "<<-t1.second->offset<<"(%rbp), "<<"%al"<<endl;
+					cout<<"movb "<<-t1.second->offset<<"(%rbp)"<<", "<<"%al"<<endl;
 					cout<<"negb "<<"%al"<<endl;
 					cout<<"movb "<<"%al"<<", "<<-t2.second->offset<<"(%rbp)"<<endl;
 				}
@@ -1701,22 +1701,22 @@ void codegen(){
 				qi t2 = instr.res;
 				string type1 = t1.second->type;
 				if(type1 == "int" || type1 == "unsigned int"){
-					cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"notl "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax"<<", "<<-t2.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "short int" || type1 == "unsigned short int"){
-					cout<<"movw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 					cout<<"notw "<<"%ax"<<endl;
 					cout<<"movw "<<"%ax"<<", "<<-t2.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int" || type1 == "unsigned long int"){
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"notq "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax"<<", "<<-t2.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "char"){
-					cout<<"movb "<<-t1.second->offset<<"(%rbp), "<<"%al"<<endl;
+					cout<<"movb "<<-t1.second->offset<<"(%rbp)"<<", "<<"%al"<<endl;
 					cout<<"notb "<<"%al"<<endl;
 					cout<<"movb "<<"%al"<<", "<<-t2.second->offset<<"(%rbp)"<<endl;
 				}
@@ -1726,7 +1726,7 @@ void codegen(){
 				qi t1 = instr.op1;
 				qi t2 = instr.res;
 				string type1 = t1.second->type;
-				cout<<"leaq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+				cout<<"leaq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 				cout<<"movq "<<"%rax, "<<-t2.second->offset<<"(%rbp)"<<endl;
 			}
 
@@ -1734,21 +1734,21 @@ void codegen(){
 				qi t1 = instr.op1;
 				qi t2 = instr.res;
 				string type1 = t2.second->type;
-				cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rcx"<<endl;
+				cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rcx"<<endl;
 				if(type1 == "int" || type1 == "unsigned int"){
-					cout<<"movl "<<"(%rcx), "<<"%eax"<<endl;
+					cout<<"movl "<<"(%rcx)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<-t2.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "short int" || type1 == "unsigned short int"){
-					cout<<"movw "<<"(%rcx), "<<"%ax"<<endl;
+					cout<<"movw "<<"(%rcx)"<<", "<<"%ax"<<endl;
 					cout<<"movw "<<"%ax, "<<-t2.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "long int" || type1 == "unsigned long int" || type1.back()=='*'){
-					cout<<"movq "<<"(%rcx), "<<"%rax"<<endl;
+					cout<<"movq "<<"(%rcx)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-t2.second->offset<<"(%rbp)"<<endl;
 				}
 				else if(type1 == "char"){
-					cout<<"movb "<<"(%rcx), "<<"%al"<<endl;
+					cout<<"movb "<<"(%rcx)"<<", "<<"%al"<<endl;
 					cout<<"movb "<<"%al, "<<-t2.second->offset<<"(%rbp)"<<endl;
 				}
 			}
@@ -1776,11 +1776,11 @@ void codegen(){
 				}
 				else if(t1.first[0]=='.'){ //RIP address for floats
 					if(type1 == "float"){
-						cout<<"movss "<<t1.first<<"(%rip), "<<"%xmm0"<<endl;
+						cout<<"movss "<<t1.first<<"(%rip)"<<", "<<"%xmm0"<<endl;
 						cout<<"movss "<<"%xmm0, "<<-t2.second->offset<<"(%rbp)"<<endl;
 					}
 					else if(type1 == "double"){
-						cout<<"movsd "<<t1.first<<"(%rip), "<<"%xmm0"<<endl;
+						cout<<"movsd "<<t1.first<<"(%rip)"<<", "<<"%xmm0"<<endl;
 						cout<<"movsd "<<"%xmm0, "<<-t2.second->offset<<"(%rbp)"<<endl;
 					}
 					else if(type1 == "long double"){
@@ -1790,23 +1790,23 @@ void codegen(){
 				}
 				else{
 					if(type1 == "int"){
-						cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+						cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 						cout<<"movl "<<"%eax, "<<-t2.second->offset<<"(%rbp)"<<endl;
 					}
 					else if(type1 == "short int"){
-						cout<<"movw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
+						cout<<"movw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 						cout<<"movw "<<"%ax, "<<-t2.second->offset<<"(%rbp)"<<endl;
 					}
 					else if(type1 == "long int"){
-						cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+						cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 						cout<<"movq "<<"%rax, "<<-t2.second->offset<<"(%rbp)"<<endl;
 					}
 					else if(type1 == "char"){
-						cout<<"movb "<<-t1.second->offset<<"(%rbp), "<<"%al"<<endl;
+						cout<<"movb "<<-t1.second->offset<<"(%rbp)"<<", "<<"%al"<<endl;
 						cout<<"movb "<<"%al, "<<-t2.second->offset<<"(%rbp)"<<endl;
 					}
 					else if(type1.back()=='*'){
-						cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+						cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 						cout<<"movq "<<"%rax, "<<-t2.second->offset<<"(%rbp)"<<endl;
 					}
 				}
@@ -1815,25 +1815,25 @@ void codegen(){
 				qi t1 = instr.op1;
 				qi t2 = instr.res;
 				string type1 = t1.second->type;
-				cout<<"movq "<<-t2.second->offset<<"(%rbp), "<<"%rcx"<<endl;
+				cout<<"movq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rcx"<<endl;
 				if(type1 == "int"){
-					cout<<"movl "<<-t1.second->offset<<"(%rbp), "<<"%eax"<<endl;
+					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"movl "<<"%eax, "<<"(%rcx)"<<endl;
 				}
 				else if(type1 == "short int"){
-					cout<<"movw "<<-t1.second->offset<<"(%rbp), "<<"%ax"<<endl;
+					cout<<"movw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
 					cout<<"movw "<<"%ax, "<<"(%rcx)"<<endl;
 				}
 				else if(type1 == "long int"){
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<"(%rcx)"<<endl;
 				}
 				else if(type1 == "char"){
-					cout<<"movb "<<-t1.second->offset<<"(%rbp), "<<"%al"<<endl;
+					cout<<"movb "<<-t1.second->offset<<"(%rbp)"<<", "<<"%al"<<endl;
 					cout<<"movb "<<"%al, "<<"(%rcx)"<<endl;
 				}
 				else if(type1.back()=='*'){
-					cout<<"movq "<<-t1.second->offset<<"(%rbp), "<<"%rax"<<endl;
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<"(%rcx)"<<endl;
 				}
 			}

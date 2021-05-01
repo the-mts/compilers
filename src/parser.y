@@ -158,7 +158,7 @@ postfix_expression
 																		printf("\e[1;31mError [line %d]:\e[0m Array subscript is not an integer.\n",line);
 																		exit(-1);
 																	}
-																	if($3->node_data.find("int")==string::npos && $3->node_data.find("char")==string::npos){
+																	if(is_struct_or_union($3->node_data) || ($3->node_data.find("int")==string::npos && $3->node_data.find("char")==string::npos)){
 																		printf("\e[1;31mError [line %d]:\e[0m Array subscript is not an integer.\n",line);
 																		exit(-1);
 																	}
@@ -169,7 +169,7 @@ postfix_expression
 																	if($3->token == CONSTANT){
 																		$3->place = emitConstant($3);
 																	}
-																	$$->place = getNewTemp($$->node_data);
+																	$$->place = getNewTemp($$->node_data, $$->ttentry);
 																	backpatch($3->nextlist, nextquad);
 																	int x = emit("[]", $1->place, $3->place, $$->place);
 																	// backpatch($3->truelist, x);		// Have to check
@@ -205,7 +205,7 @@ postfix_expression
 																	$$->ttentry = entry->ttentry;
 
 																	//////////////// 3AC ////////////////
-																	$$->place = getNewTemp($$->node_data);
+																	$$->place = getNewTemp($$->node_data, $$->ttentry);
 																	emit("CALL", $1->place, {"", NULL}, $$->place, 0);
 																	/////////////////////////////////////
 																}
@@ -325,7 +325,7 @@ postfix_expression
 																			//////////////// 3AC ////////////////
 																			if(tmp1 != tmp2){
 																				string op2 = "("+tmp1 + "-to-" + tmp2+")"; // Modify
-																				qi tmp = getNewTemp(tmp2);  
+																				qi tmp = getNewTemp(tmp2, entry1);  
 																				int x = emit(op2, $3->v[i]->place, {"", NULL}, tmp);
 																				arg_names.push_back(tmp);
 																			}
@@ -346,7 +346,7 @@ postfix_expression
 																	for(auto i: arg_names){
 																		emit("PARAM", i, {"", NULL}, {"", NULL});
 																	}
-																	$$->place = getNewTemp($$->node_data);
+																	$$->place = getNewTemp($$->node_data, $$->ttentry);
 																	emit("CALL", $1->place, {"", NULL}, $$->place, $3->sz);
 																	/////////////////////////////////////
 																}
@@ -440,7 +440,10 @@ postfix_expression
 																	$$ = node_(1, "exp++", -1);
 																	$$->v[0] = $1;
 																	$$->node_data = $1->node_data;
-																	tt_entry* type_entry = type_lookup($1->node_data);
+																	tt_entry* type_entry = NULL;
+																	if($1->node_data.back()!='*' && $1->node_data.back()!=']'){
+																		type_entry = $1->ttentry;
+																	}
 																	if(type_entry != NULL){
 																		printf("\e[1;31mError [line %d]:\e[0m Increment operator cannot be applied on non-integer, non-floating point and non pointer types.\n",line);
 																		exit(-1);
@@ -453,7 +456,7 @@ postfix_expression
 																	$$->ttentry = $1->ttentry;
 
 																	//////////////// 3AC ////////////////
-																	$$->place = getNewTemp($$->node_data);
+																	$$->place = getNewTemp($$->node_data, $$->ttentry);
 																	// int x = emit("x++", $1->place, {"", NULL}, $$->place);
 
 																	string type = $1->node_data;
@@ -461,14 +464,15 @@ postfix_expression
 																		emit("=", $1->place, {"", NULL}, $$->place);
 																		auto consttmp = getNewTemp("char");
 																		emit("=", {"$1", NULL}, {"", NULL}, consttmp);
-																		if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.find("*")!=string::npos){
-																			auto tmp = getNewTemp($1->node_data);
+
+																		if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.back()=='*'){
+																			auto tmp = getNewTemp($1->node_data, $1->ttentry);
 																			int x = emit("+int", $1->place, consttmp, tmp);
 																			emit("ADDR=", tmp, {"", NULL}, $1->v[0]->place);
 																		}
 																		else{
-																			auto tmp = getNewTemp(type);
-																			auto tmp2 = getNewTemp(type);
+																			auto tmp = getNewTemp(type, type_entry);
+																			auto tmp2 = getNewTemp(type, type_entry);
 																			int x = emit("inttoreal", consttmp, {"", NULL}, tmp);
 																			emit("+real", $1->place, tmp, tmp2);
 																			emit("ADDR=", tmp2, {"", NULL}, $1->v[0]->place);
@@ -486,7 +490,10 @@ postfix_expression
 																	}
 																	$$ = node_(1, "exp--", -1); $$->v[0] = $1;
 																	$$->node_data = $1->node_data;
-																	tt_entry* type_entry = type_lookup($1->node_data);
+																	tt_entry* type_entry = NULL;
+																	if($1->node_data.back()!='*' && $1->node_data.back()!=']'){
+																		type_entry = $1->ttentry;
+																	}
 																	if(type_entry != NULL){
 																		printf("\e[1;31mError [line %d]:\e[0m Decrement operator cannot be applied on non-integer, non-floating point and non pointer types.\n",line);
 																		exit(-1);
@@ -499,7 +506,7 @@ postfix_expression
 																	$$->ttentry = $1->ttentry;
 
 																	//////////////// 3AC ////////////////
-																	$$->place = getNewTemp($$->node_data);
+																	$$->place = getNewTemp($$->node_data, $$->ttentry);
 																	// int x = emit("x--", $1->place, {"", NULL}, $$->place);
 
 																	
@@ -508,14 +515,14 @@ postfix_expression
 																		emit("=", $1->place, {"", NULL}, $$->place);
 																		auto consttmp = getNewTemp("char");
 																		emit("=", {"$1", NULL}, {"", NULL}, consttmp);
-																		if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.find("*")!=string::npos){
-																			auto tmp = getNewTemp($1->node_data);
+																		if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.back() == '*'){
+																			auto tmp = getNewTemp($1->node_data, $1->ttentry);
 																			int x = emit("-int", $1->place, consttmp, tmp);
 																			emit("ADDR=", tmp, {"", NULL}, $1->v[0]->place);
 																		}
 																		else{
-																			auto tmp = getNewTemp(type);
-																			auto tmp2 = getNewTemp(type);
+																			auto tmp = getNewTemp(type, type_entry);
+																			auto tmp2 = getNewTemp(type, type_entry);
 																			int x = emit("inttoreal", consttmp, {"", NULL}, tmp);
 																			emit("-real", $1->place, tmp, tmp2);
 																			emit("ADDR=", tmp2, {"", NULL}, $1->v[0]->place);
@@ -559,7 +566,10 @@ unary_expression
 																	$$ = node_(1,"++exp",-1);
 																	$$->v[0] = $2;
 																	$$->node_data = $2->node_data;
-																	tt_entry* type_entry = type_lookup($2->node_data);
+																	tt_entry* type_entry = NULL;
+																	if($2->node_data.back()!='*' && $2->node_data.back()!=']'){
+																		type_entry = $2->ttentry;
+																	}
 																	if(type_entry != NULL){
 																		printf("\e[1;31mError [line %d]:\e[0m Increment operator cannot be applied on non-integer, non-floating point and non pointer types.\n",line);
 																		exit(-1);
@@ -572,22 +582,22 @@ unary_expression
 																	$$->ttentry = $2->ttentry;
 
 																	//////////////// 3AC ////////////////
-																	$$->place = getNewTemp($$->node_data);
+																	$$->place = getNewTemp($$->node_data, $$->ttentry);
 																	// int x = emit("++x", $2->place, {"", NULL}, $$->place);
 																	
 																	string type = $2->node_data;
 																	if(!strcmp($2->name, "UNARY*")){
 																		auto consttmp = getNewTemp("char");
 																		emit("=", {"$1", NULL}, {"", NULL}, consttmp);
-																		if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.find("*")!=string::npos){
-																			auto tmp = getNewTemp($2->node_data);
+																		if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.back()=='*'){
+																			auto tmp = getNewTemp($2->node_data, $2->ttentry);
 																			int x = emit("+int", $2->place, consttmp, tmp);
 																			emit("ADDR=", tmp, {"", NULL}, $2->v[0]->place);
 																			emit("=", tmp, {"", NULL}, $$->place);
 																		}
 																		else{
-																			auto tmp = getNewTemp(type);
-																			auto tmp2 = getNewTemp(type);
+																			auto tmp = getNewTemp(type, type_entry);
+																			auto tmp2 = getNewTemp(type, type_entry);
 																			int x = emit("inttoreal", consttmp, {"", NULL}, tmp);
 																			emit("+real", $2->place, tmp, tmp2);
 																			emit("ADDR=", tmp2, {"", NULL}, $2->v[0]->place);
@@ -607,7 +617,10 @@ unary_expression
 																	$$ = node_(1,"++exp",-1);
 																	$$->v[0] = $2;
 																	$$->node_data = $2->node_data;
-																	tt_entry* type_entry = type_lookup($2->node_data);
+																	tt_entry* type_entry = NULL;
+																	if($2->node_data.back()!='*' && $2->node_data.back()!=']'){
+																		type_entry = $2->ttentry;
+																	}
 																	if(type_entry != NULL){
 																		printf("\e[1;31mError [line %d]:\e[0m Decrement operator cannot be applied on non-integer, non-floating point and non pointer types.\n",line);
 																		exit(-1);
@@ -620,22 +633,22 @@ unary_expression
 																	$$->ttentry = $2->ttentry;
 
 																	//////////////// 3AC ////////////////
-																	$$->place = getNewTemp($$->node_data);
+																	$$->place = getNewTemp($$->node_data, $$->ttentry);
 																	// int x = emit("--x", $2->place, {"", NULL}, $$->place);
 
 																	string type = $2->node_data;
 																	if(!strcmp($2->name, "UNARY*")){
 																		auto consttmp = getNewTemp("char");
 																		emit("=", {"$1", NULL}, {"", NULL}, consttmp);
-																		if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.find("*")!=string::npos){
-																			auto tmp = getNewTemp($2->node_data);
+																		if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.back()=='*'){
+																			auto tmp = getNewTemp($2->node_data, $2->ttentry);
 																			int x = emit("-int", $2->place, consttmp, tmp);
 																			emit("ADDR=", tmp, {"", NULL}, $2->v[0]->place);
 																			emit("=", tmp, {"", NULL}, $$->place);
 																		}
 																		else{
-																			auto tmp = getNewTemp(type);
-																			auto tmp2 = getNewTemp(type);
+																			auto tmp = getNewTemp(type, type_entry);
+																			auto tmp2 = getNewTemp(type, type_entry);
 																			int x = emit("inttoreal", consttmp, {"", NULL}, tmp);
 																			emit("-real", $2->place, tmp, tmp2);
 																			emit("ADDR=", tmp2, {"", NULL}, $2->v[0]->place);
@@ -682,7 +695,7 @@ unary_expression
 																				$$->place = $2->v[0]->place;
 																			}
 																			else{
-																				$$->place = getNewTemp($$->node_data);
+																				$$->place = getNewTemp($$->node_data, $$->ttentry);
 																				emit("UNARY" + string((const char*)$1), $2->place, {"", NULL}, $$->place);
 																			}
 																			/////////////////////////////////////																			
@@ -700,7 +713,7 @@ unary_expression
 
 
 																				//////////////// 3AC ////////////////
-																				$$->place = getNewTemp($$->node_data);
+																				$$->place = getNewTemp($$->node_data, $$->ttentry);
 																				int x = emit("UNARY"+string((const char*) $1), $2->place, {"", NULL}, $$->place);
 																				/////////////////////////////////////
 																			}
@@ -731,7 +744,7 @@ unary_expression
 																				$$->ttentry = NULL;
 
 																				//////////////// 3AC ////////////////
-																				$$->place = getNewTemp($$->node_data);
+																				$$->place = getNewTemp($$->node_data, $$->ttentry);
 																				int x = emit("UNARY"+string((const char*) $1), $2->place, {"", NULL}, $$->place);
 																				/////////////////////////////////////
 
@@ -779,7 +792,7 @@ unary_expression
 																					printf("\e[1;31mError [line %d]:\e[0m Incompatible type for %c operator.\n",line,*($1));
 																					exit(-1);
 																				}
-																				if(temp_data.find("int") == string::npos && temp_data.find("double") == string::npos && temp_data.find("float") == string::npos && temp_data.find("char") == string::npos){
+																				if(is_struct_or_union(temp_data) || (temp_data.find("int") == string::npos && temp_data.find("double") == string::npos && temp_data.find("float") == string::npos && temp_data.find("char") == string::npos)){
 																					printf("\e[1;31mError [line %d]:\e[0m Incompatible type for %c operator.\n",line,*($1));
 																					exit(-1);
 																				}
@@ -787,7 +800,7 @@ unary_expression
 																				$$->value_type = RVALUE;
 
 																				//////////////// 3AC ////////////////
-																				$$->place = getNewTemp($$->node_data);
+																				$$->place = getNewTemp($$->node_data, $$->ttentry);
 																				int x = emit("UNARY"+string((const char*) $1), $2->place, {"", NULL}, $$->place);
 																				/////////////////////////////////////
 																			}
@@ -813,7 +826,7 @@ unary_expression
 																				break;
 																			}
 																			else{
-																				if(temp_data.substr((int)temp_data.size() - 3,3) != "int"){
+																				if(is_struct_or_union(temp_data) || temp_data.substr((int)temp_data.size() - 3,3) != "int"){
 																					printf("\e[1;31mError [line %d]:\e[0m ~ cannot be applied to non-integer types.\n",line);
 																					exit(-1);
 																				}
@@ -821,7 +834,7 @@ unary_expression
 																				$$->value_type = RVALUE;
 
 																				//////////////// 3AC ////////////////
-																				$$->place = getNewTemp($$->node_data);
+																				$$->place = getNewTemp($$->node_data, $$->ttentry);
 																				int x = emit("UNARY"+string((const char*) $1), $2->place, {"", NULL}, $$->place);
 																				/////////////////////////////////////
 
@@ -900,7 +913,7 @@ cast_expression
 																	$$->ttentry = $2->ttentry;
 
 																	//////////////// 3AC ////////////////
-																	$$->place = getNewTemp($$->node_data);
+																	$$->place = getNewTemp($$->node_data, $$->ttentry);
 																	string op2 = "("+p2.first + "-to-" + p1.first+")"; // Modify
 																	int x = emit(op2, $4->place, {"", NULL}, $$->place);
 																	/////////////////////////////////////
@@ -916,6 +929,10 @@ multiplicative_expression
 																	}
 																	if($3->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
+																	if(is_struct_or_union($1->node_data) || is_struct_or_union($3->node_data)){
+																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																		exit(-1);
 																	}
 																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2),$1->ttentry,$3->ttentry);
@@ -973,6 +990,10 @@ multiplicative_expression
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
 																	}
+																	if(is_struct_or_union($1->node_data) || is_struct_or_union($3->node_data)){
+																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
+																		exit(-1);
+																	}
 																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2),$1->ttentry,$3->ttentry);
 																	if(type.back() == '*'){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
@@ -1026,6 +1047,10 @@ multiplicative_expression
 																	}
 																	if($3->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
+																	if(is_struct_or_union($1->node_data) || is_struct_or_union($3->node_data)){
+																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																		exit(-1);
 																	}
 																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2),$1->ttentry,$3->ttentry);
@@ -1101,18 +1126,18 @@ additive_expression
 																			$3->place = emitConstant($3);
 																		}
 
-																		$$->place = getNewTemp(type);
-																		if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.find("*")!=string::npos){
+																		$$->place = getNewTemp(type, $$->ttentry);
+																		if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.back()=='*'){
 																			int x = emit("+int", $1->place, $3->place, $$->place);
 																		}
 																		else {
 																			if($1->node_data.find("int")!=string::npos || $1->node_data.find("char")!=string::npos){
-																				auto tmp = getNewTemp(type);
+																				auto tmp = getNewTemp(type, $1->ttentry);
 																				int x = emit("inttoreal", $1->place, {"", NULL}, tmp);
 																				emit("+real", tmp, $3->place, $$->place);
 																			}
 																			else if ($3->node_data.find("int")!=string::npos || $3->node_data.find("char")!=string::npos){
-																				auto tmp = getNewTemp(type);
+																				auto tmp = getNewTemp(type, $3->ttentry);
 																				int x = emit("inttoreal", $3->place, {"", NULL}, tmp);
 																				emit("+real", $1->place, tmp, $$->place);
 																			}
@@ -1164,8 +1189,8 @@ additive_expression
 																			$3->place = emitConstant($3);
 																		}
 
-																		$$->place = getNewTemp(type);
-																		if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.find("*")!=string::npos){
+																		$$->place = getNewTemp(type, $$->ttentry);
+																		if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.back()=='*'){
 																			int x = emit("-int", $1->place, $3->place, $$->place);
 																		}
 																		else {
@@ -1199,6 +1224,10 @@ shift_expression
 																	}
 																	if($3->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
+																	if(is_struct_or_union($1->node_data) || is_struct_or_union($3->node_data)){
+																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																		exit(-1);
 																	}
 																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2),$1->ttentry,$3->ttentry);
@@ -1242,6 +1271,10 @@ shift_expression
 																	}
 																	if($3->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
+																	if(is_struct_or_union($1->node_data) || is_struct_or_union($3->node_data)){
+																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																		exit(-1);
 																	}
 																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2),$1->ttentry,$3->ttentry);
@@ -1288,6 +1321,10 @@ relational_expression
 																	}
 																	if($3->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
+																	if(is_struct_or_union($1->node_data) || is_struct_or_union($3->node_data)){
+																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																		exit(-1);
 																	}
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
@@ -1382,6 +1419,10 @@ relational_expression
 																	}
 																	if($3->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
+																	if(is_struct_or_union($1->node_data) || is_struct_or_union($3->node_data)){
+																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																		exit(-1);
 																	}
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
@@ -1479,6 +1520,10 @@ relational_expression
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
 																	}
+																	if(is_struct_or_union($1->node_data) || is_struct_or_union($3->node_data)){
+																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
+																		exit(-1);
+																	}
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
 																	pair<string,int> p2 = get_equivalent_pointer($3->node_data);
 																	
@@ -1561,6 +1606,10 @@ relational_expression
 																	}
 																	if($3->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
+																	if(is_struct_or_union($1->node_data) || is_struct_or_union($3->node_data)){
+																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																		exit(-1);
 																	}
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
@@ -1651,6 +1700,10 @@ equality_expression
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
 																	}
+																	if(is_struct_or_union($1->node_data) || is_struct_or_union($3->node_data)){
+																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
+																		exit(-1);
+																	}
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
 																	pair<string,int> p2 = get_equivalent_pointer($3->node_data);
 																	
@@ -1733,6 +1786,10 @@ equality_expression
 																	}
 																	if($3->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
+																	if(is_struct_or_union($1->node_data) || is_struct_or_union($3->node_data)){
+																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																		exit(-1);
 																	}
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
@@ -1823,6 +1880,10 @@ and_expression
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
 																	}
+																	if(is_struct_or_union($1->node_data) || is_struct_or_union($3->node_data)){
+																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
+																		exit(-1);
+																	}
 																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2),$1->ttentry,$3->ttentry);
 																	if(type.back() == '*'){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
@@ -1869,6 +1930,10 @@ exclusive_or_expression
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
 																	}
+																	if(is_struct_or_union($1->node_data) || is_struct_or_union($3->node_data)){
+																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
+																		exit(-1);
+																	}
 																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2),$1->ttentry,$3->ttentry);
 																	if(type.back() == '*'){
 																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
@@ -1912,6 +1977,10 @@ inclusive_or_expression
 																	}
 																	if($3->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
+																		exit(-1);
+																	}
+																	if(is_struct_or_union($1->node_data) || is_struct_or_union($3->node_data)){
+																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
 																		exit(-1);
 																	}
 																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2),$1->ttentry,$3->ttentry);
@@ -2084,9 +2153,9 @@ conditional_expression
 															if ($1->truelist.empty() && $1->falselist.empty()) $$ = $1;
 															else {
 																$$->place = getNewTemp("int");
-																int x = emit("=", {to_string(1), NULL}, {"", NULL}, $$->place);
+																int x = emit("=", {"$1", NULL}, {"", NULL}, $$->place);
 																emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL}, nextquad+2);
-																int y = emit("=", {to_string(0), NULL}, {"", NULL}, $$->place);
+																int y = emit("=", {"$0", NULL}, {"", NULL}, $$->place);
 																backpatch($1->truelist, x);
 																backpatch($1->falselist, y);
 															}
@@ -2214,9 +2283,8 @@ assignment_expression
 																					printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operators '%s'.\n",line, $2->name);
 																					exit(-1);
 																				}
-																				break;
 																			}
-																			if(entry1 || entry2){
+																			else if(entry1 || entry2){
 																				printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2->name);
 																				exit(-1);
 																			}
@@ -2258,7 +2326,7 @@ assignment_expression
 																				}
 
 																				if(type1 != type2){
-																					qi tmpvar = getNewTemp($1->node_data);
+																					qi tmpvar = getNewTemp($1->node_data, $1->ttentry);
 																					string cast = "("+ type2 +"-to-"+ type1 +")";
 																					emit(cast, $3->place, {"", NULL}, tmpvar);
 
@@ -2411,14 +2479,14 @@ assignment_expression
 																				$$->place = $1->place;
 																				op = string((const char*) $2->name);
 																				op.pop_back();
-																				if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.find("*")!=string::npos){
+																				if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.back()=='*'){
 																					/* int x = emit(op+"int", $1->place, $3->place, $1->place); */
-																					auto tmp = getNewTemp(type);
+																					auto tmp = getNewTemp(type, $1->ttentry);
 																					int x = emit(op+"int", $1->place, $3->place, tmp);
 
 																					// Typecasting before assignment
 																					if($1->node_data!=type){
-																						auto tmp2 = getNewTemp($1->node_data);
+																						auto tmp2 = getNewTemp($1->node_data, $1->ttentry);
 																						string cast = "("+ type +"-to-"+ $1->node_data +")";
 																						emit(cast, tmp, {"", NULL}, tmp2);
 																						// emit("=", tmp2, {"", NULL}, $1->place);
@@ -2764,9 +2832,8 @@ init_declarator
 																				printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '='.\n",line);
 																				exit(-1);
 																			}
-																			break;
 																		}
-																		if(entry1 || entry2){
+																		else if(entry1 || entry2){
 																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '='.\n",line);
 																			exit(-1);
 																		}
@@ -2805,7 +2872,7 @@ init_declarator
 																			$3->place = emitConstant($3);
 																		}
 																		if(type1 != type2){
-																			qi tmpvar = getNewTemp($1->node_data);
+																			qi tmpvar = getNewTemp($1->node_data, $1->ttentry);
 																			string cast = "("+ type2 +"-to-"+ type1 +")";
 																			emit(cast, $3->place, {"", NULL}, tmpvar);
 
@@ -3397,10 +3464,10 @@ M1
 																	int curr_offset = -16;
 																	for(auto p: func_params){
 																		int flag = 0;
-																		if(p.first.first.find("int") != string::npos || p.first.first.find("char") != string::npos || p.first.first.back() == ']' || p.first.first.back() == '*'){
+																		if(!is_struct_or_union(p.first.first) && (p.first.first.find("int") != string::npos || p.first.first.find("char") != string::npos || p.first.first.back() == ']' || p.first.first.back() == '*')){
 																			flag = 1;
 																		}
-																		else if(p.first.first.find("double") != string::npos || p.first.first.find("float") != string::npos){
+																		else if(!is_struct_or_union(p.first.first) && (p.first.first.find("double") != string::npos || p.first.first.find("float") != string::npos)){
 																			flag = 2;
 																		}
 																		else{
@@ -3538,10 +3605,17 @@ selection_statement
 	statement			{
 							$$ = node_(2, $1, -1); $$->v[0] = $3; $$->v[1] = $6; break_level--;
 
+
+							if(is_struct_or_union($3->node_data) || $3->node_data.back()=='*' || $3->node_data.back()==']' || $3->node_data.find("float")!=string::npos || $3->node_data.find("double")!=string::npos){
+								printf("\e[1;31mError [line %d]:\e[0m Switch quantity not an integer.\n", line);
+								exit(-1);
+							}
+
 							if($6->defaultlist.size()>1){
 								printf("\e[1;31mError [line %d]:\e[0m Multiple default statements in switch.\n", line);
 								exit(-1);
 							}
+
 
 							qi tmp2 = getNewTemp("int");
 							int x = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
@@ -3554,7 +3628,7 @@ selection_statement
 								pair<string,int> p2 = get_equivalent_pointer(i.second->node_data);
 								string type = arithmetic_type_upgrade(p1.first,p2.first, "==",$3->ttentry,i.second->ttentry);
 								qi tmp = emitConstant(i.second);
-								if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.find("*")!=string::npos){
+								if(type.find("int")!=string::npos || type.find("char")!=string::npos || type.back()=='*'){
 									int x = emit("==int", $3->place, tmp, tmp2);
 								}
 								else {
@@ -3809,6 +3883,18 @@ jump_statement
 																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types when returning type ‘%s’ but ‘%s’ was expected.\n",line, tmp2.c_str(), tmp1.c_str());
 																			exit(-1);
 																		}
+																		tt_entry* entry3 = NULL;
+																		tt_entry* entry4 = NULL;
+																		{
+																			string type;
+																			type = type1;
+																			while(type.back()=='*' || type.back()==' ')
+																				type.pop_back();
+																			entry3 = global_type_lookup(type);
+
+																			entry4 = $2->ttentry;
+
+																		}
 																		if(p1.second && p2.second){
 																			if(p1.first != p2.first){
 																				printf("\e[1;35mWarning [line %d]:\e[0m Returning ‘%s’ from a function with return type ‘%s’.\n",line, tmp2.c_str(), tmp1.c_str());
@@ -3828,13 +3914,16 @@ jump_statement
 																			}
 																			printf("\e[1;35mWarning [line %d]:\e[0m Returning ‘%s’ from a function with return type ‘%s’.\n",line, tmp2.c_str(), tmp1.c_str());	
 																		}
+																		if(tmp1 == tmp2 && entry3 != entry4){
+																			printf("\e[1;35mWarning [line %d]:\e[0m Returning ‘%s’ from a function with return type ‘%s’.\n",line, tmp2.c_str(), tmp1.c_str());
+																		}
 																		qi tmp;
 																		if($2->token == CONSTANT){
 																			$2->place = emitConstant($2);
 																		}
 																		tmp = $2->place;
 																		if(tmp1!=tmp2){
-																			tmp = getNewTemp(tmp1);
+																			tmp = getNewTemp(tmp1, entry1);
 																			string op = "("+tmp2+"-to-"+tmp1+")";
 																			emit(op, $2->place, {"", NULL}, tmp);
 																		}

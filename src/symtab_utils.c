@@ -140,6 +140,12 @@ unsigned long get_size(string s, tt_entry* entry){
 	return 0;
 }
 
+int is_struct_or_union(string s){
+	if(s.back()!='*' && s.back()!=']' && (s.find("struct") != string::npos || s.find("union") != string::npos))
+		return 1;
+	return 0;
+}
+
 string get_eqtype(string type, int is_only_type){
 	vector<pair<int, string>> a;
 	unordered_map<string, int> m;
@@ -337,6 +343,13 @@ st_entry* current_lookup(string key){
 	return NULL;
 }
 
+st_entry* global_lookup(string key){
+	auto it = table_scope[0]->find(key);
+	if(it != table_scope[0]->end())
+		return it->second;
+	return NULL;
+}
+
 tt_entry* type_lookup(string key){
 	for(int i = (int)(type_scope.size())-1; i >= 0; i--){
 		auto it = type_scope[i]->find(key);
@@ -355,7 +368,7 @@ tt_entry* current_type_lookup(string key){
 
 tt_entry* global_type_lookup(string key){
 	auto it = type_scope[0]->find(key);
-	if(it != type_scope.back()->end())
+	if(it != type_scope[0]->end())
 		return it->second;
 	return NULL;
 }

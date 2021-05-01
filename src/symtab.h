@@ -115,6 +115,8 @@ extern void struct_init_check(string type);
 extern tt_entry* current_type_lookup(string key);
 extern unsigned long get_size(string s, tt_entry* entry = NULL);
 extern void check_mem_list(vector<pair<pair<string, string>,tt_entry*>> v, string s);
+extern int is_struct_or_union(string s);
+extern st_entry* global_lookup(string key);
 
 extern tt_entry* global_type_lookup(string key);
 
