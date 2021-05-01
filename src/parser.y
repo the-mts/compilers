@@ -936,7 +936,7 @@ cast_expression
 																			printf("\e[1;31mError [line %d]:\e[0m Cannot cast floating point values to pointers.\n",line);
 																			exit(-1);
 																		}
-																		printf("\e[1;35mWarning [line %d]:\e[0m Cast to '%s' to incompatible type '%s'.\n",line, $4->node_data.c_str(), $2->node_data.c_str());
+																		printf("\e[1;35mWarning [line %d]:\e[0m Cast from '%s' to incompatible type '%s'.\n",line, $4->node_data.c_str(), $2->node_data.c_str());
 																	}
 																	else if(p2.second){
 																		if($2->node_data == "float" || $2->node_data == "double" || $2->node_data == "long double"){

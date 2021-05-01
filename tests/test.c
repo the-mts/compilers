@@ -1,7 +1,6 @@
 int main(){
-    int a[5][10];
-    a[2][4] = 10;
-    a[3][6] = 20;
-    a[4][9] = a[3][6] + a[2][4];
-    printf("%p\n", a, &a);
+    float x = 2.4;
+    double y = 1.2;
+    printf("%f %lf\n", x, y);
+    // x = sin(x);
 }

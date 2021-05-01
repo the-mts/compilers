@@ -188,10 +188,10 @@ void codegen(){
 					}
 					string p = x.second->type;
 					int flag = 0;
-					if(p.find("int") != string::npos || p.find("char") != string::npos || p.back() == ']' || p.back() == '*'){
+					if(!is_struct_or_union(p) && (p.find("int") != string::npos || p.find("char") != string::npos || p.back() == ']' || p.back() == '*')){
 						flag = 1;
 					}
-					else if(p.find("double") != string::npos || p.find("float") != string::npos){
+					else if(!is_struct_or_union(p) && (p.find("double") != string::npos || p.find("float") != string::npos)){
 						flag = 2;
 					}
 					else{
@@ -204,7 +204,17 @@ void codegen(){
 						int_char++;
 					}
 					else if(flag == 2 && double_float<8){
-						// HANDLE FLOAT/DOUBLE ARGS COPY
+						// if(p.find("float") != string::npos){
+						// 	if(instr.op1.second->type_name == IS_BUILTIN_FUNC){
+						// 		cout<<"cvtss2sd "<<-x.second->offset<<"(%rbp)"<<", "<<"%xmm"<<double_float;
+						// 	}
+						// 	else{
+						// 		cout<<"movss "<<-x.second->offset<<"(%rbp)"<<", "<<"%xmm"<<double_float;
+						// 	}
+						// }
+						// else if(p.find("double") != string::npos && p.find("long") == string::npos){
+						// 	cout<<"movsd "<<-x.second->offset<<"(%rbp)"<<", "<<"%xmm"<<double_float;
+						// }
 						double_float++;
 					}
 					else{
@@ -1910,6 +1920,21 @@ void codegen(){
 				else if(type1.back()=='*'){
 					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<"(%rcx)"<<endl;
+				}
+			}
+
+			// (int-to-long int)
+			else if(instr.op[0] == '('){
+				qi t1 = instr.op1;
+				qi t2 = instr.res;
+				string type1, type2;
+				int x = instr.op.find("-");
+				type1 = instr.op.substr(1, x-1);
+				type2 = instr.op.substr(x+4, instr.op.length()-x-5);
+
+				if(type1.back()=='*' && type2.back()=='*'){
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"movq "<<"%rax, "<<-t2.second->offset<<"(%rbp)"<<endl;
 				}
 			}
 		}

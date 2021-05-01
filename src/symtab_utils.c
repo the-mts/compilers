@@ -294,6 +294,8 @@ void init_symtab(){
 	curr = st_root;
 	add_entry("printf", "int", 0, 0, IS_BUILTIN_FUNC);
 	add_entry("scanf", "int", 0, 0, IS_BUILTIN_FUNC);
+	add_entry("malloc", "void *", 0, 0, IS_BUILTIN_FUNC);
+	add_entry("free", "void", 0, 0, IS_BUILTIN_FUNC);
 }
 
 st_entry* add_entry(string key, string type, unsigned long size, long offset, enum sym_type type_name){
