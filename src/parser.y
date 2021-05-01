@@ -1136,9 +1136,7 @@ additive_expression
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
 																	}
-																	printf("Ye aaye: %s, %s, %d\n", $1->node_data.c_str(), $3->node_data.c_str(), line);
-																	printf("Ye arith me aaye: %p, %p, %d\n", $1->ttentry, $3->ttentry, line);
-
+																	
 																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2),$1->ttentry,$3->ttentry);
 																	
 																	if($1->ttentry){
@@ -2327,7 +2325,6 @@ assignment_expression
 																				printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2->name);
 																				exit(-1);
 																			}
-																			printf("Ye aaye: %s, %s, %d\n", $1->node_data.c_str(), $3->node_data.c_str(), line);
 																			if(($1->node_data.find("[") != string::npos && $1->node_data.find("[]") == string::npos)){
 																				printf("\e[1;31mError [line %d]:\e[0m Array variables cannot be reassigned.\n",line);
 																				exit(-1);

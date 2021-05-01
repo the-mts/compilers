@@ -557,7 +557,6 @@ string arithmetic_type_upgrade(string type1, string type2, string op, tt_entry* 
 	
 	if((ttentry1!=NULL && type1.back()!='*' && type1.back()!=']') || (ttentry2!=NULL && type2.back()!='*' && type2.back()!=']')){
 		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, op.c_str());
-	printf("Ye arith me aaye: %p, %p, %d\n", ttentry1, ttentry2, line);
 		exit(-1);
 	}
 	unordered_map<string, int> m1;
