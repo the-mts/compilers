@@ -72,11 +72,18 @@ primary_expression
 																	}
 																	$$->node_name = $1;
 																	$$->node_data = entry->type;
-																	$$->value_type = LVALUE;
+																	if(entry->type.back() == ']' && entry->type.find("[]")==string::npos){
+																		$$->value_type = RVALUE;
+																		$$->place = getNewTemp(entry->type, entry->ttentry);
+																		emit("UNARY&", {string((const char*)$1), entry}, {"", NULL}, $$->place);
+																	}
+																	else {
+																		$$->value_type = LVALUE;
+																		$$->place = { string((const char*)$1), entry };
+																	}
 																	$$->ttentry = entry->ttentry;
 
 																	//////////////// 3AC ////////////////
-																	$$->place = { string((const char*)$1), entry };
 																	/////////////////////////////////////
 																}
 
@@ -146,7 +153,7 @@ postfix_expression
 																		printf("\e[1;31mError [line %d]:\e[0m Array subscript is not an integer.\n",line);
 																		exit(-1);
 																	}
-																	$$ = node_(2, "[]", -1);
+																	$$ = node_(2, "+", -1);
 																	$$->v[0] = $1; $$->v[1] = $3;
 																	pair<string,int> p = get_equivalent_pointer($1->node_data);
 																	if(p.second == 0){
@@ -164,6 +171,12 @@ postfix_expression
 																	}
 																	$$->node_data = reduce_pointer_level($1->node_data);
 																	$$->ttentry = $1->ttentry;
+																	if($$->node_data.back() == ']'){
+																		$$->value_type = RVALUE;
+																	}
+																	else {
+																		$$->value_type = LVALUE;
+																	}
 
 																	//////////////// 3AC ////////////////
 																	if($3->token == CONSTANT){
@@ -171,9 +184,32 @@ postfix_expression
 																	}
 																	$$->place = getNewTemp($$->node_data, $$->ttentry);
 																	backpatch($3->nextlist, nextquad);
-																	int x = emit("[]", $1->place, $3->place, $$->place);
+																	// int x = emit("[]", $1->place, $3->place, $$->place);
 																	// backpatch($3->truelist, x);		// Have to check
 																	// backpatch($3->falselist, x);	// check
+
+																	if($$->node_data.back()==']'){
+																		emit("+int", $1->place, $3->place, $$->place);
+																	}
+																	else{
+																		auto tempnode = $$;
+																		$$ = node_(1, "UNARY*", -1);
+																		$$->v[0] = tempnode;
+																		$$->node_data = tempnode->node_data;
+																		if($1->node_data.back()=='*'){
+																			tempnode->node_data = $1->node_data+'*';
+																		}
+																		else{
+																			tempnode->node_data = $1->node_data+" *";
+																		}
+																		$$->value_type = LVALUE;
+																		$$->ttentry = tempnode->ttentry;
+																		$$->place = tempnode->place;
+																		tempnode->place = getNewTemp(tempnode->node_data, tempnode->ttentry);
+
+																		emit("+int", $1->place, $3->place, tempnode->place);
+																		emit("UNARY*", tempnode->place, {"", NULL}, $$->place);
+																	}
 																	/////////////////////////////////////
 																}
 	| postfix_expression '(' ')'								{
@@ -843,18 +879,18 @@ unary_expression
 																	}
 																}
 	| SIZEOF unary_expression									{
-																	long unsigned sz = get_size($2->node_data);
+																	long sz = get_size($2->node_data);
 																	$$ = node_(0,(char*)to_string(sz).c_str(),CONSTANT);
-																	$$->node_data = "unsigned long int";
-																	$$->val_dt = IS_U_LONG;
-																	$$->val.u_long_const = sz;
+																	$$->node_data = "long int";
+																	$$->val_dt = IS_LONG;
+																	$$->val.long_const = sz;
 																}
 	| SIZEOF '(' type_name ')'									{
-																	long unsigned sz = get_size($3->node_data, $3->ttentry);
+																	long sz = get_size($3->node_data, $3->ttentry);
 																	$$ = node_(0,(char*)to_string(sz).c_str(),CONSTANT);
-																	$$->node_data = "unsigned long int";
-																	$$->val_dt = IS_U_LONG;
-																	$$->val.u_long_const = sz;
+																	$$->node_data = "long int";
+																	$$->val_dt = IS_LONG;
+																	$$->val.long_const = sz;
 																}
 	;
 
@@ -900,7 +936,7 @@ cast_expression
 																			printf("\e[1;31mError [line %d]:\e[0m Cannot cast floating point values to pointers.\n",line);
 																			exit(-1);
 																		}
-																		printf("\e[1;35mWarning [line %d]:\e[0m Cast to '%s' to incompatible type '%s'.\n",line, $4->node_data.c_str(), $2->node_data.c_str());
+																		printf("\e[1;35mWarning [line %d]:\e[0m Cast from '%s' to incompatible type '%s'.\n",line, $4->node_data.c_str(), $2->node_data.c_str());
 																	}
 																	else if(p2.second){
 																		if($2->node_data == "float" || $2->node_data == "double" || $2->node_data == "long double"){
@@ -1100,6 +1136,7 @@ additive_expression
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
 																	}
+																	
 																	string type = arithmetic_type_upgrade(get_equivalent_pointer($1->node_data).first,get_equivalent_pointer($3->node_data).first, string((const char*)$2),$1->ttentry,$3->ttentry);
 																	
 																	if($1->ttentry){
@@ -2788,7 +2825,7 @@ init_declarator
 																	}
 																	$$ = NULL; free($1);
 																}
-	| declarator '=' initializer								{
+	| declarator '=' initializer								{	
 																	$$ = node_(2,"=",-1); $$->v[0] = $1; $$->v[1] = $3;
 																	if($1->node_type == 1){
 																		printf("Function pointers not supported\n");
@@ -2865,14 +2902,12 @@ init_declarator
 
 																		//////////////// 3AC ////////////////
 
-
-
-
 																		if($3->token == CONSTANT){
 																			$3->place = emitConstant($3);
 																		}
 																		if(type1 != type2){
-																			qi tmpvar = getNewTemp($1->node_data, $1->ttentry);
+																			qi tmpvar = getNewTemp($$->node_data, $$->ttentry);
+
 																			string cast = "("+ type2 +"-to-"+ type1 +")";
 																			emit(cast, $3->place, {"", NULL}, tmpvar);
 

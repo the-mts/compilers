@@ -34,7 +34,7 @@ clean:
 	$(RM) $(SRC)/lex.yy.c $(SRC)/y.tab.c $(SRC)/y.tab.h $(SRC)/y.output $(BIN)/*.o
 
 fileclean:
-	$(RM) $(BIN)/*.csv $(BIN)/*.out $(BIN)/*.dot $(BIN)/*.ps
+	$(RM) $(BIN)/*.csv $(BIN)/*.out $(BIN)/*.dot $(BIN)/*.ps $(BIN)/*.txt $(BIN)/*.s
 
 realclean: clean fileclean
 	$(RM) $(BIN)/parser

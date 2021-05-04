@@ -294,6 +294,16 @@ void init_symtab(){
 	curr = st_root;
 	add_entry("printf", "int", 0, 0, IS_BUILTIN_FUNC);
 	add_entry("scanf", "int", 0, 0, IS_BUILTIN_FUNC);
+	add_entry("malloc", "void *", 0, 0, IS_BUILTIN_FUNC);
+	add_entry("free", "void", 0, 0, IS_BUILTIN_FUNC);
+
+	add_entry("sin", "double", 0, 0, IS_BUILTIN_FUNC);
+	add_entry("cos", "double", 0, 0, IS_BUILTIN_FUNC);
+	add_entry("tan", "double", 0, 0, IS_BUILTIN_FUNC);
+	add_entry("log", "double", 0, 0, IS_BUILTIN_FUNC);
+	add_entry("log10", "double", 0, 0, IS_BUILTIN_FUNC);
+	add_entry("sqrt", "double", 0, 0, IS_BUILTIN_FUNC);
+	add_entry("exp", "double", 0, 0, IS_BUILTIN_FUNC);
 }
 
 st_entry* add_entry(string key, string type, unsigned long size, long offset, enum sym_type type_name){
@@ -309,6 +319,10 @@ st_entry* add_entry(string key, string type, unsigned long size, long offset, en
 	// 	offset += size;
 	// 	offset += (8 - offset % 8) % 8;
 	// }
+	if(type=="" || type[0] == '*' || type[0] == ' '){
+		printf("\e[1;31mError [line %d]:\e[0m Type supplied is empty/invalid.\n", line);
+		exit(-1);
+	}
 	offset += size;
 	st_entry * new_entry = new st_entry(type, size, offset, type_name);
 	if(type_name != IS_FUNC)
@@ -540,6 +554,7 @@ string increase_array_level(string s){
 string arithmetic_type_upgrade(string type1, string type2, string op, tt_entry* ttentry1, tt_entry* ttentry2){
 	// float double long double int long unsigned int unsigned long int char pointer
 	// printf("Entered upgrade with '%s'.\n", op.c_str());
+	
 	if((ttentry1!=NULL && type1.back()!='*' && type1.back()!=']') || (ttentry2!=NULL && type2.back()!='*' && type2.back()!=']')){
 		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, op.c_str());
 		exit(-1);
