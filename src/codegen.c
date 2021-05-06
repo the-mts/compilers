@@ -5,6 +5,7 @@ vector<string> code;
 // unordered_map<string, > //
 map<pair<int, int>, string> intregs;
 map<int, string> retregs;
+map<pair<int, int>, string> genregs;
 vector<qi> params_list;
 
 void dump_const_labels(){
@@ -48,6 +49,44 @@ void setregmap(){
 	retregs[2] = "%ax";
 	retregs[4] = "%eax";
 	retregs[8] = "%rax";
+
+	// reguster_no, size
+	genregs[{0, 1}] = "%al";
+	genregs[{0, 2}] = "%ax";
+	genregs[{0, 4}] = "%eax";
+	genregs[{0, 8}] = "%rax";
+
+	genregs[{1, 1}] = "%bl";
+	genregs[{1, 2}] = "%bx";
+	genregs[{1, 4}] = "%ebx";
+	genregs[{1, 8}] = "%rbx";
+
+	genregs[{2, 1}] = "%cl";
+	genregs[{2, 2}] = "%cx";
+	genregs[{2, 4}] = "%ecx";
+	genregs[{2, 8}] = "%rcx";
+
+	genregs[{3, 1}] = "%dl";
+	genregs[{3, 2}] = "%dx";
+	genregs[{3, 4}] = "%edx";
+	genregs[{3, 8}] = "%rdx";
+
+	genregs[{4, 1}] = "%sil";
+	genregs[{4, 2}] = "%si";
+	genregs[{4, 4}] = "%esi";
+	genregs[{4, 8}] = "%rsi";
+
+	genregs[{5, 1}] = "%dil";
+	genregs[{5, 2}] = "%di";
+	genregs[{5, 4}] = "%edi";
+	genregs[{5, 8}] = "%rdi";
+
+	for (int i = 8; i<15; i++){
+		genregs[{i-2, 8}] = "%r" + to_string(i);
+		genregs[{i-2, 1}] = genregs[{i-2, 8}] + "b";
+		genregs[{i-2, 2}] = genregs[{i-2, 8}] + "w";
+		genregs[{i-2, 4}] = genregs[{i-2, 8}] + "d";
+	}
 };
 
 char sizechar(int size){
@@ -270,6 +309,107 @@ void codegen(){
 				}
 
 				stk_params.clear();
+				params_list.clear();
+			}
+			
+			else if(instr.op == "TAIL"){
+				qi f = instr.op1;
+				vector<pair<pair<string, string>, tt_entry*>> args = *(f.second->arg_list);
+				int freei = 0, freef = 0, flag;
+				string var, type;
+				map <string, string> param2reg;
+				int size;
+				/*if (args.size() != params_list.size()) {
+					cout<<"Args: "<<args.size()<<", Params: "<<params_list.size()<<endl;
+					cout<<"Dead!"<<endl;
+					return;
+				}*/
+				for (auto param: params_list){
+					var = param.first;
+					type = param.second->type;
+					if (param2reg.find(var) == param2reg.end()){
+						for (auto arg: args){
+							if (var == arg.first.second){
+								if (type == "float" || type == "double"){
+									param2reg[var] = "%xmm" + to_string(freef);
+									if (type == "float"){
+										cout<<"movss ";
+									} else {
+										cout<<"movsd ";
+									}
+									cout<<-param.second->offset<<"(%rbp), "<<"%xmm"<<freef<<endl; 
+									freef++;
+								}
+								else {
+									size = get_size(type);
+									param2reg[var] = genregs[{freei, size}];
+									cout<<"mov"<<sizechar(size)<<" "<<-param.second->offset<<"(%rbp), "<<param2reg[var]<<endl;
+									freei++;
+								}
+								break;
+							}
+						}
+					}
+				}
+				//return;
+				qi param;
+				string arg;
+				/*if (args.size() != params_list.size()) {
+					cout<<"Args: "<<args.size()<<", Params: "<<params_list.size()<<endl;
+					cout<<"Dead!"<<endl;
+					return;
+				}*/
+				for (int i = 0; i < args.size(); i++){
+					//- (*(instr.op1.second->sym_table))[p.first.second]->offset,
+					param = params_list[i];
+					arg = args[i].first.second;
+					//return;
+					var = param.first;
+					type = param.second->type;
+					size = get_size(type);
+					//return;
+					if (param2reg.find(var) == param2reg.end()){
+						//return;
+						if (type == "double"){
+							cout<<"movsd "<<-param.second->offset<<"(%rbp), "<<"%xmm15"<<endl;
+							cout<<"movsd "<<"%xmm15, "<<-(*(f.second->sym_table))[arg]->offset<<"(%rbp)"<<endl;
+						}
+						else if (type == "float"){
+							cout<<"movss "<<-param.second->offset<<"(%rbp), "<<"%xmm15"<<endl;
+							cout<<"movss "<<"%xmm15, "<< -(*(f.second->sym_table))[arg]->offset <<"(%rbp)"<<endl;
+						}
+						else if (size == 8){
+							cout<<"movq "<<-param.second->offset<<"(%rbp), "<<"%r15"<<endl;
+							cout<<"movq "<<"%r15, "<<  -(*(f.second->sym_table))[arg]->offset<<"(%rbp)"<<endl;
+						}
+						else if (size == 4){
+							cout<<"movl "<<-param.second->offset<<"(%rbp), "<<"%r15d"<<endl;
+							cout<<"movl "<<"%r15d, "<<  -(*(f.second->sym_table))[arg]->offset<<"(%rbp)"<<endl;
+						}
+						else {
+							cout<<"mov"<<sizechar(size)<<" "<<-param.second->offset<<"(%rbp), "<<"%r15"<<sizechar(size)<<endl;
+							cout<<"mov"<<sizechar(size)<<" "<<"%r15"<<sizechar(size)<<", "<< -(*(f.second->sym_table))[arg]->offset <<"(%rbp)"<<endl;
+						}
+					}
+					else {
+						//return;
+						if (type == "double"){
+							cout<<"movsd "<<param2reg[var]<<", "<< -(*(f.second->sym_table))[arg]->offset <<"(%rbp)"<<endl;
+						}
+						else if (type == "float"){
+							cout<<"movss "<<param2reg[var]<<", "<<  -(*(f.second->sym_table))[arg]->offset  <<"(%rbp)"<<endl;
+						}
+						/*else if (size == 8){
+							cout<<"movq "<<param2reg[var]<<", "<<  -(*(f.second->sym_table))[arg]->offset <<"(%rbp)"<<endl;
+						}*/
+						else {
+							cout<<"mov"<<sizechar(size)<<" "<<param2reg[var]<<", "<< -(*(f.second->sym_table))[arg]->offset  <<"(%rbp)"<<endl;
+						}
+					}
+					//return;
+				}
+				cout<<"jmp .L"<<instr.goto_addr<<endl;
+				//return;
 				params_list.clear();
 			}
 

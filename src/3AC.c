@@ -151,7 +151,7 @@ void make_blocks(){
  	int vstart, vend, prev;	
 //	printf("chick1\n");
 	// Replace some obviously redundant GOTOs with DUMMY statements
-	for (int i = 0; i < n-1; i++)
+	for (int i = 0; i < n-1; i++){
 		if ((code_array[i].op == "GOTO" || code_array[i].op == "IF_TRUE_GOTO") && code_array[i].goto_addr == i+1) {
 			code_array[i].op = "DUMMY";
 			/*code_array[i].op1 = {"", NULL};
@@ -159,6 +159,12 @@ void make_blocks(){
 			code_array[i].res = {"", NULL};
 			code_array[i].goto_addr = -1;*/
 		}
+		else if(code_array[i].op == "CALL" && code_array[i+1].op == "RETURN" && code_array[i].res.first == code_array[i+1].op1.first){
+			code_array[i+1].op = "TAIL";
+			code_array[i+1].op1 = code_array[i].op1;
+			code_array[i].op = "DUMMY";
+		}
+	}
 
 	// Finding leaders
 //	printf("chick2\n");
@@ -174,7 +180,7 @@ void make_blocks(){
 			leader[i] = 1;
 			leader[i+1] = 1;
 		}
-		else if (code_array[i].op == "RETURN" || code_array[i].op == "RETURN_VOID" || code_array[i].op == "CALL") leader[i+1] = 1;	
+		else if (code_array[i].op == "RETURN" || code_array[i].op == "RETURN_VOID" || code_array[i].op == "CALL" || code_array[i].op == "TAIL") leader[i+1] = 1;	
 	}
 	if (code_array[n-1].op == "IF_TRUE_GOTO" || code_array[n-1].op == "GOTO") leader[code_array[n-1].goto_addr] = 1;
 	else if (code_array[n-1].op == "FUNC_END") leader[n-1] = 1;
@@ -189,7 +195,7 @@ void make_blocks(){
 	if (code_array[0].op == "FUNC_START") {
 		f = 1;
 		//vstart = code_array[0].goto_addr;
-		//prev = 0;
+		prev = 1;
 	}
 	for (int i = 0; i < n; i++){
 		if (curr < blocknum[i]){
@@ -205,6 +211,10 @@ void make_blocks(){
 			}
 			else if (code_array[i-1].op == "RETURN" || code_array[i-1].op == "RETURN_VOID")
 				blocks[curr].succ = -1;
+			else if (code_array[i-1].op == "TAIL") {
+				blocks[curr].succ = blocknum[prev];
+				blocks[curr].code[blocks[curr].code.size()-1].goto_addr = blocknum[prev];
+			}
 			else if (code_array[i-1].op == "FUNC_END"){
 				blocks[curr].succ = -1;
 				f = 0;
@@ -218,12 +228,12 @@ void make_blocks(){
 			if (code_array[i].op == "FUNC_START") {
 				f = 1;
 				//vstart = code_array[i].goto_addr;
-				//prev = curr;
+				prev = curr+1;
 			}
 		}
 		blocks[curr].code.push_back(code_array[i]);
 	}
-	if (code_array[n-1].op == "GOTO"){
+	/*if (code_array[n-1].op == "GOTO"){
 		blocks[curr].succ = blocknum[code_array[n-1].goto_addr];
 		blocks[curr].code[blocks[curr].code.size()-1].goto_addr = blocks[curr].succ;		
 	}
@@ -232,14 +242,15 @@ void make_blocks(){
 		blocks[curr].code[blocks[curr].code.size()-1].goto_addr = blocks[curr].cond_succ;
 	}
 	else{
-		/*if (code_array[n-1].op == "FUNC_END") {
+		if (code_array[n-1].op == "FUNC_END") {
 			for (int j = prev; j <= curr; j++){
 				blocks[j].varend = code_array[n-1].goto_addr;
 				blocks[j].varstart = vstart;
 			}
-		}*/
+		}
 		blocks[curr].succ = -1;
-	}
+	}*/
+	blocks[curr].succ = -1;
 	blocks[curr].next = -1;
 	blocks[curr].isglobal = !f;
 	if (blocks[curr].isglobal) blocks[curr].pred.push_back(-1);
@@ -269,7 +280,9 @@ void opt_ret_dead(){
 	while (lim-- && c) {
 		c = 0;
 		for (int b = 0; b != -1; b = blocks[b].next){
-			if (blocks[b].pred.size() == 0 && blocks[b].alive && blocks[b].code[0].op != "FUNC_START" && blocks[b].code[0].op != "FUNC_END"){
+			//if (blocks[b].pred.size() == 0 && blocks[b].alive && blocks[b].code[0].op != "FUNC_START" && blocks[b].code[0].op != "FUNC_END"){
+			if (blocks[b].pred.size() == 0 && blocks[b].alive && blocks[b].code[0].op != "FUNC_START"){
+
 				blocks[b].alive = 0;
 				blocks[b].code.clear();
 				if (blocks[b].succ != -1){
@@ -319,7 +332,7 @@ int opt_cse(){
 			op2 = blocks[b].code[i].op2.first;
 			res = blocks[b].code[i].res.first;
 			if (op == "IF_TRUE_GOTO" || op == "GOTO" ||
-				op == "PARAM" || op == "CALL" ||
+				op == "PARAM" || op == "CALL" || op == "TAIL" ||
 				op == "RETURN" || op == "RETURN_VOID") break;
 			if (expr.find({op, {op1, op2}}) != expr.end()){
 				//cout<<"Found expr\n";
@@ -383,7 +396,7 @@ int opt_copy(){
 			op1 = blocks[b].code[i].op1.first;
 			op2 = blocks[b].code[i].op2.first;
 			res = blocks[b].code[i].res.first;
-			if (op == "GOTO" || op == "CALL" ||
+			if (op == "GOTO" || op == "CALL" || op == "TAIL" ||
 			    op == "RETURN_VOID") break;
 			if (expr.find(op1) != expr.end() && (op == "=" || (expr[op1].first)[0] != '$')){
 				//cout<<"Found expr\n";
@@ -470,7 +483,7 @@ int opt_dead_expr(){
 					else user[var] = 1;
 					l--;
 				}
-				else if (blocks[b].code[l].op == "CALL"){
+				else if (blocks[b].code[l].op == "CALL" || blocks[b].code[l].op == "TAIL"){
 					//var = blocks[b].code[l].res.first;
 					//temp[var] = 0;
 					l--;
