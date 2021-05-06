@@ -99,6 +99,19 @@ qi emitConstant(node* tmp){
     return temp;
 }
 
+int tailposs(qi caller, qi callee){
+	if (caller.first != callee.first) return 0;
+	int fcount=0, icount= 0;
+	for (auto arg: *(caller.second->arg_list)){
+		if (is_struct_or_union(arg.first.first)){
+			return 0;
+		}
+		if (arg.first.first == "float" || arg.first.first == "double") fcount++;
+		else icount++;
+	}
+	return fcount < 16 && icount < 14;
+}
+
 void handle_dead_block(int b){
 	int temp, f, s;
 	if (blocks[b].code.size() == 0){
@@ -151,18 +164,36 @@ void make_blocks(){
  	int vstart, vend, prev;	
 //	printf("chick1\n");
 	// Replace some obviously redundant GOTOs with DUMMY statements
-	for (int i = 0; i < n-1; i++){
-		if ((code_array[i].op == "GOTO" || code_array[i].op == "IF_TRUE_GOTO") && code_array[i].goto_addr == i+1) {
-			code_array[i].op = "DUMMY";
-			/*code_array[i].op1 = {"", NULL};
-			code_array[i].op2 = {"", NULL};
-			code_array[i].res = {"", NULL};
-			code_array[i].goto_addr = -1;*/
+	qi func;	
+	int tail = 1;
+	if (tail) {
+		for (int i = 0; i < n-1; i++){
+			if (code_array[i].op == "GOTO" || code_array[i].op == "IF_TRUE_GOTO"){
+				if (code_array[i].goto_addr == i+1) {
+					code_array[i].op = "DUMMY";
+				}
+			}
+			else if(code_array[i].op == "CALL"){
+				if (code_array[i+1].op == "RETURN" && code_array[i].res.first == code_array[i+1].op1.first && tailposs(func, code_array[i].op1)){
+					code_array[i+1].op = "TAIL";
+					code_array[i+1].op1 = code_array[i].op1;
+					code_array[i].op = "DUMMY";
+				}
+			}
+			else if (code_array[i].op == "FUNC_START"){
+				func = code_array[i].op1;
+			}
 		}
-		else if(code_array[i].op == "CALL" && code_array[i+1].op == "RETURN" && code_array[i].res.first == code_array[i+1].op1.first){
-			code_array[i+1].op = "TAIL";
-			code_array[i+1].op1 = code_array[i].op1;
-			code_array[i].op = "DUMMY";
+	}
+	else {
+		for (int i = 0; i < n-1; i++){
+			if ((code_array[i].op == "GOTO" || code_array[i].op == "IF_TRUE_GOTO") && code_array[i].goto_addr == i+1) {
+				code_array[i].op = "DUMMY";
+				/*code_array[i].op1 = {"", NULL};
+				code_array[i].op2 = {"", NULL};
+				code_array[i].res = {"", NULL};
+				code_array[i].goto_addr = -1;*/
+			}
 		}
 	}
 
