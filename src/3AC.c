@@ -441,13 +441,25 @@ int opt_copy(){
 			if (op == "=" && op1[0] != '.'){
 				//cout<<"Adding expr\n";
 				expr[res] = blocks[b].code[i].op1;
+				auto pred = [&](const auto& item) {
+    	    		auto const& [key, value] = item;
+				    return value.first == res;
+				};
+	
+					for (auto i = expr.begin(), last = expr.end(); i != last; ) {
+				  		if (pred(*i)) {
+					      i = expr.erase(i);
+				  		} else {
+				      ++i;
+				 		}
+				}
 			}
 			else {
 				if (op == "ADDR=") expr.clear();
 				else {
 					auto pred = [&](const auto& item) {
     	    			auto const& [key, value] = item;
-				        return key == res;
+				        return value.first == res || key == res;
 					};
 	
 					for (auto i = expr.begin(), last = expr.end(); i != last; ) {
