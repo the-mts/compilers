@@ -346,10 +346,11 @@ void print_map(const map<pair<string, pair<string, string>>, qi>& m)
 }
 
 int opt_cse(){
-	map<pair<string, pair<string, string>>, qi> expr;
+	map<pair<string, pair<st_entry*, st_entry*>>, qi> expr;
 	//map<string, vector<pair<string, pair<string, string>>>> used;
 	int i;
-	string op, op1, op2, res;
+	string op;
+	st_entry *op1, *op2, *res;
 	//cout<<"chick1\n";
 	//print_map(expr);
 	int c = 0;
@@ -359,9 +360,9 @@ int opt_cse(){
 		if (blocks[b].isglobal || blocks[b].code[0].op == "FUNC_START" || blocks[b].code[0].op == "FUNC_END") continue;
 		for (; i < blocks[b].code.size(); i++){
 			op = blocks[b].code[i].op;
-			op1 = blocks[b].code[i].op1.first;
-			op2 = blocks[b].code[i].op2.first;
-			res = blocks[b].code[i].res.first;
+			op1 = blocks[b].code[i].op1.second;
+			op2 = blocks[b].code[i].op2.second;
+			res = blocks[b].code[i].res.second;
 			if (op == "IF_TRUE_GOTO" || op == "GOTO" ||
 				op == "PARAM" || op == "CALL" || op == "TAIL" ||
 				op == "RETURN" || op == "RETURN_VOID") break;
@@ -411,11 +412,12 @@ void print_copy_map(const map<string, qi>& m)
 }
 
 int opt_copy(){
-	map<string, qi> expr;
+	map<st_entry*, qi> expr;
 	//map<string, vector<pair<string, pair<string, string>>>> used;
 	int i;
 	int c = 0;
-	string op, op1, op2, res;
+	string op;
+	st_entry *op1, *op2, *res;
 	//cout<<"chick1\n";
 	//print_copy_map(expr);
 	for (int b = 0; b != -1; b = blocks[b].next){
@@ -424,9 +426,9 @@ int opt_copy(){
 		if (blocks[b].code[0].op == "FUNC_START" || blocks[b].code[0].op == "FUNC_END") continue;
 		for (; i < blocks[b].code.size(); i++){
 			op = blocks[b].code[i].op;
-			op1 = blocks[b].code[i].op1.first;
-			op2 = blocks[b].code[i].op2.first;
-			res = blocks[b].code[i].res.first;
+			op1 = blocks[b].code[i].op1.second;
+			op2 = blocks[b].code[i].op2.second;
+			res = blocks[b].code[i].res.second;
 			if (op == "GOTO" || op == "CALL" || op == "TAIL" ||
 			    op == "RETURN_VOID") break;
 			if (expr.find(op1) != expr.end() && (op == "=" || (expr[op1].first)[0] != '$')){
@@ -439,33 +441,33 @@ int opt_copy(){
 				c = 1;
 			}
 			if (op == "="){
-				if (op1[0] != '.')
+				if (blocks[b].code[i].op1.first[0] != '.')
 					expr[res] = blocks[b].code[i].op1;
 				auto pred = [&](const auto& item) {
     	    		auto const& [key, value] = item;
-				    return value.first == res;
+				    return value.second == res;
 				};
 	
-					for (auto i = expr.begin(), last = expr.end(); i != last; ) {
-				  		if (pred(*i)) {
-					      i = expr.erase(i);
-				  		} else {
-				      ++i;
-				 		}
+				for (auto i = expr.begin(), last = expr.end(); i != last; ) {
+			  		if (pred(*i)) {
+				      i = expr.erase(i);
+			  		} else {
+			    	  ++i;
+			 		}
 				}
 			}
 			else if (op == "ADDR=") expr.clear();
 			else {
 				auto pred = [&](const auto& item) {
   	    			auto const& [key, value] = item;
-			        return value.first == res || key == res;
+			        return value.second == res || key == res;
 				};
 
 				for (auto i = expr.begin(), last = expr.end(); i != last; ) {
 			  		if (pred(*i)) {
-				      i = expr.erase(i);
+				    	i = expr.erase(i);
 			  		} else {
-			      ++i;
+			      		++i;
 			  		}
 				}
 			}		
@@ -476,18 +478,18 @@ int opt_copy(){
 	return c;
 }
 
-int istemp(string v){
-	return v[0] >= 48 && v[0] <= 57;
+int istemp(qi v){
+	return v.first[0] >= 48 && v.first[0] <= 57;
 }
 
 int opt_dead_expr(){
 	int n = blocks.size();
-	vector<map<string, int>> gtemp(n);
-	map<string, int> user;
-	map<string, int> temp;
+	vector<map<qi, int>> gtemp(n);
+	map<qi, int> user;
+	map<qi, int> temp;
 	int l, e;
 	int c = 0;
-	string var, op;
+	qi var, op;
 	for (int b = n-1; b >= 0; b--){
 		if (blocks[b].alive && blocks[b].code[0].op != "FUNC_END" && blocks[b].code[0].op != "FUNC_START"){
 			user.clear();
@@ -509,17 +511,17 @@ int opt_dead_expr(){
 				l = blocks[b].code.size() - 1;
 				if (blocks[b].succ == -1 || (blocks[b].cond_succ == -1 && blocks[blocks[b].succ].code[0].op == "FUNC_END")){
 					for (int i = 0; i <= l; i++){
-						var = blocks[b].code[i].op1.first;
-						if (var != "" && !istemp(var)) user[var] = 0;
-						var = blocks[b].code[i].op2.first;
-						if (var != "" && !istemp(var)) user[var] = 0;
-						var = blocks[b].code[i].res.first;
-						if (var != "" && !istemp(var)) user[var] = 0;
+						var = blocks[b].code[i].op1;
+						if (var.first != "" && !istemp(var)) user[var] = 0;
+						var = blocks[b].code[i].op2;
+						if (var.first != "" && !istemp(var)) user[var] = 0;
+						var = blocks[b].code[i].res;
+						if (var.first != "" && !istemp(var)) user[var] = 0;
 					}
 				}
 				if (blocks[b].code[l].op == "RETURN_VOID" || blocks[b].code[l].op == "GOTO") l--;
 				else if (blocks[b].code[l].op == "RETURN" || blocks[b].code[l].op == "IF_TRUE_GOTO") {
-					var = blocks[b].code[l].op1.first;
+					var = blocks[b].code[l].op1;
 					if (istemp(var)) temp[var] = 1;
 					else user[var] = 1;
 					l--;
@@ -529,7 +531,7 @@ int opt_dead_expr(){
 					//temp[var] = 0;
 					l--;
 					while (l>=0 && blocks[b].code[l].op == "PARAM") {
-						var = blocks[b].code[l].op1.first;
+						var = blocks[b].code[l].op1;
 						if (istemp(var)) temp[var] = 1;
 						else user[var] = 1;
 						l--;
@@ -539,8 +541,8 @@ int opt_dead_expr(){
 			else l = blocks[b].code.size() - 1;
 
 			for (;l >= 0; l--){
-				var = blocks[b].code[l].res.first;
-				op = blocks[b].code[l].op1.first;
+				var = blocks[b].code[l].res;
+				op = blocks[b].code[l].op1;
 				if (blocks[b].code[l].op == "ADDR="){
 					if (istemp(op)) temp[op] = 1;
 					else user[op] = 1;
@@ -557,7 +559,7 @@ int opt_dead_expr(){
 							temp[var] = 0;
 							user.clear();
 							for (int i = l-1; i >= 0 && blocks[b].code[i].op != "UNARY*"; i--){
-								var = blocks[b].code[i].res.first;
+								var = blocks[b].code[i].res;
 								if (istemp(var)) temp[var] = 1;
 							}
 						}
@@ -570,7 +572,7 @@ int opt_dead_expr(){
 						else {
 							user.clear();
 							for (int i = l-1; i >= 0 && blocks[b].code[i].op != "UNARY*"; i--){
-								var = blocks[b].code[i].res.first;
+								var = blocks[b].code[i].res;
 								if (istemp(var)) temp[var] = 1;
 							}
 						}
@@ -587,11 +589,11 @@ int opt_dead_expr(){
 						}
 						else {
 							temp[var] = 0;
-							op = blocks[b].code[l].op1.first;
+							op = blocks[b].code[l].op1;
 							if (istemp(op))	temp[op] = 1;
 							else user[op] = 1;
-							op = blocks[b].code[l].op2.first;
-							if (op != ""){
+							op = blocks[b].code[l].op2;
+							if (op.first != ""){
 								if (istemp(op))	temp[op] = 1;
 								else user[op] = 1;
 							}
@@ -606,11 +608,11 @@ int opt_dead_expr(){
 						}
 						else {
 							user[var] = 0;
-							op = blocks[b].code[l].op1.first;
+							op = blocks[b].code[l].op1;
 							if (istemp(op))	temp[op] = 1;
 							else user[op] = 1;
-							op = blocks[b].code[l].op2.first;
-							if (op != ""){
+							op = blocks[b].code[l].op2;
+							if (op.first != ""){
 								if (istemp(op))	temp[op] = 1;
 								else user[op] = 1;
 							}
