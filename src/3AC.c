@@ -375,7 +375,7 @@ int opt_cse(){
 			else if (op == "ADDR="){
 				expr.clear();
 			}
-			else if (op != "[]" && op != "UNARY*"){
+			else if (op != "UNARY*"){
 				//cout<<"Adding expr\n";
 				expr[{op, {op1, op2}}] = blocks[b].code[i].res;	
 			}
@@ -385,7 +385,7 @@ int opt_cse(){
 
 			auto pred = [&](const auto& item) {
         		auto const& [key, value] = item;
-		        return key.second.first == res || key.second.second == res;
+		        return (key.second.first == res || key.second.second == res) && key.first != "UNARY&";
 			};
 
 			for (auto i = expr.begin(), last = expr.end(); i != last; ) {
@@ -438,9 +438,9 @@ int opt_copy(){
 				blocks[b].code[i].op2 = expr[op2];
 				c = 1;
 			}
-			if (op == "=" && op1[0] != '.'){
-				//cout<<"Adding expr\n";
-				expr[res] = blocks[b].code[i].op1;
+			if (op == "="){
+				if (op1[0] != '.')
+					expr[res] = blocks[b].code[i].op1;
 				auto pred = [&](const auto& item) {
     	    		auto const& [key, value] = item;
 				    return value.first == res;
@@ -454,21 +454,19 @@ int opt_copy(){
 				 		}
 				}
 			}
+			else if (op == "ADDR=") expr.clear();
 			else {
-				if (op == "ADDR=") expr.clear();
-				else {
-					auto pred = [&](const auto& item) {
-    	    			auto const& [key, value] = item;
-				        return value.first == res || key == res;
-					};
-	
-					for (auto i = expr.begin(), last = expr.end(); i != last; ) {
-				  		if (pred(*i)) {
-					      i = expr.erase(i);
-				  		} else {
-				      ++i;
-				  		}
-					}
+				auto pred = [&](const auto& item) {
+  	    			auto const& [key, value] = item;
+			        return value.first == res || key == res;
+				};
+
+				for (auto i = expr.begin(), last = expr.end(); i != last; ) {
+			  		if (pred(*i)) {
+				      i = expr.erase(i);
+			  		} else {
+			      ++i;
+			  		}
 				}
 			}		
 		}
@@ -548,6 +546,35 @@ int opt_dead_expr(){
 					else user[op] = 1;
 					if (istemp(var)) temp[var] = 1;
 					else user[var] = 1;
+				}
+				else if(blocks[b].code[l].op == "UNARY*"){
+					if (istemp(var)){
+						if (temp.find(var) == temp.end() || temp[var] == 0){
+							blocks[b].code[l].op = "DUMMY";
+							c = 1;
+						}
+						else {
+							temp[var] = 0;
+							user.clear();
+							for (int i = l-1; i >= 0 && blocks[b].code[i].op != "UNARY*"; i--){
+								var = blocks[b].code[i].res.first;
+								if (istemp(var)) temp[var] = 1;
+							}
+						}
+					}
+					else {
+						if (user.find(var) != temp.end() && user[var] == 0){
+							blocks[b].code[l].op = "DUMMY";
+							c = 1;
+						}
+						else {
+							user.clear();
+							for (int i = l-1; i >= 0 && blocks[b].code[i].op != "UNARY*"; i--){
+								var = blocks[b].code[i].res.first;
+								if (istemp(var)) temp[var] = 1;
+							}
+						}
+					}
 				}
 				else{
 					if (istemp(var)){
