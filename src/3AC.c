@@ -376,7 +376,7 @@ int opt_cse(){
 			else if (op == "ADDR="){
 				expr.clear();
 			}
-			else if (op != "UNARY*"){
+			else if (op != "UNARY*" && op != "="){
 				//cout<<"Adding expr\n";
 				expr[{op, {op1, op2}}] = blocks[b].code[i].res;	
 			}
@@ -509,7 +509,7 @@ int opt_dead_expr(){
 				}
 			
 				l = blocks[b].code.size() - 1;
-				if (blocks[b].succ == -1 || (blocks[b].cond_succ == -1 && blocks[blocks[b].succ].code[0].op == "FUNC_END")){
+				/*if (blocks[b].succ == -1 || (blocks[b].cond_succ == -1 && blocks[blocks[b].succ].code[0].op == "FUNC_END")){
 					for (int i = 0; i <= l; i++){
 						var = blocks[b].code[i].op1;
 						if (var.first != "" && !istemp(var)) user[var] = 0;
@@ -518,7 +518,7 @@ int opt_dead_expr(){
 						var = blocks[b].code[i].res;
 						if (var.first != "" && !istemp(var)) user[var] = 0;
 					}
-				}
+				}*/
 				if (blocks[b].code[l].op == "RETURN_VOID" || blocks[b].code[l].op == "GOTO") l--;
 				else if (blocks[b].code[l].op == "RETURN" || blocks[b].code[l].op == "IF_TRUE_GOTO") {
 					var = blocks[b].code[l].op1;
