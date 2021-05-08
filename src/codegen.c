@@ -164,7 +164,15 @@ void codegen(){
 					}
 					else if(flag == 2 && double_float<8){
 						//// HANDLE FLOAT/DOUBLE ARGS COPY
+						if(p.first.first == "float"){
+							cout<<"movss "<<"%xmm"<<double_float<<", "<< - (*(instr.op1.second->sym_table))[p.first.second]->offset<<"(%rbp)"<<endl;
+						}	
+						else{
+							cout<<"movsd "<<"%xmm"<<double_float<<", "<< - (*(instr.op1.second->sym_table))[p.first.second]->offset<<"(%rbp)"<<endl;
+						}				
+
 						double_float++;
+
 					}
 				}
 			}
@@ -2484,13 +2492,38 @@ void codegen(){
 					type1 = instr.op1.second->type;
 					type2 = instr.res.second->type;
 				}
-
+				if(type1 == type2 && (type1.back()!='*')){
+					if(type1 == "char"){
+						cout<<"movb "<<-t1.second->offset<<"(%rbp)"<<", "<<"%al"<<endl;
+						cout<<"movb "<<"%al, "<<-t2.second->offset<<"(%rbp)"<<endl;
+					}
+					else if(type1 == "short int"){
+						cout<<"movw "<<-t1.second->offset<<"(%rbp)"<<", "<<"%ax"<<endl;
+						cout<<"movw "<<"%ax, "<<-t2.second->offset<<"(%rbp)"<<endl;
+					}
+					else if(type1 == "int"){
+						cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
+						cout<<"movl "<<"%eax, "<<-t2.second->offset<<"(%rbp)"<<endl;
+					}
+					else if(type1 == "long int"){
+						cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+						cout<<"movq "<<"%rax, "<<-t2.second->offset<<"(%rbp)"<<endl;
+					}
+					else if(type1 == "float"){
+						cout<<"movss "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+						cout<<"movss "<<"%xmm0, "<<-t2.second->offset<<"(%rbp)"<<endl;
+					}
+					else if(type1 == "double"){
+						cout<<"movsd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+						cout<<"movsd "<<"%xmm0, "<<-t2.second->offset<<"(%rbp)"<<endl;
+					}
+				}
 				// Between ints and pointers
-				if(type1.back()=='*' && type2.back()=='*'){
+				else if(type1.back()=='*' && type2.back()=='*'){
 					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-t2.second->offset<<"(%rbp)"<<endl;
 				}
-				if(type1.back()==']' && type2.back()=='*'){
+				else if(type1.back()==']' && type2.back()=='*'){
 					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-t2.second->offset<<"(%rbp)"<<endl;
 				}
