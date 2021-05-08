@@ -47,6 +47,9 @@ void init_equiv_types(){
 }
 
 unsigned long get_size(string s, tt_entry* entry){
+	if(s.find("#") != string :: npos){
+		return 8ul;
+	}
 	if(s.find("[]") != string :: npos){
 		return 8ul;
 	}

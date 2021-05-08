@@ -13,9 +13,14 @@ int main(){
 	struct y* r = &t;
 	struct x p;
 	struct x* q = &p;
-	q->x = 12;
-	q->y = 33.333;
-	q->w = r;
-	r->s = 1234;
-	printf("%d %f %d\n", q->x, q->y, q->w->s);
+	struct x* qq[2];
+	qq[0] = &p;
+	qq[1] = &p;
+	// q->x = 12;
+	// q->y = 33.333;
+	// q->w = r;
+	// r->s = 1234;
+	(*(qq[0])).x;
+	// qq[1]->x = 2;
+	// printf("%d %d\n", qq[0]->x, qq[1]->x);
 }

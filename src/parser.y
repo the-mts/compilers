@@ -79,7 +79,8 @@ primary_expression
 																	}
 																	else if(is_struct_or_union(entry->type)){
 																		$$->value_type = LVALUE;
-																		$$->place = getNewTemp(entry->type+" *", entry->ttentry);
+																		$$->place = getNewTemp(entry->type+" #", entry->ttentry);
+																		$$->node_data+= " #";
 																		emit("UNARY&", {string((const char*)$1), entry}, {"", NULL}, $$->place);
 																	}
 																	else {
@@ -201,11 +202,11 @@ postfix_expression
 																		$$ = node_(1, "UNARY*", -1);
 																		$$->v[0] = tempnode;
 																		$$->node_data = tempnode->node_data;
-																		if($1->node_data.back()=='*'){
-																			tempnode->node_data = $1->node_data+'*';
+																		if(tempnode->node_data.back()=='*'){
+																			tempnode->node_data = tempnode->node_data+'*';
 																		}
 																		else{
-																			tempnode->node_data = $1->node_data+" *";
+																			tempnode->node_data = tempnode->node_data+" *";
 																		}
 																		$$->value_type = LVALUE;
 																		$$->ttentry = tempnode->ttentry;
@@ -431,7 +432,11 @@ postfix_expression
 
 																	//////////////// 3AC ////////////////
 																	$$->place = getNewTemp($$->node_data, $$->ttentry);
-																	if(is_struct_or_union($$->node_data) || $$->node_data.back() == ']'){
+																	if(is_struct_or_union($$->node_data)){
+																		$$->node_data += " #";
+																		emit("+struct", $1->place, {"$"+to_string(struct_offset), NULL}, $$->place);
+																	}
+																	else if($$->node_data.back() == ']'){
 																		emit("+struct", $1->place, {"$"+to_string(struct_offset), NULL}, $$->place);
 																	}
 																	else{
@@ -502,7 +507,11 @@ postfix_expression
 																	
 																	//////////////// 3AC ////////////////
 																	$$->place = getNewTemp($$->node_data, $$->ttentry);
-																	if(is_struct_or_union($$->node_data) || $$->node_data.back() == ']'){
+																	if(is_struct_or_union($$->node_data)){
+																		$$->node_data += " #";
+																		emit("+struct", $1->place, {"$"+to_string(struct_offset), NULL}, $$->place);
+																	}
+																	else if($$->node_data.back() == ']'){
 																		emit("+struct", $1->place, {"$"+to_string(struct_offset), NULL}, $$->place);
 																	}
 																	else{
@@ -768,6 +777,15 @@ unary_expression
 																	string temp_data = get_equivalent_pointer($2->node_data).first;
 																	switch(*($1)){
 																		case '&':{
+																			// printf("%s\n", $2->node_data.c_str());
+																			if($2->node_data.back()=='#'){
+																				free($$);
+																				$$ = $2;
+																				$$->node_data.pop_back();
+																				$$->node_data += '*';
+																				break;
+																			}
+
 																			if($2->value_type == LVALUE){
 																				$$->value_type = RVALUE;
 																				if($2->node_data.back() == '*'){
@@ -791,6 +809,7 @@ unary_expression
 																				$$->place = $2->v[0]->place;
 																			}
 																			else{
+																				// printf("asdasd\n");
 																				$$->place = getNewTemp($$->node_data, $$->ttentry);
 																				emit("UNARY" + string((const char*)$1), $2->place, {"", NULL}, $$->place);
 																			}
@@ -798,6 +817,14 @@ unary_expression
 																		}
 																		break;
 																		case '*':{
+																			if($2->node_data.back()=='*' && is_struct_or_union(reduce_pointer_level($2->node_data))){
+																				free($$);
+																				$$ = $2;
+																				$$->node_data.pop_back();
+																				$$->node_data += '#';
+																				printf("Reached here: %s\n", $2->place.first.c_str());
+																				break;
+																			}
 																			if(temp_data.back() != '*'){
 																				printf("\e[1;31mError [line %d]:\e[0m Indirection operator cannot be applied on non-pointer type.\n",line);
 																				exit(-1);
