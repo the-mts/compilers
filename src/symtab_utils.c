@@ -263,7 +263,7 @@ void struct_init_check(string type){
 	}
 	if(tmp!="")
 		a.push_back(tmp);
-	if(a[0]!="struct" && a[0]!="enum"){
+	if(a[0]!="struct" && a[0]!="union"){
 		return;
 	}
 	string type1 = a[0] + " " + a[1];

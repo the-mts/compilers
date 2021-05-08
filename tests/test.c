@@ -1,13 +1,21 @@
+struct y{
+	int s;
+};
+
 struct x {
 	int x;
 	float y;
-	int a[10][10];
+	struct y* w;
 };
 
 int main(){
+	struct y t;
+	struct y* r = &t;
 	struct x p;
-	int* x;
-	p.a[3][2] = 9;
-	p.y = 1.11;
-	printf("%d %f\n", p.a[3][2], p.y);
+	struct x* q = &p;
+	q->x = 12;
+	q->y = 33.333;
+	q->w = r;
+	r->s = 1234;
+	printf("%d %f %d\n", q->x, q->y, q->w->s);
 }

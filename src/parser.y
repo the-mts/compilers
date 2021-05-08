@@ -72,9 +72,14 @@ primary_expression
 																	}
 																	$$->node_name = $1;
 																	$$->node_data = entry->type;
-																	if((entry->type.back() == ']' && entry->type.find("[]")==string::npos) || is_struct_or_union(entry->type)){
+																	if((entry->type.back() == ']' && entry->type.find("[]")==string::npos)){
 																		$$->value_type = RVALUE;
 																		$$->place = getNewTemp(entry->type, entry->ttentry);
+																		emit("UNARY&", {string((const char*)$1), entry}, {"", NULL}, $$->place);
+																	}
+																	else if(is_struct_or_union(entry->type)){
+																		$$->value_type = LVALUE;
+																		$$->place = getNewTemp(entry->type+" *", entry->ttentry);
 																		emit("UNARY&", {string((const char*)$1), entry}, {"", NULL}, $$->place);
 																	}
 																	else {
@@ -427,7 +432,7 @@ postfix_expression
 																	//////////////// 3AC ////////////////
 																	$$->place = getNewTemp($$->node_data, $$->ttentry);
 																	if(is_struct_or_union($$->node_data) || $$->node_data.back() == ']'){
-																		emit("+int", $1->place, {"$"+to_string(struct_offset), NULL}, $$->place);
+																		emit("+struct", $1->place, {"$"+to_string(struct_offset), NULL}, $$->place);
 																	}
 																	else{
 																		auto tempnode = $$;
@@ -446,7 +451,7 @@ postfix_expression
 																		$$->place = tempnode->place;
 																		tempnode->place = getNewTemp(tempnode->node_data, tempnode->ttentry);
 
-																		emit("+int", $1->place, {"$"+to_string(struct_offset), NULL}, tempnode->place);
+																		emit("+struct", $1->place, {"$"+to_string(struct_offset), NULL}, tempnode->place);
 																		emit("UNARY*", tempnode->place, {"", NULL}, $$->place);
 																	}
 																	/////////////////////////////////////
@@ -458,6 +463,8 @@ postfix_expression
 																	string type = $1->node_data;
 																	pair<string,int> p = get_equivalent_pointer(type);
 																	int p_level = p.second;
+																	// printf("data type in ->: %s %d\n", $1->node_data.c_str(), p_level);
+																	
 																	if(p_level != 1){
 																		printf("\e[1;31mError [line %d]:\e[0m '->' operator applied on non-pointer or multilevel-pointer type.\n",line);
 																		exit(-1);
@@ -469,29 +476,56 @@ postfix_expression
 																		exit(-1);
 																	}
 																	int flag = 0;
-																	tt_entry* tmp_entry = NULL;
+																	tt_entry* entry = NULL;
 																	string type1 = type;
 																	string name = string((const char*)$3);
-																	for(auto it : *(type_entry->mem_list))
+																	int struct_offset = 0;
+																	for(auto it : *(type_entry->mem_list)){
 																		if(it.first.second == name){
 																			type = it.first.first;
 																			flag = 1;
-																			tmp_entry = it.second;
+																			entry = it.second;
 																			break;
 																		}
+																		struct_offset += get_size(it.first.first, it.second);
+																	}
 																	if(!flag){
 																		printf("\e[1;31mError [line %d]:\e[0m '%s' has no member named '%s'.\n",line, type1.c_str(),$3);/*typedef changes*/
 																		exit(-1);
 																	}
 																	$$->node_data = type;
-																	if($1->value_type == RVALUE)
+																	if(type.back() == ']')
 																		$$->value_type = RVALUE;
 																	else
 																		$$->value_type = LVALUE;
-																	$$->ttentry = tmp_entry;
+																	$$->ttentry = entry;
 																	
 																	//////////////// 3AC ////////////////
+																	$$->place = getNewTemp($$->node_data, $$->ttentry);
+																	if(is_struct_or_union($$->node_data) || $$->node_data.back() == ']'){
+																		emit("+struct", $1->place, {"$"+to_string(struct_offset), NULL}, $$->place);
+																	}
+																	else{
+																		auto tempnode = $$;
+																		$$ = node_(1, "UNARY*", -1);
+																		$$->v[0] = tempnode;
+																		$$->node_data = tempnode->node_data;
+																		if(tempnode->node_data.back()=='*'){
+																			tempnode->node_data = tempnode->node_data+'*';
+																		}
+																		else{
+																			tempnode->node_data = tempnode->node_data+" *";
+																		}
 
+																		$$->value_type = LVALUE;
+																		$$->ttentry = tempnode->ttentry;
+																		$$->place = tempnode->place;
+																		tempnode->place = getNewTemp(tempnode->node_data, tempnode->ttentry);
+																		// printf("data type in ->: %s\n", $$->node_data.c_str());
+
+																		emit("+struct", $1->place, {"$"+to_string(struct_offset), NULL}, tempnode->place);
+																		emit("UNARY*", tempnode->place, {"", NULL}, $$->place);
+																	}
 																	/////////////////////////////////////
 																}
 	| postfix_expression INC_OP									{
@@ -3049,7 +3083,11 @@ M5
 																					struct_entry->mem_list = tmp;
 																				}
 																				struct_init_check(type);
-																				i->v[1]->ttentry = type_lookup(type);
+																				string type2 = type;
+																				while(type2.back() == '*' || type2.back() == ']'){
+																					type2 = reduce_pointer_level(type2);
+																				}
+																				i->v[1]->ttentry = type_lookup(type2);
 																				struct_entry->mem_list->push_back({{type, name},i->v[1]->ttentry});
 																			}
 																		}
