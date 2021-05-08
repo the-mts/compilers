@@ -220,7 +220,7 @@ void make_blocks(){
 		blocknum[i] = curr;
 	}
 //	printf("chick3\n");
-
+	
 	curr = 0;
 	blocks.push_back(block(0));
 	if (code_array[0].op == "FUNC_START") {
@@ -293,7 +293,7 @@ void make_blocks(){
 			blocks[blocks[i].succ].pred.push_back(i);
 			if (blocks[i].cond_succ != -1) blocks[blocks[i].cond_succ].pred.push_back(i);
 		}
-		blocks[i].code.erase(remove_if(blocks[i].code.begin(), blocks[i].code.end(), [](quad q){return q.op == "DUMMY";}), blocks[i].code.end());
+		//blocks[i].code.erase(remove_if(blocks[i].code.begin(), blocks[i].code.end(), [](quad q){return q.op == "DUMMY";}), blocks[i].code.end());
 	}
 //	printf("chick5\n");
 	//return;
@@ -629,8 +629,11 @@ int opt_dead_expr(){
 }
 
 int opt_gotos(){
-	int c = 0;
+	int c = 0, s;
 	int n = blocks.size();
+	qi cond, res;
+	long val;
+	string op, op1;
 	for (int b = n-1; b >= 0; b--){
 		if (blocks[b].alive && !blocks[b].isglobal){
 			if (blocks[b].code.back().op == "GOTO"){
@@ -651,6 +654,37 @@ int opt_gotos(){
 					handle_dead_block(b);
 					c = 1;
 				}
+				else {
+					cond = blocks[b].code.back().op1;
+					for (int l = blocks[b].code.size()-2; l >= 0; l--){
+						op = blocks[b].code[l].op;
+						res = blocks[b].code[l].res;
+						op1 = blocks[b].code[l].op1.first;
+						if (res == cond){
+							if (op == "=" && op1[0] == '$'){
+								op1.erase(op1.begin());
+								val = stol(op1);
+								if (val){
+									blocks[b].code.back().op = "GOTO";
+									blocks[b].code.back().op1 = {"", NULL};
+									s = blocks[b].succ;
+									blocks[b].succ = blocks[b].cond_succ;
+									blocks[b].cond_succ = -1;
+									blocks[s].pred.erase(remove(blocks[s].pred.begin(), blocks[s].pred.end(), b), blocks[s].pred.end());
+								}
+								else {
+									s = blocks[b].cond_succ;
+									blocks[s].pred.erase(remove(blocks[s].pred.begin(), blocks[s].pred.end(), b), blocks[s].pred.end());
+									blocks[b].cond_succ = -1;
+									blocks[b].code.pop_back();
+									handle_dead_block(b);
+								}
+								c = 1;
+							}
+							break;
+						}
+					}
+				}
 			}
 		}
 	}
@@ -661,11 +695,12 @@ int opt_gotos(){
 
 void optimize(){
 	if (blocks.size() == 0) return;
-	opt_ret_dead();
+	//opt_ret_dead();
 	int limit = 10;
 	int c = 1, l = limit;
 	while (l-- && c){
 		c = 0;
+		opt_ret_dead();
 		c = c | opt_cse();
 		c = c | opt_copy();
 		c = c | opt_dead_expr();

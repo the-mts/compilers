@@ -2275,8 +2275,7 @@ conditional_expression
 																	$$->place = getNewTemp($$->node_data);
 																	emit("=", $7->place, {"", NULL}, $$->place);
 																	code_array[$6].res = $$->place;
-																	$$->nextlist.insert($$->nextlist.end(), $4->nextlist.begin(), $4->nextlist.end());
-																	//backpatch($4->nextlist, nextquad);
+																	backpatch($4->nextlist, nextquad);
 																	$$->nextlist.insert($$->nextlist.end(), $7->nextlist.begin(), $7->nextlist.end());
 																	/////////////////////////////////////
 																}
