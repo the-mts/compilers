@@ -1065,6 +1065,126 @@ void codegen(){
 				// }
 			}
 
+			else if(instr.op == "+real"){
+				qi t1 = instr.op1;
+				qi t2 = instr.op2;
+				string type1 = instr.op1.second->type, type2 = instr.op2.second->type;
+				if(type1=="float" && type2=="float"){
+					cout<<"movss "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movss "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"addss "<<"%xmm1"<<", "<<"%xmm0"<<endl;
+					cout<<"movss "<<"%xmm0"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1=="double" && type2=="double"){
+					cout<<"movsd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"addsd "<<"%xmm1"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<"%xmm0"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1=="float" && type2=="double"){
+					cout<<"cvtss2sd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"addsd "<<"%xmm1"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<"%xmm0"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1=="double" && type2=="float"){
+					cout<<"movsd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"cvtss2sd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"addsd "<<"%xmm1"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<"%xmm0"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+			}
+
+			else if(instr.op == "-real"){
+				qi t1 = instr.op1;
+				qi t2 = instr.op2;
+				string type1 = instr.op1.second->type, type2 = instr.op2.second->type;
+				if(type1=="float" && type2=="float"){
+					cout<<"movss "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movss "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"subss "<<"%xmm1"<<", "<<"%xmm0"<<endl;
+					cout<<"movss "<<"%xmm0"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1=="double" && type2=="double"){
+					cout<<"movsd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"subsd "<<"%xmm1"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<"%xmm0"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1=="float" && type2=="double"){
+					cout<<"cvtss2sd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"subsd "<<"%xmm1"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<"%xmm0"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1=="double" && type2=="float"){
+					cout<<"movsd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"cvtss2sd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"subsd "<<"%xmm1"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<"%xmm0"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+			}
+
+			else if(instr.op == "*real"){
+				qi t1 = instr.op1;
+				qi t2 = instr.op2;
+				string type1 = instr.op1.second->type, type2 = instr.op2.second->type;
+				if(type1=="float" && type2=="float"){
+					cout<<"movss "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movss "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"mulss "<<"%xmm1"<<", "<<"%xmm0"<<endl;
+					cout<<"movss "<<"%xmm0"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1=="double" && type2=="double"){
+					cout<<"movsd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"mulsd "<<"%xmm1"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<"%xmm0"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1=="float" && type2=="double"){
+					cout<<"cvtss2sd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"mulsd "<<"%xmm1"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<"%xmm0"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1=="double" && type2=="float"){
+					cout<<"movsd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"cvtss2sd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"mulsd "<<"%xmm1"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<"%xmm0"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+			}
+
+			else if(instr.op == "/real"){
+				qi t1 = instr.op1;
+				qi t2 = instr.op2;
+				string type1 = instr.op1.second->type, type2 = instr.op2.second->type;
+				if(type1=="float" && type2=="float"){
+					cout<<"movss "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movss "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"divss "<<"%xmm1"<<", "<<"%xmm0"<<endl;
+					cout<<"movss "<<"%xmm0"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1=="double" && type2=="double"){
+					cout<<"movsd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"divsd "<<"%xmm1"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<"%xmm0"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1=="float" && type2=="double"){
+					cout<<"cvtss2sd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"divsd "<<"%xmm1"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<"%xmm0"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1=="double" && type2=="float"){
+					cout<<"movsd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"cvtss2sd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"divsd "<<"%xmm1"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<"%xmm0"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+			}
+
 			else if(instr.op == "%"){
 				qi t1 = instr.op1;
 				qi t2 = instr.op2;
@@ -1841,6 +1961,274 @@ void codegen(){
 				cout<<"movzbl %al, %eax"<<endl;
 				cout<<"movl %eax, "<<-r.second->offset<<"(%rbp)"<<endl;
 
+			}
+
+			else if(instr.op == "<real"){
+				qi t1 = instr.op1;
+				qi t2 = instr.op2;
+				string type1 = instr.op1.second->type, type2 = instr.op2.second->type;
+				if(type1=="float" && type2=="float"){
+					cout<<"movss "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movss "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"comiss "<<"%xmm0"<<", "<<"%xmm1"<<endl;
+					cout<<"seta "<<"%al"<<endl;
+					cout<<"movzbl "<<"%al"<<", "<<"%eax"<<endl;
+					cout<<"movl "<<"%eax"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1=="double" && type2=="double"){
+					cout<<"movsd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"comisd "<<"%xmm0"<<", "<<"%xmm1"<<endl;
+					cout<<"seta "<<"%al"<<endl;
+					cout<<"movzbl "<<"%al"<<", "<<"%eax"<<endl;
+					cout<<"movl "<<"%eax"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1=="float" && type2=="double"){
+					cout<<"cvtss2sd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"comisd "<<"%xmm0"<<", "<<"%xmm1"<<endl;
+					cout<<"seta "<<"%al"<<endl;
+					cout<<"movzbl "<<"%al"<<", "<<"%eax"<<endl;
+					cout<<"movl "<<"%eax"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1=="double" && type2=="float"){
+					cout<<"movsd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"cvtss2sd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"comisd "<<"%xmm0"<<", "<<"%xmm1"<<endl;
+					cout<<"seta "<<"%al"<<endl;
+					cout<<"movzbl "<<"%al"<<", "<<"%eax"<<endl;
+					cout<<"movl "<<"%eax"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+			}
+
+			else if(instr.op == ">real"){
+				qi t1 = instr.op1;
+				qi t2 = instr.op2;
+				string type1 = instr.op1.second->type, type2 = instr.op2.second->type;
+				if(type1=="float" && type2=="float"){
+					cout<<"movss "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movss "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"comiss "<<"%xmm0"<<", "<<"%xmm1"<<endl;
+					cout<<"setb "<<"%al"<<endl;
+					cout<<"movzbl "<<"%al"<<", "<<"%eax"<<endl;
+					cout<<"movl "<<"%eax"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1=="double" && type2=="double"){
+					cout<<"movsd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"comisd "<<"%xmm0"<<", "<<"%xmm1"<<endl;
+					cout<<"setb "<<"%al"<<endl;
+					cout<<"movzbl "<<"%al"<<", "<<"%eax"<<endl;
+					cout<<"movl "<<"%eax"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1=="float" && type2=="double"){
+					cout<<"cvtss2sd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"comisd "<<"%xmm0"<<", "<<"%xmm1"<<endl;
+					cout<<"setb "<<"%al"<<endl;
+					cout<<"movzbl "<<"%al"<<", "<<"%eax"<<endl;
+					cout<<"movl "<<"%eax"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1=="double" && type2=="float"){
+					cout<<"movsd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"cvtss2sd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"comisd "<<"%xmm0"<<", "<<"%xmm1"<<endl;
+					cout<<"setb "<<"%al"<<endl;
+					cout<<"movzbl "<<"%al"<<", "<<"%eax"<<endl;
+					cout<<"movl "<<"%eax"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+			}
+
+			else if(instr.op == "<=real"){
+				qi t1 = instr.op1;
+				qi t2 = instr.op2;
+				string type1 = instr.op1.second->type, type2 = instr.op2.second->type;
+				if(type1=="float" && type2=="float"){
+					cout<<"movss "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movss "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"comiss "<<"%xmm0"<<", "<<"%xmm1"<<endl;
+					cout<<"setnb "<<"%al"<<endl;
+					cout<<"movzbl "<<"%al"<<", "<<"%eax"<<endl;
+					cout<<"movl "<<"%eax"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1=="double" && type2=="double"){
+					cout<<"movsd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"comisd "<<"%xmm0"<<", "<<"%xmm1"<<endl;
+					cout<<"setnb "<<"%al"<<endl;
+					cout<<"movzbl "<<"%al"<<", "<<"%eax"<<endl;
+					cout<<"movl "<<"%eax"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1=="float" && type2=="double"){
+					cout<<"cvtss2sd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"comisd "<<"%xmm0"<<", "<<"%xmm1"<<endl;
+					cout<<"setnb "<<"%al"<<endl;
+					cout<<"movzbl "<<"%al"<<", "<<"%eax"<<endl;
+					cout<<"movl "<<"%eax"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1=="double" && type2=="float"){
+					cout<<"movsd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"cvtss2sd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"comisd "<<"%xmm0"<<", "<<"%xmm1"<<endl;
+					cout<<"setnb "<<"%al"<<endl;
+					cout<<"movzbl "<<"%al"<<", "<<"%eax"<<endl;
+					cout<<"movl "<<"%eax"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+			}
+
+			else if(instr.op == ">=real"){
+				qi t1 = instr.op1;
+				qi t2 = instr.op2;
+				string type1 = instr.op1.second->type, type2 = instr.op2.second->type;
+				if(type1=="float" && type2=="float"){
+					cout<<"movss "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movss "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"comiss "<<"%xmm0"<<", "<<"%xmm1"<<endl;
+					cout<<"setna "<<"%al"<<endl;
+					cout<<"movzbl "<<"%al"<<", "<<"%eax"<<endl;
+					cout<<"movl "<<"%eax"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1=="double" && type2=="double"){
+					cout<<"movsd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"comisd "<<"%xmm0"<<", "<<"%xmm1"<<endl;
+					cout<<"setna "<<"%al"<<endl;
+					cout<<"movzbl "<<"%al"<<", "<<"%eax"<<endl;
+					cout<<"movl "<<"%eax"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1=="float" && type2=="double"){
+					cout<<"cvtss2sd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"comisd "<<"%xmm0"<<", "<<"%xmm1"<<endl;
+					cout<<"setna "<<"%al"<<endl;
+					cout<<"movzbl "<<"%al"<<", "<<"%eax"<<endl;
+					cout<<"movl "<<"%eax"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1=="double" && type2=="float"){
+					cout<<"movsd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"cvtss2sd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"comisd "<<"%xmm0"<<", "<<"%xmm1"<<endl;
+					cout<<"setna "<<"%al"<<endl;
+					cout<<"movzbl "<<"%al"<<", "<<"%eax"<<endl;
+					cout<<"movl "<<"%eax"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+			}
+
+			else if(instr.op == "==real"){
+				qi t1 = instr.op1;
+				qi t2 = instr.op2;
+				string type1 = instr.op1.second->type, type2 = instr.op2.second->type;
+				if(type1=="float" && type2=="float"){
+					cout<<"movss "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movss "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"ucomiss "<<"%xmm1"<<", "<<"%xmm0"<<endl;
+					cout<<"setnp %al"<<endl;
+					cout<<"movl $0, %edx"<<endl;
+					cout<<"movss "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movss "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"ucomiss "<<"%xmm1"<<", "<<"%xmm0"<<endl;
+					cout<<"cmovne %edx, %eax"<<endl;
+					cout<<"movzbl %al, %eax"<<endl;
+					cout<<"movl "<<"%eax"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1=="double" && type2=="double"){
+					cout<<"movsd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"ucomisd "<<"%xmm1"<<", "<<"%xmm0"<<endl;
+					cout<<"setnp %al"<<endl;
+					cout<<"movl $0, %edx"<<endl;
+					cout<<"movsd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"ucomisd "<<"%xmm1"<<", "<<"%xmm0"<<endl;
+					cout<<"cmovne %edx, %eax"<<endl;
+					cout<<"movzbl %al, %eax"<<endl;
+					cout<<"movl "<<"%eax"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1=="float" && type2=="double"){
+					cout<<"cvtss2sd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"ucomisd "<<"%xmm1"<<", "<<"%xmm0"<<endl;
+					cout<<"setnp %al"<<endl;
+					cout<<"movl $0, %edx"<<endl;
+					cout<<"cvtss2sd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"ucomisd "<<"%xmm1"<<", "<<"%xmm0"<<endl;
+					cout<<"cmovne %edx, %eax"<<endl;
+					cout<<"movzbl %al, %eax"<<endl;
+					cout<<"movl "<<"%eax"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1=="double" && type2=="float"){
+					cout<<"movsd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"cvtss2sd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"ucomisd "<<"%xmm1"<<", "<<"%xmm0"<<endl;
+					cout<<"setnp %al"<<endl;
+					cout<<"movl $0, %edx"<<endl;
+					cout<<"movsd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"cvtss2sd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"ucomisd "<<"%xmm1"<<", "<<"%xmm0"<<endl;
+					cout<<"cmovne %edx, %eax"<<endl;
+					cout<<"movzbl %al, %eax"<<endl;
+					cout<<"movl "<<"%eax"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+			}
+
+			else if(instr.op == "!=real"){
+				qi t1 = instr.op1;
+				qi t2 = instr.op2;
+				string type1 = instr.op1.second->type, type2 = instr.op2.second->type;
+				if(type1=="float" && type2=="float"){
+					cout<<"movss "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movss "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"ucomiss "<<"%xmm1"<<", "<<"%xmm0"<<endl;
+					cout<<"setp %al"<<endl;
+					cout<<"movl $1, %edx"<<endl;
+					cout<<"movss "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movss "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"ucomiss "<<"%xmm1"<<", "<<"%xmm0"<<endl;
+					cout<<"cmovne %edx, %eax"<<endl;
+					cout<<"movzbl %al, %eax"<<endl;
+					cout<<"movl "<<"%eax"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1=="double" && type2=="double"){
+					cout<<"movsd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"ucomisd "<<"%xmm1"<<", "<<"%xmm0"<<endl;
+					cout<<"setp %al"<<endl;
+					cout<<"movl $1, %edx"<<endl;
+					cout<<"movsd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"ucomisd "<<"%xmm1"<<", "<<"%xmm0"<<endl;
+					cout<<"cmovne %edx, %eax"<<endl;
+					cout<<"movzbl %al, %eax"<<endl;
+					cout<<"movl "<<"%eax"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1=="float" && type2=="double"){
+					cout<<"cvtss2sd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"ucomisd "<<"%xmm1"<<", "<<"%xmm0"<<endl;
+					cout<<"setp %al"<<endl;
+					cout<<"movl $1, %edx"<<endl;
+					cout<<"cvtss2sd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"ucomisd "<<"%xmm1"<<", "<<"%xmm0"<<endl;
+					cout<<"cmovne %edx, %eax"<<endl;
+					cout<<"movzbl %al, %eax"<<endl;
+					cout<<"movl "<<"%eax"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1=="double" && type2=="float"){
+					cout<<"movsd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"cvtss2sd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"ucomisd "<<"%xmm1"<<", "<<"%xmm0"<<endl;
+					cout<<"setp %al"<<endl;
+					cout<<"movl $1, %edx"<<endl;
+					cout<<"movsd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"cvtss2sd "<<-t2.second->offset<<"(%rbp)"<<", "<<"%xmm1"<<endl;
+					cout<<"ucomisd "<<"%xmm1"<<", "<<"%xmm0"<<endl;
+					cout<<"cmovne %edx, %eax"<<endl;
+					cout<<"movzbl %al, %eax"<<endl;
+					cout<<"movl "<<"%eax"<<", "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+				}
 			}
 
 			else if(instr.op == "UNARY+"){
