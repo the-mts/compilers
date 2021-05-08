@@ -47,6 +47,9 @@ void init_equiv_types(){
 }
 
 unsigned long get_size(string s, tt_entry* entry){
+	if(s.find("#") != string :: npos){
+		return 8ul;
+	}
 	if(s.find("[]") != string :: npos){
 		return 8ul;
 	}
@@ -263,7 +266,7 @@ void struct_init_check(string type){
 	}
 	if(tmp!="")
 		a.push_back(tmp);
-	if(a[0]!="struct" && a[0]!="enum"){
+	if(a[0]!="struct" && a[0]!="union"){
 		return;
 	}
 	string type1 = a[0] + " " + a[1];
@@ -304,6 +307,7 @@ void init_symtab(){
 	add_entry("log10", "double", 0, 0, IS_BUILTIN_FUNC);
 	add_entry("sqrt", "double", 0, 0, IS_BUILTIN_FUNC);
 	add_entry("exp", "double", 0, 0, IS_BUILTIN_FUNC);
+	add_entry("pow", "double", 0, 0, IS_BUILTIN_FUNC);
 }
 
 st_entry* add_entry(string key, string type, unsigned long size, long offset, enum sym_type type_name){
