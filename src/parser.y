@@ -1274,8 +1274,8 @@ additive_expression
 																	if($1->node_data.back() == ']' || $1->node_data.back() == '*'){
 																		type = $1->node_data;
 																	}
-																	if($2->node_data.back() == ']' || $2->node_data.back() == '*'){
-																		type = $2->node_data;
+																	if($3->node_data.back() == ']' || $3->node_data.back() == '*'){
+																		type = $3->node_data;
 																	}
 																	$$->node_data = type;
 																	$$->value_type = RVALUE;
@@ -2916,6 +2916,9 @@ init_declarator
 																		tt_entry* entry = type_lookup(data_type);
 																		st_entry* tmp = add_entry($1->node_name, data_type_, get_size(data_type_, entry),accumulate(offset.begin()+1, offset.end(), 0),IS_VAR);
 																		tmp->type_name = IS_VAR;
+																		if(table_scope.back() == &global){
+																			tmp->is_global = true;
+																		}
 																		tmp->ttentry = entry;
 																		if(data_type_ == "void"){
 																			printf("\e[1;31mError [line %d]:\e[0m Variable or field '%s' declared void.\n", line, $1->node_name.c_str());
@@ -2947,6 +2950,9 @@ init_declarator
 																		}
 																		tt_entry* datatype_entry = type_lookup(data_type);
 																		st_entry* tmp = add_entry($1->name, data_type_, get_size(data_type_, datatype_entry), accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);/*change IS_VAR*/
+																		if(table_scope.back() == &global){
+																			tmp->is_global = true;
+																		}
 																		$1->place = {$1->node_name, tmp};
 																		tmp->ttentry = datatype_entry;
 																		$1->ttentry = tmp->ttentry;
