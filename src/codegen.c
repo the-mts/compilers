@@ -243,7 +243,7 @@ void codegen(){
 					}
 					string p = x.second->type;
 					int flag = 0;
-					if(!is_struct_or_union(p) && (p.find("int") != string::npos || p.find("char") != string::npos || p.back() == ']' || p.back() == '*' || p.back() == '#')){
+					if(!is_struct_or_union(p) && (p.find("int") != string::npos || p.find("char") != string::npos || p.back() == ']' || p.back() == '*')){
 						flag = 1;
 					}
 					else if(!is_struct_or_union(p) && (p.find("double") != string::npos || p.find("float") != string::npos)){
@@ -252,12 +252,12 @@ void codegen(){
 					else{
 						flag = 3;
 					}
-					cerr<<flag<<" "<<p<<endl;
+					// cout<<flag<<" "<<p<<endl;
 
 					if(flag == 1 && int_char<6){
 						int size = get_size(p);
 						if(p.back() == ']') size = 8;
-						cerr<<intregs[{int_char+1, size}]<<endl;
+						// cout<<intregs[{int_char+1, size}]<<endl;
 						cout<<"mov"<<sizechar(size)<<" "<<-x.second->offset<<"(%rbp)"<<", "<<intregs[{int_char+1, size}]<<endl;
 						int_char++;
 					}
@@ -281,7 +281,7 @@ void codegen(){
 				}
 				for(int x = stk_params.size()-1; x>=0; x--){
 					string p = stk_params[x].second->type;
-					int size = get_size(p);
+					int size = get_size(p, stk_params[x].second->ttentry);
 					if(p.back() == ']') size = 8;
 					if (size<=8) cout<<"pushq "<<-stk_params[x].second->offset<<"(%rbp)"<<endl;
 					else{
@@ -524,7 +524,7 @@ void codegen(){
 				}
 				else if(type1.back() == '*' && (type2 == "char")){
 					type1 = reduce_pointer_level(type1);
-					int size = get_size(type1);
+					int size = get_size(type1, t1.second->ttentry);
 					cout<<"movsbq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rax"<<endl;
 					cout<<"addq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
@@ -534,7 +534,7 @@ void codegen(){
 					swap(t1,t2);
 					swap(type1,type2);
 					type1 = reduce_pointer_level(type1);
-					int size = get_size(type1);
+					int size = get_size(type1, t1.second->ttentry);
 					cout<<"movsbq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rax"<<endl;
 					cout<<"addq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
@@ -542,7 +542,7 @@ void codegen(){
 				}
 				else if(type1.back() == '*' && (type2 == "short int")){
 					type1 = reduce_pointer_level(type1);
-					int size = get_size(type1);
+					int size = get_size(type1, t1.second->ttentry);
 					cout<<"movswq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rax"<<endl;
 					cout<<"addq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
@@ -552,7 +552,7 @@ void codegen(){
 					swap(t1,t2);
 					swap(type1,type2);
 					type1 = reduce_pointer_level(type1);
-					int size = get_size(type1);
+					int size = get_size(type1, t1.second->ttentry);
 					cout<<"movswq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rax"<<endl;
 					cout<<"addq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
@@ -561,7 +561,7 @@ void codegen(){
 
 				else if(type1.back() == '*' && (type2 == "int")){
 					type1 = reduce_pointer_level(type1);
-					int size = get_size(type1);
+					int size = get_size(type1, t1.second->ttentry);
 					cout<<"movslq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rax"<<endl;
 					cout<<"addq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
@@ -571,7 +571,7 @@ void codegen(){
 					swap(t1,t2);
 					swap(type1,type2);
 					type1 = reduce_pointer_level(type1);
-					int size = get_size(type1);
+					int size = get_size(type1, t1.second->ttentry);
 					cout<<"movslq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rax"<<endl;
 					cout<<"addq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
@@ -580,7 +580,7 @@ void codegen(){
 
 				else if(type1.back() == '*' && (type2 == "long int")){
 					type1 = reduce_pointer_level(type1);
-					int size = get_size(type1);
+					int size = get_size(type1, t1.second->ttentry);
 					cout<<"movq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rax"<<endl;
 					cout<<"addq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
@@ -590,7 +590,7 @@ void codegen(){
 					swap(t1,t2);
 					swap(type1,type2);
 					type1 = reduce_pointer_level(type1);
-					int size = get_size(type1);
+					int size = get_size(type1, t1.second->ttentry);
 					cout<<"movq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rax"<<endl;
 					cout<<"addq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
@@ -599,7 +599,7 @@ void codegen(){
 
 				else if(type1.back() == ']' && (type2 == "char")){
 					type1 = reduce_pointer_level(type1);
-					int size = get_size(type1);
+					int size = get_size(type1, t1.second->ttentry);
 					cout<<"movsbq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rax"<<endl;
 					cout<<"addq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
@@ -609,7 +609,7 @@ void codegen(){
 					swap(t1,t2);
 					swap(type1,type2);
 					type1 = reduce_pointer_level(type1);
-					int size = get_size(type1);
+					int size = get_size(type1, t1.second->ttentry);
 					cout<<"movsbq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rax"<<endl;
 					cout<<"addq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
@@ -617,7 +617,7 @@ void codegen(){
 				}
 				else if(type1.back() == ']' && (type2 == "short int")){
 					type1 = reduce_pointer_level(type1);
-					int size = get_size(type1);
+					int size = get_size(type1, t1.second->ttentry);
 					cout<<"movswq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rax"<<endl;
 					cout<<"addq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
@@ -627,7 +627,7 @@ void codegen(){
 					swap(t1,t2);
 					swap(type1,type2);
 					type1 = reduce_pointer_level(type1);
-					int size = get_size(type1);
+					int size = get_size(type1, t1.second->ttentry);
 					cout<<"movswq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rax"<<endl;
 					cout<<"addq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
@@ -636,7 +636,7 @@ void codegen(){
 
 				else if(type1.back() == ']' && (type2 == "int")){
 					type1 = reduce_pointer_level(type1);
-					int size = get_size(type1);
+					int size = get_size(type1, t1.second->ttentry);
 					cout<<"movslq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rax"<<endl;
 					cout<<"addq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
@@ -646,7 +646,7 @@ void codegen(){
 					swap(t1,t2);
 					swap(type1,type2);
 					type1 = reduce_pointer_level(type1);
-					int size = get_size(type1);
+					int size = get_size(type1, t1.second->ttentry);
 					cout<<"movslq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rax"<<endl;
 					cout<<"addq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
@@ -655,7 +655,7 @@ void codegen(){
 
 				else if(type1.back() == ']' && (type2 == "long int")){
 					type1 = reduce_pointer_level(type1);
-					int size = get_size(type1);
+					int size = get_size(type1, t1.second->ttentry);
 					cout<<"movq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rax"<<endl;
 					cout<<"addq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
@@ -665,7 +665,7 @@ void codegen(){
 					swap(t1,t2);
 					swap(type1,type2);
 					type1 = reduce_pointer_level(type1);
-					int size = get_size(type1);
+					int size = get_size(type1, t1.second->ttentry);
 					cout<<"movq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rax"<<endl;
 					cout<<"addq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
@@ -766,7 +766,7 @@ void codegen(){
 				}
 				else if(type1.back() == '*' && (type2 == "char")){
 					type1 = reduce_pointer_level(type1);
-					int size = get_size(type1);
+					int size = get_size(type1, t1.second->ttentry);
 					cout<<"movsbq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rcx"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rcx"<<endl;
 					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
@@ -775,7 +775,7 @@ void codegen(){
 				}
 				else if(type1.back() == '*' && (type2 == "short int")){
 					type1 = reduce_pointer_level(type1);
-					int size = get_size(type1);
+					int size = get_size(type1, t1.second->ttentry);
 					cout<<"movswq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rcx"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rcx"<<endl;
 					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
@@ -784,7 +784,7 @@ void codegen(){
 				}
 				else if(type1.back() == '*' && (type2 == "int")){
 					type1 = reduce_pointer_level(type1);
-					int size = get_size(type1);
+					int size = get_size(type1, t1.second->ttentry);
 					cout<<"movslq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rcx"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rcx"<<endl;
 					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
@@ -793,7 +793,7 @@ void codegen(){
 				}
 				else if(type1.back() == '*' && (type2 == "long int")){
 					type1 = reduce_pointer_level(type1);
-					int size = get_size(type1);
+					int size = get_size(type1, t1.second->ttentry);
 					cout<<"movq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rcx"<<endl;
 					cout<<"imulq $"<<size<<", "<<"%rcx"<<endl;
 					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
@@ -802,7 +802,7 @@ void codegen(){
 				}
 				else if(type1.back() == '*' && type2.back() == '*'){
 					type1 = reduce_pointer_level(type1);
-					int size = get_size(type1);
+					int size = get_size(type1, t1.second->ttentry);
 					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"subq "<<-t2.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"cqto"<<endl;
@@ -1618,7 +1618,7 @@ void codegen(){
 
 				else if(type1.back() == '*'){
 					type1 = reduce_pointer_level(type1);
-					int size = get_size(type1);
+					int size = get_size(type1, t1.second->ttentry);
 					cout<<"addq $"<<size<<", "<<-t1.second->offset<<"(%rbp)"<<endl;
 					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
@@ -1651,7 +1651,7 @@ void codegen(){
 
 				else if(type1.back() == '*'){
 					type1 = reduce_pointer_level(type1);
-					int size = get_size(type1);
+					int size = get_size(type1, t1.second->ttentry);
 					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 					cout<<"addq $"<<size<<", "<<-t1.second->offset<<"(%rbp)"<<endl;
@@ -1684,7 +1684,7 @@ void codegen(){
 
 				else if(type1.back() == '*'){
 					type1 = reduce_pointer_level(type1);
-					int size = get_size(type1);
+					int size = get_size(type1, t1.second->ttentry);
 					cout<<"subq $"<<size<<", "<<-t1.second->offset<<"(%rbp)"<<endl;
 					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
@@ -1717,7 +1717,7 @@ void codegen(){
 
 				else if(type1.back() == '*'){
 					type1 = reduce_pointer_level(type1);
-					int size = get_size(type1);
+					int size = get_size(type1, t1.second->ttentry);
 					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
 					cout<<"subq $"<<size<<", "<<-t1.second->offset<<"(%rbp)"<<endl;

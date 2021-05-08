@@ -188,33 +188,70 @@ postfix_expression
 																	if($3->token == CONSTANT){
 																		$3->place = emitConstant($3);
 																	}
-																	$$->place = getNewTemp($$->node_data, $$->ttentry);
 																	backpatch($3->nextlist, nextquad);
 																	// int x = emit("[]", $1->place, $3->place, $$->place);
 																	// backpatch($3->truelist, x);		// Have to check
 																	// backpatch($3->falselist, x);	// check
 
 																	if($$->node_data.back()==']'){
+																		$$->place = getNewTemp($$->node_data, $$->ttentry);
 																		emit("+int", $1->place, $3->place, $$->place);
 																	}
 																	else{
-																		auto tempnode = $$;
-																		$$ = node_(1, "UNARY*", -1);
-																		$$->v[0] = tempnode;
-																		$$->node_data = tempnode->node_data;
-																		if(tempnode->node_data.back()=='*'){
-																			tempnode->node_data = tempnode->node_data+'*';
+																		
+																		/*
+																				struct x{
+	
+																				} y[5];
+																				y[2]->struct x
+																		*/
+																		if(!is_struct_or_union(reduce_pointer_level($1->node_data))){
+																			$$->place = getNewTemp($$->node_data, $$->ttentry);
+																			auto tempnode = $$;
+																			$$ = node_(1, "UNARY*", -1);
+																			$$->v[0] = tempnode;
+																			$$->node_data = tempnode->node_data;
+																			if(tempnode->node_data.back()=='*'){
+																				tempnode->node_data = tempnode->node_data+'*';
+																			}
+																			else{
+																				tempnode->node_data = tempnode->node_data+" *";
+																			}
+																			$$->value_type = LVALUE;
+																			$$->ttentry = tempnode->ttentry;
+																			$$->place = tempnode->place;
+
+																			tempnode->place = getNewTemp(tempnode->node_data, tempnode->ttentry);
+																			emit("+int", $1->place, $3->place, tempnode->place);
+																			emit("UNARY*", tempnode->place, {"", NULL}, $$->place);
+																			//free($$);
+																			//$$ = $2;
+																			//$$->node_data.pop_back();
+																			//$$->value_type = LVALUE;
+																			//$$->place = getNewTemp(entry->type+" #", entry->ttentry);
+																			//$$->node_data+= " #";
+																			//emit("UNARY&", {string((const char*)$1), entry}, {"", NULL}, $$->place);
+																			//printf("Reached here: %s\n", $2->place.first.c_str());
+																			//break;
 																		}
 																		else{
-																			tempnode->node_data = tempnode->node_data+" *";
+																			auto tempnode = $$;
+																			$$ = node_(1, "UNARY*", -1);
+																			$$->v[0] = tempnode;
+																			$$->node_data = tempnode->node_data;
+																			if(tempnode->node_data.back()=='*'){
+																				tempnode->node_data = tempnode->node_data+'*';
+																			}
+																			else{
+																				tempnode->node_data = tempnode->node_data+" *";
+																			}
+																			$$->value_type = LVALUE;
+																			$$->ttentry = tempnode->ttentry;
+																			$$->node_data += " #";
+																			$$->place = getNewTemp($$->node_data, $$->ttentry);
+																			emit("+int", $1->place, $3->place, $$->place);
+																			$$->place.second->type += " #";
 																		}
-																		$$->value_type = LVALUE;
-																		$$->ttentry = tempnode->ttentry;
-																		$$->place = tempnode->place;
-																		tempnode->place = getNewTemp(tempnode->node_data, tempnode->ttentry);
-
-																		emit("+int", $1->place, $3->place, tempnode->place);
-																		emit("UNARY*", tempnode->place, {"", NULL}, $$->place);
 																	}
 																	/////////////////////////////////////
 																}
@@ -431,15 +468,17 @@ postfix_expression
 																	$$->ttentry = entry;
 
 																	//////////////// 3AC ////////////////
-																	$$->place = getNewTemp($$->node_data, $$->ttentry);
 																	if(is_struct_or_union($$->node_data)){
 																		$$->node_data += " #";
+																		$$->place = getNewTemp($$->node_data, $$->ttentry);
 																		emit("+struct", $1->place, {"$"+to_string(struct_offset), NULL}, $$->place);
 																	}
 																	else if($$->node_data.back() == ']'){
+																		$$->place = getNewTemp($$->node_data, $$->ttentry);
 																		emit("+struct", $1->place, {"$"+to_string(struct_offset), NULL}, $$->place);
 																	}
 																	else{
+																		$$->place = getNewTemp($$->node_data, $$->ttentry);
 																		auto tempnode = $$;
 																		$$ = node_(1, "UNARY*", -1);
 																		$$->v[0] = tempnode;
@@ -506,15 +545,17 @@ postfix_expression
 																	$$->ttentry = entry;
 																	
 																	//////////////// 3AC ////////////////
-																	$$->place = getNewTemp($$->node_data, $$->ttentry);
 																	if(is_struct_or_union($$->node_data)){
 																		$$->node_data += " #";
+																		$$->place = getNewTemp($$->node_data, $$->ttentry);
 																		emit("+struct", $1->place, {"$"+to_string(struct_offset), NULL}, $$->place);
 																	}
 																	else if($$->node_data.back() == ']'){
+																		$$->place = getNewTemp($$->node_data, $$->ttentry);
 																		emit("+struct", $1->place, {"$"+to_string(struct_offset), NULL}, $$->place);
 																	}
 																	else{
+																		$$->place = getNewTemp($$->node_data, $$->ttentry);
 																		auto tempnode = $$;
 																		$$ = node_(1, "UNARY*", -1);
 																		$$->v[0] = tempnode;
@@ -783,6 +824,9 @@ unary_expression
 																				$$ = $2;
 																				$$->node_data.pop_back();
 																				$$->node_data += '*';
+																				$$->place.second->type.pop_back();
+																				$$->place.second->type+='*';
+																				$$->ttentry = $2->ttentry;
 																				break;
 																			}
 
@@ -817,12 +861,13 @@ unary_expression
 																		}
 																		break;
 																		case '*':{
-																			if($2->node_data.back()=='*' && is_struct_or_union(reduce_pointer_level($2->node_data))){
+																			if(is_struct_or_union(reduce_pointer_level($2->node_data))){
 																				free($$);
 																				$$ = $2;
 																				$$->node_data.pop_back();
 																				$$->node_data += '#';
-																				printf("Reached here: %s\n", $2->place.first.c_str());
+																				$$->place.second->type.pop_back();
+																				$$->place.second->type+='#';
 																				break;
 																			}
 																			if(temp_data.back() != '*'){
@@ -2442,7 +2487,6 @@ assignment_expression
 
 																				//////////////// 3AC ////////////////
 																				backpatch($3->nextlist, nextquad); // CHECK THIS!!!!!
-
 
 																				if($3->token == CONSTANT){
 																					$3->place = emitConstant($3);

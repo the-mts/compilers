@@ -144,7 +144,10 @@ unsigned long get_size(string s, tt_entry* entry){
 }
 
 int is_struct_or_union(string s){
-	if(s.back()!='*' && s.back()!='#' && s.back()!=']' && (s.find("struct") != string::npos || s.find("union") != string::npos))
+	if(s.back()=='#'){
+		return 1;
+	}
+	if(s.back()!='*' && s.back()!=']' && (s.find("struct") != string::npos || s.find("union") != string::npos))
 		return 1;
 	return 0;
 }
