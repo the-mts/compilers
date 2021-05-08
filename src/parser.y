@@ -1183,6 +1183,12 @@ additive_expression
 																		}
 																		/////////////////////////////////////
 																	}
+																	if($1->node_data.back() == ']' || $1->node_data.back() == '*'){
+																		type = $1->node_data;
+																	}
+																	if($2->node_data.back() == ']' || $2->node_data.back() == '*'){
+																		type = $2->node_data;
+																	}
 																	$$->node_data = type;
 																	$$->value_type = RVALUE;
 																}
@@ -1245,6 +1251,12 @@ additive_expression
 																			}
 																		}
 																		/////////////////////////////////////
+																	}
+																	if($1->node_data.back() == ']' || $1->node_data.back() == '*'){
+																		type = $1->node_data;
+																	}
+																	if($3->node_data.back() == ']' || $3->node_data.back() == '*'){
+																		type = $3->node_data;
 																	}
 																	$$->node_data = type;
 																	$$->value_type = RVALUE;
