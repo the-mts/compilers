@@ -59,7 +59,8 @@ void print_blocks(int only_alive = 1){
 			cout<<endl;
 			for(auto i: blocks[b].code){
 				cout<<j<<"\t\t";
-		        if(i.op.find("unary")!= string::npos) cout<<i.res.first<< " = " << i.op<< ' '<<i.op1.first;
+		        if(i.op == "ADDR=")	cout<<i.res.first<< ' '<<i.op << ' '<<i.op1.first;
+        		else if(i.op.find("UNARY")!= string::npos) cout<<i.res.first<< " = " << i.op<< ' '<<i.op1.first;
 				else if(i.op == "IF_TRUE_GOTO") cout<<"IF "<< i.op1.first << " IS TRUE GOTO " << i.goto_addr;
 				else if(i.op == "GOTO") cout<<"GOTO " << i.goto_addr;
 				else if(i.op == "PARAM") cout<<"PARAM " << i.op1.first;
@@ -94,7 +95,8 @@ void print_blocks(int only_alive = 1){
 			cout<<endl;
 			for(auto i: b.code){
 				cout<<j<<"\t\t";
-		        if(i.op.find("unary")!= string::npos) cout<<i.res.first<< " = " << i.op<< ' '<<i.op1.first;
+		        if(i.op == "ADDR=")	cout<<i.res.first<< ' '<<i.op << ' '<<i.op1.first;
+        		else if(i.op.find("UNARY")!= string::npos) cout<<i.res.first<< " = " << i.op<< ' '<<i.op1.first;
 				else if(i.op == "IF_TRUE_GOTO") cout<<"IF "<< i.op1.first << " IS TRUE GOTO " << i.goto_addr;
 				else if(i.op == "GOTO") cout<<"GOTO " << i.goto_addr;
 				else if(i.op == "PARAM") cout<<"PARAM " << i.op1.first;

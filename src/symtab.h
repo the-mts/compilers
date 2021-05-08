@@ -51,7 +51,7 @@ struct st_entry{
 	symtab* sym_table;
 	vector<pair<pair<string, string>,tt_entry*>> *arg_list;
 	vector<int> * dim = NULL;
-	tt_entry* ttentry;
+	tt_entry* ttentry = NULL;
 	st_entry(string type, unsigned long size, long offset, enum sym_type type_name = UNDEFINED){
 		this->type = type;
 		this->size = size;

@@ -47,6 +47,9 @@ void init_equiv_types(){
 }
 
 unsigned long get_size(string s, tt_entry* entry){
+	if(s.find("#") != string :: npos){
+		return 8ul;
+	}
 	if(s.find("[]") != string :: npos){
 		return 8ul;
 	}
@@ -263,7 +266,7 @@ void struct_init_check(string type){
 	}
 	if(tmp!="")
 		a.push_back(tmp);
-	if(a[0]!="struct" && a[0]!="enum"){
+	if(a[0]!="struct" && a[0]!="union"){
 		return;
 	}
 	string type1 = a[0] + " " + a[1];
@@ -304,6 +307,7 @@ void init_symtab(){
 	add_entry("log10", "double", 0, 0, IS_BUILTIN_FUNC);
 	add_entry("sqrt", "double", 0, 0, IS_BUILTIN_FUNC);
 	add_entry("exp", "double", 0, 0, IS_BUILTIN_FUNC);
+	add_entry("pow", "double", 0, 0, IS_BUILTIN_FUNC);
 }
 
 st_entry* add_entry(string key, string type, unsigned long size, long offset, enum sym_type type_name){
@@ -319,6 +323,10 @@ st_entry* add_entry(string key, string type, unsigned long size, long offset, en
 	// 	offset += size;
 	// 	offset += (8 - offset % 8) % 8;
 	// }
+	if(type=="" || type[0] == '*' || type[0] == ' '){
+		printf("\e[1;31mError [line %d]:\e[0m Type supplied is empty/invalid.\n", line);
+		exit(-1);
+	}
 	offset += size;
 	st_entry * new_entry = new st_entry(type, size, offset, type_name);
 	if(type_name != IS_FUNC)
@@ -550,6 +558,7 @@ string increase_array_level(string s){
 string arithmetic_type_upgrade(string type1, string type2, string op, tt_entry* ttentry1, tt_entry* ttentry2){
 	// float double long double int long unsigned int unsigned long int char pointer
 	// printf("Entered upgrade with '%s'.\n", op.c_str());
+	
 	if((ttentry1!=NULL && type1.back()!='*' && type1.back()!=']') || (ttentry2!=NULL && type2.back()!='*' && type2.back()!=']')){
 		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, op.c_str());
 		exit(-1);
