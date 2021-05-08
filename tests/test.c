@@ -1,14 +1,13 @@
-double func(float a, double b, float c){
-	printf("%f %lf %f\n", a, b, c);
-	return (a+b*c)/2;
-}
-int main(){
-	float a = 4;
-	double b = 3.5;
-	float c = 1;
-    float f = func(a, b, c);
-	printf("%f %lf %f\n", a, b, c);
-    printf("%f\n", f);
-    return 0;
+struct x {
+	int x;
+	float y;
+	int a[10][10];
+};
 
+int main(){
+	struct x p;
+	int* x;
+	p.a[3][2] = 9;
+	p.y = 1.11;
+	printf("%d %f\n", p.a[3][2], p.y);
 }

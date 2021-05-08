@@ -304,6 +304,7 @@ void init_symtab(){
 	add_entry("log10", "double", 0, 0, IS_BUILTIN_FUNC);
 	add_entry("sqrt", "double", 0, 0, IS_BUILTIN_FUNC);
 	add_entry("exp", "double", 0, 0, IS_BUILTIN_FUNC);
+	add_entry("pow", "double", 0, 0, IS_BUILTIN_FUNC);
 }
 
 st_entry* add_entry(string key, string type, unsigned long size, long offset, enum sym_type type_name){

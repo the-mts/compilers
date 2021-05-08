@@ -30,7 +30,7 @@ qi getNewTemp(string type, tt_entry* ttentry){
     var_no++;
     qi q;
     q.first = var_name;
-    q.second = add_entry(q.first, type, get_size(type), accumulate(offset.begin()+1, offset.end(), 0), IS_TEMP);
+    q.second = add_entry(q.first, type, get_size(type, ttentry), accumulate(offset.begin()+1, offset.end(), 0), IS_TEMP);
     q.second->ttentry = ttentry;
     return q;
 }

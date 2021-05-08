@@ -72,7 +72,7 @@ primary_expression
 																	}
 																	$$->node_name = $1;
 																	$$->node_data = entry->type;
-																	if(entry->type.back() == ']' && entry->type.find("[]")==string::npos){
+																	if((entry->type.back() == ']' && entry->type.find("[]")==string::npos) || is_struct_or_union(entry->type)){
 																		$$->value_type = RVALUE;
 																		$$->place = getNewTemp(entry->type, entry->ttentry);
 																		emit("UNARY&", {string((const char*)$1), entry}, {"", NULL}, $$->place);
@@ -403,26 +403,52 @@ postfix_expression
 																	string name = string((const char*)$3);
 																	string type;
 																	tt_entry* entry = NULL;
-																	for(auto it : *(type_entry->mem_list))
+																	int struct_offset = 0;
+																	for(auto it : *(type_entry->mem_list)){
 																		if(it.first.second == name){
 																			type = it.first.first;
 																			flag = 1;
 																			entry = it.second;
 																			break;
 																		}
+																		struct_offset += get_size(it.first.first, it.second);
+																	}
 																	if(!flag){
 																		printf("\e[1;31mError [line %d]:\e[0m '%s' has no member named '%s'.\n",line, $1->node_data.c_str(),$3);/*typedef changes*/
 																		exit(-1);
 																	}
 																	$$->node_data = type;
-																	if($1->value_type == RVALUE)
+																	if(type.back() == ']')
 																		$$->value_type = RVALUE;
 																	else
 																		$$->value_type = LVALUE;
 																	$$->ttentry = entry;
 
 																	//////////////// 3AC ////////////////
-																	
+																	$$->place = getNewTemp($$->node_data, $$->ttentry);
+																	if(is_struct_or_union($$->node_data) || $$->node_data.back() == ']'){
+																		emit("+int", $1->place, {"$"+to_string(struct_offset), NULL}, $$->place);
+																	}
+																	else{
+																		auto tempnode = $$;
+																		$$ = node_(1, "UNARY*", -1);
+																		$$->v[0] = tempnode;
+																		$$->node_data = tempnode->node_data;
+																		if(tempnode->node_data.back()=='*'){
+																			tempnode->node_data = tempnode->node_data+'*';
+																		}
+																		else{
+																			tempnode->node_data = tempnode->node_data+" *";
+																		}
+
+																		$$->value_type = LVALUE;
+																		$$->ttentry = tempnode->ttentry;
+																		$$->place = tempnode->place;
+																		tempnode->place = getNewTemp(tempnode->node_data, tempnode->ttentry);
+
+																		emit("+int", $1->place, {"$"+to_string(struct_offset), NULL}, tempnode->place);
+																		emit("UNARY*", tempnode->place, {"", NULL}, $$->place);
+																	}
 																	/////////////////////////////////////
 																}
 	| postfix_expression PTR_OP IDENTIFIER 						{
@@ -879,7 +905,7 @@ unary_expression
 																	}
 																}
 	| SIZEOF unary_expression									{
-																	long sz = get_size($2->node_data);
+																	long sz = get_size($2->node_data, $2->ttentry);
 																	$$ = node_(0,(char*)to_string(sz).c_str(),CONSTANT);
 																	$$->node_data = "long int";
 																	$$->val_dt = IS_LONG;
@@ -2814,13 +2840,14 @@ init_declarator
 																		tmp->ttentry = type_lookup(data_type);
 																	}
 																	else{
-																		st_entry* tmp = add_entry($1->node_name, data_type_, get_size(data_type_),accumulate(offset.begin()+1, offset.end(), 0),IS_VAR);
+																		tt_entry* entry = type_lookup(data_type);
+																		st_entry* tmp = add_entry($1->node_name, data_type_, get_size(data_type_, entry),accumulate(offset.begin()+1, offset.end(), 0),IS_VAR);
+																		tmp->type_name = IS_VAR;
+																		tmp->ttentry = entry;
 																		if(data_type_ == "void"){
 																			printf("\e[1;31mError [line %d]:\e[0m Variable or field '%s' declared void.\n", line, $1->node_name.c_str());
 																			exit(-1);
 																		}
-																		tmp->type_name = IS_VAR;
-																		tmp->ttentry = type_lookup(data_type);
 																	}
 																	$$ = NULL; free($1);
 																}
@@ -2845,9 +2872,10 @@ init_declarator
 																			printf("\e[1;31mError [line %d]:\e[0m Initializer for '%s' must be a constant.\n", line, $1->node_name.c_str());
 																			exit(-1);
 																		}
-																		st_entry* tmp = add_entry($1->name, data_type_, get_size(data_type_), accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);/*change IS_VAR*/
+																		tt_entry* datatype_entry = type_lookup(data_type);
+																		st_entry* tmp = add_entry($1->name, data_type_, get_size(data_type_, datatype_entry), accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);/*change IS_VAR*/
 																		$1->place = {$1->node_name, tmp};
-																		tmp->ttentry = type_lookup(data_type);
+																		tmp->ttentry = datatype_entry;
 																		$1->ttentry = tmp->ttentry;
 																		if(data_type_ == "void"){
 																			printf("\e[1;31mError [line %d]:\e[0m Variable or field '%s' declared void.\n", line, $1->node_name.c_str());
@@ -3539,10 +3567,10 @@ M1
 																		else if(flag == 3){
 																			st_entry* st = add_entry(p.first.second, p.first.first, 0, accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
 																			st->ttentry = p.second;
-																			st->size = get_size(p.first.first);
+																			st->size = get_size(p.first.first, p.second);
 																			curr_offset -= (8-(-curr_offset)%8)%8;
 																			st->offset = curr_offset;
-																			curr_offset-=get_size(p.first.first);
+																			curr_offset-=get_size(p.first.first, p.second);
 																		}
 																	}
 																	func_params.clear();

@@ -420,7 +420,14 @@ void codegen(){
 			else if(instr.op == "+int"){
 				qi t1 = instr.op1;
 				qi t2 = instr.op2;
-				string type1 = instr.op1.second->type, type2 = instr.op2.second->type;
+				string type1 = instr.op1.second->type;
+				if (is_struct_or_union(type1)){
+					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
+					cout<<"addq "<<instr.op2.first<<", "<<"%rax"<<endl;
+					cout<<"movq "<<"%rax, "<<-instr.res.second->offset<<"(%rbp)"<<endl;
+					continue;
+				}
+				string type2 = instr.op2.second->type;
 				if((type1 == "int" && type2 == "int")){
 					cout<<"movl "<<-t1.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
 					cout<<"addl "<<-t2.second->offset<<"(%rbp)"<<", "<<"%eax"<<endl;
@@ -2382,6 +2389,14 @@ void codegen(){
 					cout<<"movb "<<"(%rcx)"<<", "<<"%al"<<endl;
 					cout<<"movb "<<"%al, "<<-t2.second->offset<<"(%rbp)"<<endl;
 				}
+				else if(type1 == "float"){
+					cout<<"movss "<<"(%rcx)"<<", "<<"%xmm0"<<endl;
+					cout<<"movss "<<"%xmm0, "<<-t2.second->offset<<"(%rbp)"<<endl;
+				}
+				else if(type1 == "double"){
+					cout<<"movsd "<<"(%rcx)"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<"%xmm0, "<<-t2.second->offset<<"(%rbp)"<<endl;
+				}
 			}
 
 			else if(instr.op == "="){
@@ -2475,6 +2490,14 @@ void codegen(){
 				else if(type1.back()=='*'){
 					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<"(%rcx)"<<endl;
+				}
+				else if(type1 == "float"){
+					cout<<"movss "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movss "<<"%xmm0, "<<"(%rcx)"<<endl;
+				}
+				else if(type1 == "double"){
+					cout<<"movsd "<<-t1.second->offset<<"(%rbp)"<<", "<<"%xmm0"<<endl;
+					cout<<"movsd "<<"%xmm0, "<<"(%rcx)"<<endl;
 				}
 			}
 
