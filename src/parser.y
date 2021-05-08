@@ -1295,7 +1295,7 @@ additive_expression
 																	else if($3->ttentry){
 																		$$->ttentry = $3->ttentry;
 																	}
-
+																	//printf("%p %p %p\n", $$->ttentry, $1->ttentry, $3->ttentry);
 																	if($1->token == CONSTANT && $3->token == CONSTANT){
 																		evaluate_const($1, $3, *($2), type);
 																		$$ = $1;

@@ -226,6 +226,7 @@ void codegen(){
 				int int_char = 0, double_float = 0;
 				int param_stk_size = 0;
 				vector<qi> stk_params;
+				// cerr<<params_list.size()<<endl;
 				for(auto x: params_list){
 					if(x.first[0]=='.' && constLabels.find(x.first)!=constLabels.end()){
 						auto tmp = constLabels[x.first];
@@ -242,7 +243,7 @@ void codegen(){
 					}
 					string p = x.second->type;
 					int flag = 0;
-					if(!is_struct_or_union(p) && (p.find("int") != string::npos || p.find("char") != string::npos || p.back() == ']' || p.back() == '*')){
+					if(!is_struct_or_union(p) && (p.find("int") != string::npos || p.find("char") != string::npos || p.back() == ']' || p.back() == '*' || p.back() == '#')){
 						flag = 1;
 					}
 					else if(!is_struct_or_union(p) && (p.find("double") != string::npos || p.find("float") != string::npos)){
@@ -251,9 +252,12 @@ void codegen(){
 					else{
 						flag = 3;
 					}
+					cerr<<flag<<" "<<p<<endl;
+
 					if(flag == 1 && int_char<6){
 						int size = get_size(p);
 						if(p.back() == ']') size = 8;
+						cerr<<intregs[{int_char+1, size}]<<endl;
 						cout<<"mov"<<sizechar(size)<<" "<<-x.second->offset<<"(%rbp)"<<", "<<intregs[{int_char+1, size}]<<endl;
 						int_char++;
 					}
@@ -2490,7 +2494,7 @@ void codegen(){
 					cout<<"movb "<<-t1.second->offset<<"(%rbp)"<<", "<<"%al"<<endl;
 					cout<<"movb "<<"%al, "<<"(%rcx)"<<endl;
 				}
-				else if(type1.back()=='*'){
+				else if(type1.back()=='*' || type1.back() == '#'){
 					cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 					cout<<"movq "<<"%rax, "<<"(%rcx)"<<endl;
 				}
