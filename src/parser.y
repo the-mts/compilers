@@ -3051,29 +3051,33 @@ init_declarator
 																		$$->value_type = RVALUE;
 
 																		//////////////// 3AC ////////////////
-
-																		if($3->token == CONSTANT){
-																			$3->place = emitConstant($3);
-																		}
-																		if(type1 != type2){
-																			qi tmpvar = getNewTemp($$->node_data, $$->ttentry);
-
-																			string cast = "("+ type2 +"-to-"+ type1 +")";
-																			emit(cast, $3->place, {"", NULL}, tmpvar);
-
-																			if(!strcmp($1->name, "UNARY*")){
-																				emit("ADDR=", tmpvar, {"", NULL}, $1->v[0]->place);
-																			}
-																			else{
-																				emit("=", tmpvar, {"", NULL}, $1->place);
-																			}
+																		if(table_scope.back() == &global){
+																			
 																		}
 																		else{
-																			if(!strcmp($1->name, "UNARY*")){
-																				emit("ADDR=", $3->place, {"", NULL}, $1->v[0]->place);
+																			if($3->token == CONSTANT){
+																				$3->place = emitConstant($3);
+																			}
+																			if(type1 != type2){
+																				qi tmpvar = getNewTemp($$->node_data, $$->ttentry);
+
+																				string cast = "("+ type2 +"-to-"+ type1 +")";
+																				emit(cast, $3->place, {"", NULL}, tmpvar);
+
+																				if(!strcmp($1->name, "UNARY*")){
+																					emit("ADDR=", tmpvar, {"", NULL}, $1->v[0]->place);
+																				}
+																				else{
+																					emit("=", tmpvar, {"", NULL}, $1->place);
+																				}
 																			}
 																			else{
-																				emit("=", $3->place, {"", NULL}, $1->place);
+																				if(!strcmp($1->name, "UNARY*")){
+																					emit("ADDR=", $3->place, {"", NULL}, $1->v[0]->place);
+																				}
+																				else{
+																					emit("=", $3->place, {"", NULL}, $1->place);
+																				}
 																			}
 																		}
 																		
