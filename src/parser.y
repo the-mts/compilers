@@ -188,33 +188,70 @@ postfix_expression
 																	if($3->token == CONSTANT){
 																		$3->place = emitConstant($3);
 																	}
-																	$$->place = getNewTemp($$->node_data, $$->ttentry);
 																	backpatch($3->nextlist, nextquad);
 																	// int x = emit("[]", $1->place, $3->place, $$->place);
 																	// backpatch($3->truelist, x);		// Have to check
 																	// backpatch($3->falselist, x);	// check
 
 																	if($$->node_data.back()==']'){
+																		$$->place = getNewTemp($$->node_data, $$->ttentry);
 																		emit("+int", $1->place, $3->place, $$->place);
 																	}
 																	else{
-																		auto tempnode = $$;
-																		$$ = node_(1, "UNARY*", -1);
-																		$$->v[0] = tempnode;
-																		$$->node_data = tempnode->node_data;
-																		if(tempnode->node_data.back()=='*'){
-																			tempnode->node_data = tempnode->node_data+'*';
+																		
+																		/*
+																				struct x{
+	
+																				} y[5];
+																				y[2]->struct x
+																		*/
+																		if(!is_struct_or_union(reduce_pointer_level($1->node_data))){
+																			$$->place = getNewTemp($$->node_data, $$->ttentry);
+																			auto tempnode = $$;
+																			$$ = node_(1, "UNARY*", -1);
+																			$$->v[0] = tempnode;
+																			$$->node_data = tempnode->node_data;
+																			if(tempnode->node_data.back()=='*'){
+																				tempnode->node_data = tempnode->node_data+'*';
+																			}
+																			else{
+																				tempnode->node_data = tempnode->node_data+" *";
+																			}
+																			$$->value_type = LVALUE;
+																			$$->ttentry = tempnode->ttentry;
+																			$$->place = tempnode->place;
+
+																			tempnode->place = getNewTemp(tempnode->node_data, tempnode->ttentry);
+																			emit("+int", $1->place, $3->place, tempnode->place);
+																			emit("UNARY*", tempnode->place, {"", NULL}, $$->place);
+																			//free($$);
+																			//$$ = $2;
+																			//$$->node_data.pop_back();
+																			//$$->value_type = LVALUE;
+																			//$$->place = getNewTemp(entry->type+" #", entry->ttentry);
+																			//$$->node_data+= " #";
+																			//emit("UNARY&", {string((const char*)$1), entry}, {"", NULL}, $$->place);
+																			//printf("Reached here: %s\n", $2->place.first.c_str());
+																			//break;
 																		}
 																		else{
-																			tempnode->node_data = tempnode->node_data+" *";
+																			auto tempnode = $$;
+																			$$ = node_(1, "UNARY*", -1);
+																			$$->v[0] = tempnode;
+																			$$->node_data = tempnode->node_data;
+																			if(tempnode->node_data.back()=='*'){
+																				tempnode->node_data = tempnode->node_data+'*';
+																			}
+																			else{
+																				tempnode->node_data = tempnode->node_data+" *";
+																			}
+																			$$->value_type = LVALUE;
+																			$$->ttentry = tempnode->ttentry;
+																			$$->node_data += " #";
+																			$$->place = getNewTemp($$->node_data, $$->ttentry);
+																			emit("+int", $1->place, $3->place, $$->place);
+																			$$->place.second->type += " #";
 																		}
-																		$$->value_type = LVALUE;
-																		$$->ttentry = tempnode->ttentry;
-																		$$->place = tempnode->place;
-																		tempnode->place = getNewTemp(tempnode->node_data, tempnode->ttentry);
-
-																		emit("+int", $1->place, $3->place, tempnode->place);
-																		emit("UNARY*", tempnode->place, {"", NULL}, $$->place);
 																	}
 																	/////////////////////////////////////
 																}
@@ -431,15 +468,17 @@ postfix_expression
 																	$$->ttentry = entry;
 
 																	//////////////// 3AC ////////////////
-																	$$->place = getNewTemp($$->node_data, $$->ttentry);
 																	if(is_struct_or_union($$->node_data)){
 																		$$->node_data += " #";
+																		$$->place = getNewTemp($$->node_data, $$->ttentry);
 																		emit("+struct", $1->place, {"$"+to_string(struct_offset), NULL}, $$->place);
 																	}
 																	else if($$->node_data.back() == ']'){
+																		$$->place = getNewTemp($$->node_data, $$->ttentry);
 																		emit("+struct", $1->place, {"$"+to_string(struct_offset), NULL}, $$->place);
 																	}
 																	else{
+																		$$->place = getNewTemp($$->node_data, $$->ttentry);
 																		auto tempnode = $$;
 																		$$ = node_(1, "UNARY*", -1);
 																		$$->v[0] = tempnode;
@@ -506,15 +545,17 @@ postfix_expression
 																	$$->ttentry = entry;
 																	
 																	//////////////// 3AC ////////////////
-																	$$->place = getNewTemp($$->node_data, $$->ttentry);
 																	if(is_struct_or_union($$->node_data)){
 																		$$->node_data += " #";
+																		$$->place = getNewTemp($$->node_data, $$->ttentry);
 																		emit("+struct", $1->place, {"$"+to_string(struct_offset), NULL}, $$->place);
 																	}
 																	else if($$->node_data.back() == ']'){
+																		$$->place = getNewTemp($$->node_data, $$->ttentry);
 																		emit("+struct", $1->place, {"$"+to_string(struct_offset), NULL}, $$->place);
 																	}
 																	else{
+																		$$->place = getNewTemp($$->node_data, $$->ttentry);
 																		auto tempnode = $$;
 																		$$ = node_(1, "UNARY*", -1);
 																		$$->v[0] = tempnode;
@@ -783,6 +824,9 @@ unary_expression
 																				$$ = $2;
 																				$$->node_data.pop_back();
 																				$$->node_data += '*';
+																				$$->place.second->type.pop_back();
+																				$$->place.second->type+='*';
+																				$$->ttentry = $2->ttentry;
 																				break;
 																			}
 
@@ -817,12 +861,13 @@ unary_expression
 																		}
 																		break;
 																		case '*':{
-																			if($2->node_data.back()=='*' && is_struct_or_union(reduce_pointer_level($2->node_data))){
+																			if(is_struct_or_union(reduce_pointer_level($2->node_data))){
 																				free($$);
 																				$$ = $2;
 																				$$->node_data.pop_back();
 																				$$->node_data += '#';
-																				printf("Reached here: %s\n", $2->place.first.c_str());
+																				$$->place.second->type.pop_back();
+																				$$->place.second->type+='#';
 																				break;
 																			}
 																			if(temp_data.back() != '*'){
@@ -1271,6 +1316,12 @@ additive_expression
 																		}
 																		/////////////////////////////////////
 																	}
+																	if($1->node_data.back() == ']' || $1->node_data.back() == '*'){
+																		type = $1->node_data;
+																	}
+																	if($3->node_data.back() == ']' || $3->node_data.back() == '*'){
+																		type = $3->node_data;
+																	}
 																	$$->node_data = type;
 																	$$->value_type = RVALUE;
 																}
@@ -1295,7 +1346,7 @@ additive_expression
 																	else if($3->ttentry){
 																		$$->ttentry = $3->ttentry;
 																	}
-
+																	//printf("%p %p %p\n", $$->ttentry, $1->ttentry, $3->ttentry);
 																	if($1->token == CONSTANT && $3->token == CONSTANT){
 																		evaluate_const($1, $3, *($2), type);
 																		$$ = $1;
@@ -1333,6 +1384,12 @@ additive_expression
 																			}
 																		}
 																		/////////////////////////////////////
+																	}
+																	if($1->node_data.back() == ']' || $1->node_data.back() == '*'){
+																		type = $1->node_data;
+																	}
+																	if($3->node_data.back() == ']' || $3->node_data.back() == '*'){
+																		type = $3->node_data;
 																	}
 																	$$->node_data = type;
 																	$$->value_type = RVALUE;
@@ -2443,7 +2500,6 @@ assignment_expression
 																				//////////////// 3AC ////////////////
 																				backpatch($3->nextlist, nextquad); // CHECK THIS!!!!!
 
-
 																				if($3->token == CONSTANT){
 																					$3->place = emitConstant($3);
 																				}
@@ -2904,10 +2960,16 @@ init_declarator
 																		tt_entry* entry = type_lookup(data_type);
 																		st_entry* tmp = add_entry($1->node_name, data_type_, get_size(data_type_, entry),accumulate(offset.begin()+1, offset.end(), 0),IS_VAR);
 																		tmp->type_name = IS_VAR;
+																		if(table_scope.back() == &global){
+																			tmp->is_global = true;
+																		}
 																		tmp->ttentry = entry;
 																		if(data_type_ == "void"){
 																			printf("\e[1;31mError [line %d]:\e[0m Variable or field '%s' declared void.\n", line, $1->node_name.c_str());
 																			exit(-1);
+																		}
+																		if(table_scope.back() == &global){
+																			emit("UNINIT_GLOBAL", {"", NULL}, {"", NULL}, {$1->node_name, tmp});
 																		}
 																	}
 																	$$ = NULL; free($1);
@@ -2935,6 +2997,9 @@ init_declarator
 																		}
 																		tt_entry* datatype_entry = type_lookup(data_type);
 																		st_entry* tmp = add_entry($1->name, data_type_, get_size(data_type_, datatype_entry), accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);/*change IS_VAR*/
+																		if(table_scope.back() == &global){
+																			tmp->is_global = true;
+																		}
 																		$1->place = {$1->node_name, tmp};
 																		tmp->ttentry = datatype_entry;
 																		$1->ttentry = tmp->ttentry;
@@ -2989,29 +3054,129 @@ init_declarator
 																		$$->value_type = RVALUE;
 
 																		//////////////// 3AC ////////////////
-
-																		if($3->token == CONSTANT){
-																			$3->place = emitConstant($3);
-																		}
-																		if(type1 != type2){
-																			qi tmpvar = getNewTemp($$->node_data, $$->ttentry);
-
-																			string cast = "("+ type2 +"-to-"+ type1 +")";
-																			emit(cast, $3->place, {"", NULL}, tmpvar);
-
-																			if(!strcmp($1->name, "UNARY*")){
-																				emit("ADDR=", tmpvar, {"", NULL}, $1->v[0]->place);
+																		if(table_scope.back() == &global){
+																			node* tmp_node = node_(0,"tmp",-1);
+																			if(data_type_.back()=='*' || data_type_ =="long int"){
+																				tmp_node->val_dt = IS_LONG;
 																			}
-																			else{
-																				emit("=", tmpvar, {"", NULL}, $1->place);
+																			else if(data_type_ == "int"){
+																				tmp_node->val_dt = IS_INT;
 																			}
+																			else if(data_type_ == "short int"){
+																				tmp_node->val_dt = IS_SHORT;
+																			}
+																			else if(data_type_ == "float"){
+																				tmp_node->val_dt = IS_FLOAT;
+																			}
+																			else if(data_type_ == "char"){
+																				tmp_node->val_dt = IS_CHAR;
+																			}
+																			else if(data_type_ == "double"){
+																				tmp_node->val_dt = IS_DOUBLE;
+																			}
+																			switch($3->val_dt){
+																				case IS_CHAR: {
+																					char ch = $3->val.char_const;
+																					switch(tmp_node->val_dt){
+																						case IS_CHAR:	tmp_node->val.char_const = ch; break;
+																						case IS_INT:	tmp_node->val.int_const = ch; break;
+																						case IS_LONG:	tmp_node->val.long_const = ch; break;
+																						case IS_SHORT:	tmp_node->val.short_const = ch; break;
+																						case IS_FLOAT:	tmp_node->val.float_const = ch; break;
+																						case IS_DOUBLE:	tmp_node->val.double_const = ch; break;
+																					}
+																					break;
+																				}
+																				case IS_INT: {
+																					int ch = $3->val.int_const;
+																					switch(tmp_node->val_dt){
+																						case IS_CHAR:	tmp_node->val.char_const = ch; break;
+																						case IS_INT:	tmp_node->val.int_const = ch; break;
+																						case IS_LONG:	tmp_node->val.long_const = ch; break;
+																						case IS_SHORT:	tmp_node->val.short_const = ch; break;
+																						case IS_FLOAT:	tmp_node->val.float_const = ch; break;
+																						case IS_DOUBLE:	tmp_node->val.double_const = ch; break;
+																					}
+																					break;
+																				}
+																				case IS_SHORT: {
+																					short int ch = $3->val.short_const;
+																					switch(tmp_node->val_dt){
+																						case IS_CHAR:	tmp_node->val.char_const = ch; break;
+																						case IS_INT:	tmp_node->val.int_const = ch; break;
+																						case IS_LONG:	tmp_node->val.long_const = ch; break;
+																						case IS_SHORT:	tmp_node->val.short_const = ch; break;
+																						case IS_FLOAT:	tmp_node->val.float_const = ch; break;
+																						case IS_DOUBLE:	tmp_node->val.double_const = ch; break;
+																					}
+																					break;
+																				}
+																				case IS_LONG: {
+																					long int ch = $3->val.long_const;
+																					switch(tmp_node->val_dt){
+																						case IS_CHAR:	tmp_node->val.char_const = ch; break;
+																						case IS_INT:	tmp_node->val.int_const = ch; break;
+																						case IS_LONG:	tmp_node->val.long_const = ch; break;
+																						case IS_SHORT:	tmp_node->val.short_const = ch; break;
+																						case IS_FLOAT:	tmp_node->val.float_const = ch; break;
+																						case IS_DOUBLE:	tmp_node->val.double_const = ch; break;
+																					}
+																					break;
+																				}
+																				case IS_FLOAT: {
+																					float ch = $3->val.float_const;
+																					switch(tmp_node->val_dt){
+																						case IS_CHAR:	tmp_node->val.char_const = ch; break;
+																						case IS_INT:	tmp_node->val.int_const = ch; break;
+																						case IS_LONG:	tmp_node->val.long_const = ch; break;
+																						case IS_SHORT:	tmp_node->val.short_const = ch; break;
+																						case IS_FLOAT:	tmp_node->val.float_const = ch; break;
+																						case IS_DOUBLE:	tmp_node->val.double_const = ch; break;
+																					}
+																					break;
+																				}
+																				case IS_DOUBLE: {
+																					double ch = $3->val.double_const;
+																					switch(tmp_node->val_dt){
+																						case IS_CHAR:	tmp_node->val.char_const = ch; break;
+																						case IS_INT:	tmp_node->val.int_const = ch; break;
+																						case IS_LONG:	tmp_node->val.long_const = ch; break;
+																						case IS_SHORT:	tmp_node->val.short_const = ch; break;
+																						case IS_FLOAT:	tmp_node->val.float_const = ch; break;
+																						case IS_DOUBLE:	tmp_node->val.double_const = ch; break;
+																					}
+																					break;
+																				}
+																			}
+																			$3->val_dt = tmp_node->val_dt;
+																			$3->val = tmp_node->val;
+																			string ss = emitGlobalConstant($3);
+																			emit("=global", {ss, NULL}, {"", NULL}, {$1->node_name, tmp});
 																		}
 																		else{
-																			if(!strcmp($1->name, "UNARY*")){
-																				emit("ADDR=", $3->place, {"", NULL}, $1->v[0]->place);
+																			if($3->token == CONSTANT){
+																				$3->place = emitConstant($3);
+																			}
+																			if(type1 != type2){
+																				qi tmpvar = getNewTemp($$->node_data, $$->ttentry);
+
+																				string cast = "("+ type2 +"-to-"+ type1 +")";
+																				emit(cast, $3->place, {"", NULL}, tmpvar);
+
+																				if(!strcmp($1->name, "UNARY*")){
+																					emit("ADDR=", tmpvar, {"", NULL}, $1->v[0]->place);
+																				}
+																				else{
+																					emit("=", tmpvar, {"", NULL}, $1->place);
+																				}
 																			}
 																			else{
-																				emit("=", $3->place, {"", NULL}, $1->place);
+																				if(!strcmp($1->name, "UNARY*")){
+																					emit("ADDR=", $3->place, {"", NULL}, $1->v[0]->place);
+																				}
+																				else{
+																					emit("=", $3->place, {"", NULL}, $1->place);
+																				}
 																			}
 																		}
 																		
@@ -3602,6 +3767,7 @@ M1
 																		}
 																		if(flag == 1 && int_char<6){
 																			st_entry* st = add_entry(p.first.second, p.first.first, get_size(p.first.first), accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
+																			st->ttentry = p.second;
 																			int_char++;
 																		}
 																		else if(flag == 2 && double_float<8){
@@ -3610,6 +3776,7 @@ M1
 																		}
 																		else if(flag == 1 && int_char == 6){
 																			st_entry* st = add_entry(p.first.second, p.first.first, 0, accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
+																			st->ttentry = p.second;
 																			st->size = get_size(p.first.first);
 																			curr_offset -= (8-(-curr_offset)%8)%8;
 																			st->offset = curr_offset;

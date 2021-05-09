@@ -52,6 +52,7 @@ struct st_entry{
 	vector<pair<pair<string, string>,tt_entry*>> *arg_list;
 	vector<int> * dim = NULL;
 	tt_entry* ttentry = NULL;
+	bool is_global = false;
 	st_entry(string type, unsigned long size, long offset, enum sym_type type_name = UNDEFINED){
 		this->type = type;
 		this->size = size;
