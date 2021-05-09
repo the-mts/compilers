@@ -850,6 +850,43 @@ void codegen(){
 					cout << "idivq " << "%rcx" << endl;
 					cout << "movl " << "%eax, " << set_offset(instr.res) << endl;
 				}
+
+				else if(type1.back() == ']' && (type2 == "char")){
+					type1 = reduce_pointer_level(type1);
+					int size = get_size(type1, t1.second->ttentry);
+					cout << "movsbq " << set_offset(t2) << ", " << "%rcx" << endl;
+					cout << "imulq $" << size << ", " << "%rcx" << endl;
+					cout << "movq " << set_offset(t1) << ", " << "%rax" << endl;
+					cout << "subq " << "%rcx, " << "%rax" << endl;
+					cout << "movq " << "%rax, " << set_offset(instr.res) << endl;
+				}
+				else if(type1.back() == ']' && (type2 == "short int")){
+					type1 = reduce_pointer_level(type1);
+					int size = get_size(type1, t1.second->ttentry);
+					cout << "movswq " << set_offset(t2) << ", " << "%rcx" << endl;
+					cout << "imulq $" << size << ", " << "%rcx" << endl;
+					cout << "movq " << set_offset(t1) << ", " << "%rax" << endl;
+					cout << "subq " << "%rcx, " << "%rax" << endl;
+					cout << "movq " << "%rax, " << set_offset(instr.res) << endl;
+				}
+				else if(type1.back() == ']' && (type2 == "int")){
+					type1 = reduce_pointer_level(type1);
+					int size = get_size(type1, t1.second->ttentry);
+					cout << "movslq " << set_offset(t2) << ", " << "%rcx" << endl;
+					cout << "imulq $" << size << ", " << "%rcx" << endl;
+					cout << "movq " << set_offset(t1) << ", " << "%rax" << endl;
+					cout << "subq " << "%rcx, " << "%rax" << endl;
+					cout << "movq " << "%rax, " << set_offset(instr.res) << endl;
+				}
+				else if(type1.back() == ']' && (type2 == "long int")){
+					type1 = reduce_pointer_level(type1);
+					int size = get_size(type1, t1.second->ttentry);
+					cout << "movq " << set_offset(t2) << ", " << "%rcx" << endl;
+					cout << "imulq $" << size << ", " << "%rcx" << endl;
+					cout << "movq " << set_offset(t1) << ", " << "%rax" << endl;
+					cout << "subq " << "%rcx, " << "%rax" << endl;
+					cout << "movq " << "%rax, " << set_offset(instr.res) << endl;
+				}
 			}
 
 			else if(instr.op == "*int"){
