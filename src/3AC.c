@@ -99,6 +99,49 @@ qi emitConstant(node* tmp){
     return temp;
 }
 
+string emitGlobalConstant(node* tmp){
+	string s;
+    switch(tmp->val_dt){
+        case IS_INT:        
+			s = ".long " + to_string(tmp->val.int_const);
+			break;
+        case IS_LONG:       
+			s = ".quad " + to_string(tmp->val.long_const);
+			break;
+        case IS_SHORT:
+			s = ".value " + to_string(tmp->val.short_const);
+			break;
+        case IS_U_INT:      
+			s = ".long " + to_string(tmp->val.u_int_const);
+			break;
+        case IS_U_LONG:
+			s = ".quad " + to_string(tmp->val.u_long_const);
+			break;
+        case IS_U_SHORT:
+			s = ".value " + to_string(tmp->val.u_short_const);
+			break;
+        case IS_CHAR:
+			s = ".byte " + to_string((int)tmp->val.char_const);
+			break;
+        case IS_FLOAT:
+			{
+				unsigned int* xf = (unsigned int*) &tmp->val.float_const;
+				unsigned int yf = *xf;
+				s = ".long " + to_string(yf);
+			}
+			break;
+        case IS_DOUBLE:
+			{	
+				unsigned long long* xd = (unsigned long long*) &tmp->val.double_const;
+				unsigned long long yd = *xd;
+				s = ".quad " + to_string(yd);
+			}
+			break;
+    }
+
+    return s;
+} 
+
 int tailposs(qi caller, qi callee){
 	if (caller.first != callee.first) return 0;
 	int fcount=0, icount= 0;

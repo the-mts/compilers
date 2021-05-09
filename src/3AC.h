@@ -50,6 +50,7 @@ extern int emit(string op, qi op1, qi op2, qi res, int goto_addr = -1);
 extern void backpatch(vector<int>& list, int addr);
 extern qi getNewTemp(string type, tt_entry* ttentry = NULL);
 extern qi emitConstant(node* tmp);
+extern string emitGlobalConstant(node* tmp);
 
 extern vector<block> blocks;
 extern void make_blocks();

@@ -2968,6 +2968,9 @@ init_declarator
 																			printf("\e[1;31mError [line %d]:\e[0m Variable or field '%s' declared void.\n", line, $1->node_name.c_str());
 																			exit(-1);
 																		}
+																		if(table_scope.back() == &global){
+																			emit("UNINIT_GLOBAL", {"", NULL}, {"", NULL}, {$1->node_name, tmp});
+																		}
 																	}
 																	$$ = NULL; free($1);
 																}
@@ -3052,7 +3055,103 @@ init_declarator
 
 																		//////////////// 3AC ////////////////
 																		if(table_scope.back() == &global){
-																			
+																			node* tmp_node = node_(0,"tmp",-1);
+																			if(data_type_.back()=='*' || data_type_ =="long int"){
+																				tmp_node->val_dt = IS_LONG;
+																			}
+																			else if(data_type_ == "int"){
+																				tmp_node->val_dt = IS_INT;
+																			}
+																			else if(data_type_ == "short int"){
+																				tmp_node->val_dt = IS_SHORT;
+																			}
+																			else if(data_type_ == "float"){
+																				tmp_node->val_dt = IS_FLOAT;
+																			}
+																			else if(data_type_ == "char"){
+																				tmp_node->val_dt = IS_CHAR;
+																			}
+																			else if(data_type_ == "double"){
+																				tmp_node->val_dt = IS_DOUBLE;
+																			}
+																			switch($3->val_dt){
+																				case IS_CHAR: {
+																					char ch = $3->val.char_const;
+																					switch(tmp_node->val_dt){
+																						case IS_CHAR:	tmp_node->val.char_const = ch; break;
+																						case IS_INT:	tmp_node->val.int_const = ch; break;
+																						case IS_LONG:	tmp_node->val.long_const = ch; break;
+																						case IS_SHORT:	tmp_node->val.short_const = ch; break;
+																						case IS_FLOAT:	tmp_node->val.float_const = ch; break;
+																						case IS_DOUBLE:	tmp_node->val.double_const = ch; break;
+																					}
+																					break;
+																				}
+																				case IS_INT: {
+																					int ch = $3->val.int_const;
+																					switch(tmp_node->val_dt){
+																						case IS_CHAR:	tmp_node->val.char_const = ch; break;
+																						case IS_INT:	tmp_node->val.int_const = ch; break;
+																						case IS_LONG:	tmp_node->val.long_const = ch; break;
+																						case IS_SHORT:	tmp_node->val.short_const = ch; break;
+																						case IS_FLOAT:	tmp_node->val.float_const = ch; break;
+																						case IS_DOUBLE:	tmp_node->val.double_const = ch; break;
+																					}
+																					break;
+																				}
+																				case IS_SHORT: {
+																					short int ch = $3->val.short_const;
+																					switch(tmp_node->val_dt){
+																						case IS_CHAR:	tmp_node->val.char_const = ch; break;
+																						case IS_INT:	tmp_node->val.int_const = ch; break;
+																						case IS_LONG:	tmp_node->val.long_const = ch; break;
+																						case IS_SHORT:	tmp_node->val.short_const = ch; break;
+																						case IS_FLOAT:	tmp_node->val.float_const = ch; break;
+																						case IS_DOUBLE:	tmp_node->val.double_const = ch; break;
+																					}
+																					break;
+																				}
+																				case IS_LONG: {
+																					long int ch = $3->val.long_const;
+																					switch(tmp_node->val_dt){
+																						case IS_CHAR:	tmp_node->val.char_const = ch; break;
+																						case IS_INT:	tmp_node->val.int_const = ch; break;
+																						case IS_LONG:	tmp_node->val.long_const = ch; break;
+																						case IS_SHORT:	tmp_node->val.short_const = ch; break;
+																						case IS_FLOAT:	tmp_node->val.float_const = ch; break;
+																						case IS_DOUBLE:	tmp_node->val.double_const = ch; break;
+																					}
+																					break;
+																				}
+																				case IS_FLOAT: {
+																					float ch = $3->val.float_const;
+																					switch(tmp_node->val_dt){
+																						case IS_CHAR:	tmp_node->val.char_const = ch; break;
+																						case IS_INT:	tmp_node->val.int_const = ch; break;
+																						case IS_LONG:	tmp_node->val.long_const = ch; break;
+																						case IS_SHORT:	tmp_node->val.short_const = ch; break;
+																						case IS_FLOAT:	tmp_node->val.float_const = ch; break;
+																						case IS_DOUBLE:	tmp_node->val.double_const = ch; break;
+																					}
+																					break;
+																				}
+																				case IS_DOUBLE: {
+																					double ch = $3->val.double_const;
+																					switch(tmp_node->val_dt){
+																						case IS_CHAR:	tmp_node->val.char_const = ch; break;
+																						case IS_INT:	tmp_node->val.int_const = ch; break;
+																						case IS_LONG:	tmp_node->val.long_const = ch; break;
+																						case IS_SHORT:	tmp_node->val.short_const = ch; break;
+																						case IS_FLOAT:	tmp_node->val.float_const = ch; break;
+																						case IS_DOUBLE:	tmp_node->val.double_const = ch; break;
+																					}
+																					break;
+																				}
+																			}
+																			$3->val_dt = tmp_node->val_dt;
+																			$3->val = tmp_node->val;
+																			string ss = emitGlobalConstant($3);
+																			emit("=global", {ss, NULL}, {"", NULL}, {$1->node_name, tmp});
 																		}
 																		else{
 																			if($3->token == CONSTANT){
@@ -3668,6 +3767,7 @@ M1
 																		}
 																		if(flag == 1 && int_char<6){
 																			st_entry* st = add_entry(p.first.second, p.first.first, get_size(p.first.first), accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
+																			st->ttentry = p.second;
 																			int_char++;
 																		}
 																		else if(flag == 2 && double_float<8){
@@ -3676,6 +3776,7 @@ M1
 																		}
 																		else if(flag == 1 && int_char == 6){
 																			st_entry* st = add_entry(p.first.second, p.first.first, 0, accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
+																			st->ttentry = p.second;
 																			st->size = get_size(p.first.first);
 																			curr_offset -= (8-(-curr_offset)%8)%8;
 																			st->offset = curr_offset;

@@ -138,6 +138,27 @@ void codegen(){
 			//Process global variables
 			for(int i=0; i<blocks[bno].code.size(); i++){
 				quad instr = blocks[bno].code[i];
+				if(instr.op == "=global"){
+					cout<<".globl"<<" "<<instr.res.first<<endl;
+					cout<<".data"<<endl;
+					cout<<".align"<<" "<<get_size(instr.res.second->type)<<endl;
+					cout << ".type " << instr.res.first << ", @object" << endl;
+					cout << ".size " << instr.res.first << ", "<< get_size(instr.res.second->type) << endl;
+					cout<<instr.res.first<<":"<<endl;
+					cout<<instr.op1.first<<endl;
+				}
+				else if(instr.op == "UNINIT_GLOBAL"){
+					string type = instr.res.second->type;
+					int sz1 = get_size(type, instr.res.second->ttentry);
+					int align = 0;
+					if(type.back()==']' || is_struct_or_union(type)){
+						align = 32;
+					}
+					else{
+						align = sz1;
+					}
+					cout<<".comm "<<instr.res.first<<","<<sz1<<","<<align<<endl;
+				}
 			}
 			continue;
 		}
