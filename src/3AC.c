@@ -475,18 +475,18 @@ int opt_copy(){
 			res = blocks[b].code[i].res.second;
 			if (op == "GOTO" || op == "CALL" || op == "TAIL" ||
 			    op == "RETURN_VOID") break;
-			if (expr.find(op1) != expr.end() && (op == "=" || (expr[op1].first)[0] != '$')){
+			if (expr.find(op1) != expr.end() && (op == "=" || (expr[op1].first)[0] != '$' && (expr[op1].first)[0] != '.')){
 				//cout<<"Found expr\n";
 				blocks[b].code[i].op1 = expr[op1];
 				c = 1;
 			}
-			if (expr.find(op2) != expr.end() && (expr[op2].first)[0] != '$'){
+			if (expr.find(op2) != expr.end() && expr[op2].first[0] != '$' && expr[op2].first[0] != '.'){
 				blocks[b].code[i].op2 = expr[op2];
 				c = 1;
 			}
 			if (op == "="){
-				if (blocks[b].code[i].op1.first[0] != '.')
-					expr[res] = blocks[b].code[i].op1;
+				//if (blocks[b].code[i].op1.first[0] != '.')
+				expr[res] = blocks[b].code[i].op1;
 				auto pred = [&](const auto& item) {
     	    		auto const& [key, value] = item;
 				    return value.second == res;
@@ -704,6 +704,7 @@ int opt_gotos(){
 						op = blocks[b].code[l].op;
 						res = blocks[b].code[l].res;
 						op1 = blocks[b].code[l].op1.first;
+						if (op == "ADDR=") break;
 						if (res == cond){
 							if (op == "=" && op1[0] == '$'){
 								op1.erase(op1.begin());

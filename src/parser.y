@@ -251,10 +251,6 @@ postfix_expression
 																			$$->node_data += " #";
 																			$$->place = getNewTemp($$->node_data, $$->ttentry);
 																			emit("+int", $1->place, $3->place, $$->place);
-																			//$$->place.second->type += " #";
-																			//cout<<$$->node_data<<" "<<$1->node_data<<endl;
-																			//cout<<"sym "<<$$->place.second->type<<endl;
-																			//printf("found %s %s\n", $$->node_data, $1->node_data);
 																		}
 																	}
 																	/////////////////////////////////////
