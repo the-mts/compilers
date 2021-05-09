@@ -2510,6 +2510,30 @@ void codegen(){
 					}
 				}
 			}
+			else if(instr.op == "=struct"){
+				qi t1 = instr.op1;
+				qi t2 = instr.res;
+				string type1 = t1.second->type;
+				type1.pop_back();
+				type1.pop_back();
+				int size = get_size(type1, t1.second->ttentry);
+				int sz = 8;
+				if(size){
+					cout << "movq " << set_offset(t2) << ", " << "%rcx" << endl;
+					cout << "movq " << set_offset(t1) << ", " << "%rax" << endl;
+					cout << "movq " << "(%rax), " << "%rbx" << endl;
+					cout << "movq " << "%rbx, " << "(%rcx)" << endl;
+				}
+				while(sz<size){
+					cout<< "subq " << "$8" << ", " << "%rcx" << endl;
+					cout<< "subq " << "$8" << ", " << "%rax" << endl;
+					cout << "movq " << "(%rax), " << "%rbx" << endl;
+					cout << "movq " << "%rbx, " << "(%rcx)" << endl;
+					sz+=8;
+				}
+
+
+			}
 			else if(instr.op == "ADDR="){
 				qi t1 = instr.op1;
 				qi t2 = instr.res;

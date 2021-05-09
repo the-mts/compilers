@@ -129,11 +129,13 @@ unsigned long get_size(string s, tt_entry* entry){
 	else{
 		if(entry->mem_list == NULL)
 			return 0ul;
-		if(entry->type == "struct")
+		if(entry->type == "struct"){
 			for(auto x : *(entry->mem_list)){
 				unsigned long f = get_size(x.first.first, x.second);
 				ans+=f;
 			}
+			ans+=(8-(ans%8))%8;
+		}
 		else
 			for(auto x : *(entry->mem_list)){
 				ans=max(ans,get_size(x.first.first, x.second));

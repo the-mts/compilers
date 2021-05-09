@@ -26,6 +26,7 @@ int emit(string op, qi op1, qi op2, qi res, int goto_addr){
 
 qi getNewTemp(string type, tt_entry* ttentry){
     //static int var_no = 0;
+    // cout<<" temp "<<type<<endl;
     string var_name = to_string(var_no) + "_tmp";
     var_no++;
     qi q;

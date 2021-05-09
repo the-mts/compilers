@@ -176,6 +176,7 @@ postfix_expression
 																		exit(-1);
 																	}
 																	$$->node_data = reduce_pointer_level($1->node_data);
+																	//cout<<"check "<<$$->node_data<<endl;
 																	$$->ttentry = $1->ttentry;
 																	if($$->node_data.back() == ']'){
 																		$$->value_type = RVALUE;
@@ -250,7 +251,10 @@ postfix_expression
 																			$$->node_data += " #";
 																			$$->place = getNewTemp($$->node_data, $$->ttentry);
 																			emit("+int", $1->place, $3->place, $$->place);
-																			$$->place.second->type += " #";
+																			//$$->place.second->type += " #";
+																			//cout<<$$->node_data<<" "<<$1->node_data<<endl;
+																			//cout<<"sym "<<$$->place.second->type<<endl;
+																			//printf("found %s %s\n", $$->node_data, $1->node_data);
 																		}
 																	}
 																	/////////////////////////////////////
@@ -2504,7 +2508,10 @@ assignment_expression
 																					$3->place = emitConstant($3);
 																				}
 
-																				if(type1 != type2){
+																				if(is_struct_or_union($1->node_data) && is_struct_or_union($3->node_data)){
+																					emit("=struct", $3->place, {"", NULL}, $1->place);
+																				}
+																				else if(type1 != type2){
 																					qi tmpvar = getNewTemp($1->node_data, $1->ttentry);
 																					string cast = "("+ type2 +"-to-"+ type1 +")";
 																					emit(cast, $3->place, {"", NULL}, tmpvar);
