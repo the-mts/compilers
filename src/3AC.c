@@ -703,6 +703,7 @@ int opt_gotos(){
 						op = blocks[b].code[l].op;
 						res = blocks[b].code[l].res;
 						op1 = blocks[b].code[l].op1.first;
+						if (op == "ADDR=") break;
 						if (res == cond){
 							if (op == "=" && op1[0] == '$'){
 								op1.erase(op1.begin());

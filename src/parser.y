@@ -250,7 +250,6 @@ postfix_expression
 																			$$->node_data += " #";
 																			$$->place = getNewTemp($$->node_data, $$->ttentry);
 																			emit("+int", $1->place, $3->place, $$->place);
-																			$$->place.second->type += " #";
 																		}
 																	}
 																	/////////////////////////////////////
