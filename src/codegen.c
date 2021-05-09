@@ -178,7 +178,10 @@ void codegen(){
 				cout << "endbr64" << endl;
 				cout << "pushq %rbp" << endl;
 				cout << "movq %rsp, %rbp" << endl;
-				cout << "subq $320, %rsp" << endl;
+				long long sz = instr.op1.second->size;
+				sz += (16-sz%16)%16;
+				sz += 16;
+				cout << "subq $"<<sz<<", %rsp" << endl;
 
 
 				int int_char = 0, double_float = 0;
@@ -325,7 +328,7 @@ void codegen(){
 						// HANDLE LONG DOUBLE
 						;
 					}
-					param_stk_size += size;
+					param_stk_size += 8;
 				}
 
 				cout << "movl " << "$" << double_float << ", " << "%eax" << endl;

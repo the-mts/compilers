@@ -19,6 +19,7 @@
 	int break_level=0;
 	int continue_level=0;
 	string next_name;
+	st_entry* curr_func = NULL;
 	string func_ret_type = "";
 	int temp_var;
 %}
@@ -3164,7 +3165,12 @@ init_declarator
 																			if($3->token == CONSTANT){
 																				$3->place = emitConstant($3);
 																			}
-																			if(type1 != type2){
+																			if(is_struct_or_union(data_type_) && is_struct_or_union($3->node_data)){
+																				qi tmp = getNewTemp(data_type_ + "#", $1->ttentry);
+																				emit("UNARY&", $1->place, {"", NULL}, tmp);
+																				emit("=struct", $3->place, {"", NULL}, tmp);
+																			}
+																			else if(type1 != type2){
 																				qi tmpvar = getNewTemp($$->node_data, $$->ttentry);
 
 																				string cast = "("+ type2 +"-to-"+ type1 +")";
@@ -3820,6 +3826,7 @@ M2
 	: 	/* empty */												{
 																	scope_cleanup();
 																	long long temp = offset.back();
+																	curr_func->size = max((long long)curr_func->size, (long long)accumulate(offset.begin()+1, offset.end(), 0));
 																	offset.pop_back();
 																}
 	;
@@ -4264,6 +4271,7 @@ function_definition
 													$1->node_data += " "+$3->node_data;
 												}
 												st_entry* tmp = lookup($3->node_name);
+												curr_func = tmp; 
 												for(auto p : func_params){
 													if(p.first.second == ""){
 														printf("\e[1;31mError [line %d]:\e[0m Parameter name omitted\n", line);
@@ -4321,6 +4329,7 @@ function_definition
 													while(tmpp.back()=='*' || tmpp.back()==' ')
 														tmpp.pop_back();
 													func_entry->ttentry = type_lookup(tmpp);
+													curr_func = func_entry; 
 												}
 												next_name = $3->node_name;
 												func_ret_type = $1->node_data;
@@ -4331,7 +4340,7 @@ function_definition
 											$$ = node_(2,"fun_def",-1); $$->v[0] = $3; $$->v[1] = $5;
 											st_entry* tmp = lookup($3->node_name); 
 											tmp->sym_table = curr->v.back()->val;
-											tmp->size = curr_width;
+											//tmp->size = curr_width;
 											func_ret_type = "";
 
 											backpatch($5->nextlist, nextquad);
@@ -4352,6 +4361,7 @@ function_definition
 												}
 											} 
 											st_entry* tmp = lookup($1->node_name); 
+											curr_func = tmp; 
 											if(tmp != NULL && tmp->type_name != IS_FUNC){
 												printf("\e[1;31mError [line %d]:\e[0m Conflicting declarations of '%s'.\n", line ,($1->node_name).c_str());
 												exit(-1);
@@ -4405,13 +4415,14 @@ function_definition
 											func_ret_type = temp->type; 
 
 											emit("FUNC_START", {$1->node_name, lookup($1->node_name)}, {"", NULL}, {"", NULL}, var_no);
+											curr_func = temp; 
 										}
 
 	compound_statement					{
 											$$ = node_(2,"fun_def",-1); $$->v[0] = $1; $$->v[1] = $3; 
-											st_entry* tmp = lookup($1->node_name); 
+											st_entry* tmp = lookup($1->node_name);
 											tmp->sym_table = curr->v.back()->val;
-											tmp->size = curr_width;
+											//tmp->size = curr_width;
 											func_ret_type = "";
 
 											backpatch($3->nextlist, nextquad);
