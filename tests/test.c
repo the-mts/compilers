@@ -1,20 +1,22 @@
 struct edge{
     char w;
-    int i;
     float z;
+    int i;
 };
 
 int main(){
     struct edge x;
     struct edge y;
+    struct edge* p = &x;
     y.w = 'a';
-    y.i = 7;
-    y.z = 4.0;
-    x = y;
-    y.w++;
-    y.i++;
-    y.z = 0;
-    printf("%d %d %d %d %d %d", y.w, y.i, y.z, x.w, x.i, x.z);
+    // y.i = 10;
+    // y.z = 23.111;
+    *p = y;
+    // y.w++;
+    // y.i /= 4;
+    // y.z = 13;
+    // printf("%c %f %d %c %f %d\n", y.w, y.z, y.i, x.w, x.z, x.i);
+    printf("%c.. %c..\n", y.w, x.w);
     // int * R = (int *)malloc((10)*sizeof(int));
     // int * arr = (int *)malloc((10)*sizeof(int));
     // int i;

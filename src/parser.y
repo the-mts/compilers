@@ -866,12 +866,16 @@ unary_expression
 																		break;
 																		case '*':{
 																			if(is_struct_or_union(reduce_pointer_level($2->node_data))){
-																				free($$);
-																				$$ = $2;
-																				$$->node_data.pop_back();
-																				$$->node_data += '#';
-																				$$->place.second->type.pop_back();
-																				$$->place.second->type+='#';
+																				$$->node_data = reduce_pointer_level($2->node_data)+ " #";
+																				$$->ttentry = $2->ttentry;
+																				$$->place = getNewTemp($$->node_data, $$->ttentry);
+																				$$->value_type = LVALUE;
+																				emit("=", $2->place, {"", NULL}, $$->place);
+																				// free($$);
+																				// $$->node_data.pop_back();
+																				// $$->node_data += '#';
+																				// $$->place.second->type.pop_back();
+																				// $$->place.second->type+='#';
 																				break;
 																			}
 																			if(temp_data.back() != '*'){

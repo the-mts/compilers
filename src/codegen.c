@@ -2508,6 +2508,11 @@ void codegen(){
 						cout << "movsd " << set_offset(t1) << ", " << "%xmm0" << endl;
 						cout << "movsd " << "%xmm0, " << set_offset(t2) << endl;
 					}
+
+					else{ //// ASSUMING SIZE 8 FOR ANY OTHER CALLS (SAY STRUCT #)
+						cout << "movq " << set_offset(t1) << ", " << "%rax" << endl;
+						cout << "movq " << "%rax, " << set_offset(t2) << endl;
+					}
 				}
 			}
 			else if(instr.op == "=struct"){
@@ -2525,8 +2530,8 @@ void codegen(){
 					cout << "movq " << "%rbx, " << "(%rcx)" << endl;
 				}
 				while(sz<size){
-					cout<< "subq " << "$8" << ", " << "%rcx" << endl;
-					cout<< "subq " << "$8" << ", " << "%rax" << endl;
+					cout<< "addq " << "$8" << ", " << "%rcx" << endl;
+					cout<< "addq " << "$8" << ", " << "%rax" << endl;
 					cout << "movq " << "(%rax), " << "%rbx" << endl;
 					cout << "movq " << "%rbx, " << "(%rcx)" << endl;
 					sz+=8;
