@@ -11,8 +11,8 @@ vector<qi> params_list;
 string set_offset(qi quad){
 	if(quad.second->is_global == 0){
 		string s = "(%rbp)";
-		s = to_string(quad.second->offset)+s;
-		s = "-" + s;
+		s = to_string(-quad.second->offset)+s;
+		// s = "-" + s;
 		return s;
 	}
 	else{
@@ -323,12 +323,27 @@ void codegen(){
 					string p = stk_params[x].second->type;
 					int size = get_size(p, stk_params[x].second->ttentry);
 					if(p.back() == ']') size = 8;
-					if (size<=8) cout << "pushq " << set_offset(stk_params[x]) << endl;
-					else{
-						// HANDLE LONG DOUBLE
-						;
+					if (!is_struct_or_union(p)){
+						cout << "pushq " << set_offset(stk_params[x]) << endl;
+						param_stk_size += 8;
 					}
-					param_stk_size += 8;
+					else{
+						// HANDLE struct type
+						string actual_type = p;
+						actual_type.pop_back(); actual_type.pop_back();
+						size = get_size(actual_type, stk_params[x].second->ttentry);
+						param_stk_size += size;
+						cout<<"movq "<< set_offset(stk_params[x]) << ", "<<"%rax"<< endl;
+						cout<<"addq "<< "$"<< size-8<<", "<<"%rax"<<endl;
+						cout << "pushq " << "0(%rax)" << endl;
+						size -=8;
+						while(size>0){
+							cout<<"subq "<<"$8"<<", "<<"%rax"<<endl;
+							cout << "pushq " << "0(%rax)" << endl;
+							size -= 8;
+						}
+
+					}
 				}
 
 				cout << "movl " << "$" << double_float << ", " << "%eax" << endl;

@@ -403,7 +403,7 @@ postfix_expression
 																			}
 
 																			//////////////// 3AC ////////////////
-																			if(tmp1 != tmp2){
+																			if(tmp1 != tmp2 && !(is_struct_or_union(tmp1) && is_struct_or_union(tmp2))){
 																				string op2 = "("+tmp1 + "-to-" + tmp2+")"; // Modify
 																				qi tmp = getNewTemp(tmp2, entry1);  
 																				int x = emit(op2, $3->v[i]->place, {"", NULL}, tmp);
