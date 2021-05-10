@@ -156,6 +156,25 @@ int tailposs(qi caller, qi callee){
 	return fcount < 16 && icount < 14;
 }
 
+void merge_blocks(int first, int next){
+	if (blocks[next].pred.size() > 1) return;
+	if (blocks[next].pred[0] != first) {
+		printf("Something went wrong in merging blocks %d and %d\n", first, next);
+		exit(-1);
+	}
+	for (auto c: blocks[next].code) blocks[first].code.push_back(c);
+	blocks[next].code.clear();
+	blocks[next].alive = 0;
+	blocks[first].next = blocks[next].next;
+	blocks[first].succ = blocks[next].succ;
+	if (blocks[next].succ != -1){
+		int s = blocks[next].succ;
+		blocks[s].pred.erase(remove(blocks[s].pred.begin(), blocks[s].pred.end(), next), blocks[s].pred.end());
+		blocks[s].pred.push_back(first);
+		blocks[next].succ = -1;
+	}
+}
+
 void handle_dead_block(int b){
 	int temp, f, s;
 	if (blocks[b].code.size() == 0){
@@ -417,10 +436,10 @@ int opt_cse(){
 				blocks[b].code[i].op2 = {"", NULL};
 				c = 1;
 			}
-			else if (op == "ADDR="){
+			else if (op == "ADDR=" || op == "=struct"){
 				expr.clear();
 			}
-			else if (op != "UNARY*" && op != "="){
+			else if (op != "UNARY&" && op != "UNARY*" && op != "="){
 				//cout<<"Adding expr\n";
 				expr[{op, {op1, op2}}] = blocks[b].code[i].res;	
 			}
@@ -430,7 +449,7 @@ int opt_cse(){
 
 			auto pred = [&](const auto& item) {
         		auto const& [key, value] = item;
-		        return (key.second.first == res || key.second.second == res) && key.first != "UNARY&";
+		        return (key.second.first == res || key.second.second == res);
 			};
 
 			for (auto i = expr.begin(), last = expr.end(); i != last; ) {
@@ -500,7 +519,7 @@ int opt_copy(){
 			 		}
 				}
 			}
-			else if (op == "ADDR=") expr.clear();
+			else if (op == "ADDR=" || op == "struct=") expr.clear();
 			else {
 				auto pred = [&](const auto& item) {
   	    			auto const& [key, value] = item;
@@ -553,16 +572,17 @@ int opt_dead_expr(){
 				}
 			
 				l = blocks[b].code.size() - 1;
-				/*if (blocks[b].succ == -1 || (blocks[b].cond_succ == -1 && blocks[blocks[b].succ].code[0].op == "FUNC_END")){
+				if (blocks[b].succ == -1 || (blocks[b].cond_succ == -1 && blocks[blocks[b].succ].code[0].op == "FUNC_END")){
 					for (int i = 0; i <= l; i++){
-						var = blocks[b].code[i].op1;
-						if (var.first != "" && !istemp(var)) user[var] = 0;
+						/*var = blocks[b].code[i].op1;
+						if (var.second && !istemp(var) && !(var.second->is_global)) user[var] = 0;
 						var = blocks[b].code[i].op2;
-						if (var.first != "" && !istemp(var)) user[var] = 0;
+						if (var.second && !istemp(var) && !(var.second->is_global)) user[var] = 0;*/
 						var = blocks[b].code[i].res;
-						if (var.first != "" && !istemp(var)) user[var] = 0;
+						if (var.second && !istemp(var) && !(var.second->is_global)) user[var] = 0;
 					}
-				}*/
+					printf("HERE\n");
+				}
 				if (blocks[b].code[l].op == "RETURN_VOID" || blocks[b].code[l].op == "GOTO") l--;
 				else if (blocks[b].code[l].op == "RETURN" || blocks[b].code[l].op == "IF_TRUE_GOTO") {
 					var = blocks[b].code[l].op1;
@@ -587,7 +607,7 @@ int opt_dead_expr(){
 			for (;l >= 0; l--){
 				var = blocks[b].code[l].res;
 				op = blocks[b].code[l].op1;
-				if (blocks[b].code[l].op == "ADDR="){
+				if (blocks[b].code[l].op == "ADDR=" || blocks[b].code[l].op == "=struct"){
 					if (istemp(op)) temp[op] = 1;
 					else user[op] = 1;
 					if (istemp(var)) temp[var] = 1;
@@ -684,6 +704,7 @@ int opt_gotos(){
 				if (blocks[b].succ == blocks[b].next){
 					blocks[b].code.pop_back();
 					handle_dead_block(b);
+					if (blocks[b].alive && blocks[b].succ != -1) merge_blocks(b, blocks[b].succ);
 					c = 1;
 				}
 			}
@@ -696,6 +717,7 @@ int opt_gotos(){
 					blocks[b].code.pop_back();
 					blocks[b].cond_succ = -1;
 					handle_dead_block(b);
+					if (blocks[b].alive && blocks[b].succ != -1) merge_blocks(b, blocks[b].succ);
 					c = 1;
 				}
 				else {
@@ -704,7 +726,7 @@ int opt_gotos(){
 						op = blocks[b].code[l].op;
 						res = blocks[b].code[l].res;
 						op1 = blocks[b].code[l].op1.first;
-						if (op == "ADDR=") break;
+						if (op == "ADDR=" || op == "=struct") break;
 						if (res == cond){
 							if (op == "=" && op1[0] == '$'){
 								op1.erase(op1.begin());
