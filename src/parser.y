@@ -78,7 +78,7 @@ primary_expression
 																		$$->place = getNewTemp(entry->type, entry->ttentry);
 																		emit("UNARY&", {string((const char*)$1), entry}, {"", NULL}, $$->place);
 																	}
-																	else if(is_struct_or_union(entry->type)){
+																	else if(is_struct_or_union(entry->type) && entry->type_name!=IS_FUNC){
 																		$$->value_type = LVALUE;
 																		$$->place = getNewTemp(entry->type+" #", entry->ttentry);
 																		$$->node_data+= " #";
@@ -283,9 +283,17 @@ postfix_expression
 																	$$->node_data = entry->type;
 																	$$->value_type = RVALUE;
 																	$$->ttentry = entry->ttentry;
-
 																	//////////////// 3AC ////////////////
-																	$$->place = getNewTemp($$->node_data, $$->ttentry);
+																	qi tmp = getNewTemp($$->node_data, $$->ttentry);
+																	if(is_struct_or_union($$->node_data)){
+																		qi tmp2 = getNewTemp($$->node_data+" #", $$->ttentry);
+																		emit("UNARY&", tmp, {"", NULL}, tmp2);
+																		$$->place = tmp2;
+																		$$->node_data+= " #";
+																	}
+																	else{
+																		$$->place = tmp;
+																	}
 																	emit("CALL", $1->place, {"", NULL}, $$->place, 0);
 																	/////////////////////////////////////
 																}
@@ -426,7 +434,16 @@ postfix_expression
 																	for(auto i: arg_names){
 																		emit("PARAM", i, {"", NULL}, {"", NULL});
 																	}
-																	$$->place = getNewTemp($$->node_data, $$->ttentry);
+																	qi tmp = getNewTemp($$->node_data, $$->ttentry);
+																	if(is_struct_or_union($$->node_data)){
+																		qi tmp2 = getNewTemp($$->node_data+" #", $$->ttentry);
+																		emit("UNARY&", tmp, {"", NULL}, tmp2);
+																		$$->place = tmp2;
+																		$$->node_data+= " #";
+																	}
+																	else{
+																		$$->place = tmp;
+																	}
 																	emit("CALL", $1->place, {"", NULL}, $$->place, $3->sz);
 																	/////////////////////////////////////
 																}
@@ -3794,6 +3811,7 @@ M1
 																			curr_offset -= (8-(-curr_offset)%8)%8;
 																			st->offset = curr_offset;
 																			curr_offset -= 8;
+																			st->top_of_stack = min(st->top_of_stack, curr_offset);
 																		}
 																		else if(flag == 2 && double_float == 8){
 																			st_entry* st = add_entry(p.first.second, p.first.first, 0, accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
@@ -3808,6 +3826,7 @@ M1
 																				st->offset = curr_offset;
 																				curr_offset -= 8;
 																			}
+																			st->top_of_stack = min(st->top_of_stack, curr_offset);
 																		}
 																		else if(flag == 3){
 																			st_entry* st = add_entry(p.first.second, p.first.first, 0, accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
@@ -3816,6 +3835,7 @@ M1
 																			curr_offset -= (8-(-curr_offset)%8)%8;
 																			st->offset = curr_offset;
 																			curr_offset-=get_size(p.first.first, p.second);
+																			st->top_of_stack = min(st->top_of_stack, curr_offset);
 																		}
 																	}
 																	func_params.clear();
@@ -4187,7 +4207,7 @@ jump_statement
 																				exit(-1);
 																			}
 																		}
-																		if(entry1 || entry2){
+																		else if(entry1 || entry2){
 																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types when returning type ‘%s’ but ‘%s’ was expected.\n",line, tmp2.c_str(), tmp1.c_str());
 																			exit(-1);
 																		}
@@ -4230,12 +4250,12 @@ jump_statement
 																			$2->place = emitConstant($2);
 																		}
 																		tmp = $2->place;
-																		if(tmp1!=tmp2){
+																		if(entry1==NULL && entry2==NULL && tmp1!=tmp2){
 																			tmp = getNewTemp(tmp1, entry1);
 																			string op = "("+tmp2+"-to-"+tmp1+")";
 																			emit(op, $2->place, {"", NULL}, tmp);
 																		}
-																		emit("RETURN", tmp, {"", NULL}, {"", NULL});
+																		emit("RETURN", tmp, {"", NULL}, {"", curr_func});
 																	}
 																}
 	;

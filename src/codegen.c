@@ -239,6 +239,26 @@ void codegen(){
 				else if(type1.back()=='*'){
 					cout << "movq " << set_offset(t1) << ", " << "%rax" << endl;
 				}
+				else if(is_struct_or_union(type1)){
+					type1.pop_back();
+					type1.pop_back();
+					int size = get_size(type1, t1.second->ttentry);
+					int ptr = instr.res.second->top_of_stack;
+					int sz = 8;
+					if(size){
+						cout << "movq " << -ptr << "(%rbp)" << ", " << "%rcx" << endl;
+						cout << "movq " << set_offset(t1) << ", " << "%rax" << endl;
+						cout << "movq " << "(%rax), " << "%rbx" << endl;
+						cout << "movq " << "%rbx, " << "(%rcx)" << endl;
+					}
+					while(sz<size){
+						cout<< "addq " << "$8" << ", " << "%rcx" << endl;
+						cout<< "addq " << "$8" << ", " << "%rax" << endl;
+						cout << "movq " << "(%rax), " << "%rbx" << endl;
+						cout << "movq " << "%rbx, " << "(%rcx)" << endl;
+						sz+=8;
+					}
+				}
 				cout << "leave" << endl;
 				cout << "ret" << endl;
 			}
@@ -336,6 +356,11 @@ void codegen(){
 				}
 				else{
 					param_stk_size = 0;
+				}
+				if(is_struct_or_union(instr.op1.second->type)){
+					param_stk_size+=16;
+					cout << "pushq " << set_offset(instr.res) << endl;
+					cout << "pushq " << set_offset(instr.res) << endl;
 				}
 				for(int x = stk_params.size()-1; x>=0; x--){
 					string p = stk_params[x].second->type;

@@ -1,59 +1,25 @@
-struct w{
+struct array{
     int x;
-    char c;
-    double z;
-    float y;
 };
+    struct array arr[10];
 
-int f(struct w p){
-    // int x = p.x;
-    // printf("%f\n", p.y);
-    printf("F hi: %d %c %lf %f\n", p.x, p.c, p.z, p.y);
-    p.x = 4;
-    p.c = 'x';
-    p.z = 33.333;
-    p.y = 0.55;
-    printf("F bye: %d %c %lf %f\n", p.x, p.c, p.z, p.y);
-    return (*(&p)).x;
+int binsearch(struct array arr[], int item, int low, int high){
+    int mid;
+    if (low > high) return -1;
+    mid = (low + high)/2;
+    if (arr[mid].x == item) return mid;
+    if (arr[mid].x < item) return binsearch(arr, item, mid+1, high);
+    return binsearch(arr, item, low, mid-1);
 }
 
 int main(){
-    struct w q;
-    q.x = 666;
-    q.c = 'a';
-    q.z = 55.234;
-    q.y = 3.21;
-    printf("before F: %d %c %lf %f\n", q.x, q.c, q.z, q.y);
-    f(q);
-    printf("after F: %d %c %lf %f\n", q.x, q.c, q.z, q.y);
+    int item, i;
+    printf("Enter 10 integers in increasing order\n");
+    for (i = 0; i < 10; i++){
+        // scanf("%d", &arr[i].x);
+        arr[i].x = i;
+    }
+    printf("Enter item to search for: ");
+    scanf("%d", &item);
+    printf("Index: %d\n", binsearch(arr, item, 0, 9));
 }
-
-// struct w{
-//     double x;
-// };
-
-// int f(int a1, int a2,int a3,int a4,int a5,int a6,int a7){
-//     // int x = p.x;
-//     // printf("%f\n", p.y);
-//     // int z = 1.1;
-//     printf("F hi: %d \n", a1);
-//     // p.x = 4;
-//     // p.c = 'x';
-//     // p.z = 33.333;
-//     // p.y = 0.55;
-//     // printf("F bye: %lf\n", p.x);
-//     // return (*(&p)).x;
-// }
-
-// int main(){
-//     struct w q;
-//     q.x = 666.111;
-//     // q.c = 'a';
-//     // q.z = 55.234;
-//     // q.y = 3.21;
-
-//     // printf("before F: %lf\n", q.x);
-//     f(1,1,1,1,1,1,1);
-//     // printf("after F: %lf\n", q.x);
-// }
-
