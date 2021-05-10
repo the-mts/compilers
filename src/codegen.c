@@ -11,8 +11,7 @@ vector<qi> params_list;
 string set_offset(qi quad){
 	if(quad.second->is_global == 0){
 		string s = "(%rbp)";
-		s = to_string(quad.second->offset)+s;
-		s = "-" + s;
+		s = to_string(-quad.second->offset)+s;
 		return s;
 	}
 	else{
@@ -318,6 +317,16 @@ void codegen(){
 					else{
 						stk_params.push_back(x);
 					}
+				}
+				for(int x = stk_params.size()-1; x>=0; x--){
+					param_stk_size += 8;
+				}
+				if(param_stk_size%16){
+					cout<<"pushq $0"<<endl;
+					param_stk_size = 8;
+				}
+				else{
+					param_stk_size = 0;
 				}
 				for(int x = stk_params.size()-1; x>=0; x--){
 					string p = stk_params[x].second->type;
