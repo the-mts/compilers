@@ -319,7 +319,16 @@ void codegen(){
 					}
 				}
 				for(int x = stk_params.size()-1; x>=0; x--){
-					param_stk_size += 8;
+					string p = stk_params[x].second->type;
+					if (!is_struct_or_union(p)){
+						param_stk_size += 8;
+					}
+					else{
+						string actual_type = p;
+						actual_type.pop_back(); actual_type.pop_back();
+						int size = get_size(actual_type, stk_params[x].second->ttentry);
+						param_stk_size += size;
+					}
 				}
 				if(param_stk_size%16){
 					cout<<"pushq $0"<<endl;
