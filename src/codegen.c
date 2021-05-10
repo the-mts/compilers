@@ -12,10 +12,6 @@ string set_offset(qi quad){
 	if(quad.second->is_global == 0){
 		string s = "(%rbp)";
 		s = to_string(-quad.second->offset)+s;
-<<<<<<< HEAD
-		// s = "-" + s;
-=======
->>>>>>> c61b2e9a8eecdfa4ab6ce8ddc3cd9b3e610578dc
 		return s;
 	}
 	else{
