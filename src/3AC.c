@@ -480,6 +480,8 @@ void print_map(const map<pair<string, pair<string, string>>, qi>& m)
 }
 
 int opt_cse(){
+	int n = blocks.size();
+	vector<map<pair<string, pair<qi, qi>>, qi>> gexpr(n);
 	map<pair<string, pair<qi, qi>>, qi> expr;
 	//map<string, vector<pair<string, pair<string, string>>>> used;
 	int i;
@@ -492,6 +494,7 @@ int opt_cse(){
 		expr.clear();
 		i = 0;
 		if (blocks[b].isglobal || blocks[b].code[0].op == "FUNC_START" || blocks[b].code[0].op == "FUNC_END") continue;
+		if (blocks[b].pred.size() == 1 && blocks[b].pred[0] < b) expr = gexpr[blocks[b].pred[0]];
 		for (; i < blocks[b].code.size(); i++){
 			op = blocks[b].code[i].op;
 			op1 = blocks[b].code[i].op1;
@@ -531,6 +534,8 @@ int opt_cse(){
 			  }
 			}
 		}
+		if (blocks[b].code.back().op == "CALL" || blocks[b].code.back().op == "TAIL") expr.clear();
+		gexpr[b] = expr;
 		//print_map(expr);
 		//cout<<"chick2\n";
 	}
@@ -612,6 +617,7 @@ int opt_copy(){
 				}
 			}
 		}
+		if (blocks[b].code.back().op == "CALL" || blocks[b].code.back().op == "TAIL") expr.clear();
 		gexpr[b] = expr;
 		//print_copy_map(expr);
 		//cout<<"chick2\n";
