@@ -263,7 +263,7 @@ void codegen(){
 					}
 					else if(flag == 2 && double_float<8){
 						if(p.find("float") != string::npos){
-							if(instr.op1.second->type_name == IS_BUILTIN_FUNC){
+							if(instr.op1.second->type_name == REQUIRES_TYPECHECK){
 								cout<<"cvtss2sd "<<-x.second->offset<<"(%rbp)"<<", "<<"%xmm"<<double_float<<endl;
 							}
 							else{
@@ -2458,7 +2458,7 @@ void codegen(){
 						cout<<"movb "<<-t1.second->offset<<"(%rbp)"<<", "<<"%al"<<endl;
 						cout<<"movb "<<"%al, "<<-t2.second->offset<<"(%rbp)"<<endl;
 					}
-					else if(type1.back()=='*'){
+					else if(type1.back()=='*' || type1.back() == ']'){
 						cout<<"movq "<<-t1.second->offset<<"(%rbp)"<<", "<<"%rax"<<endl;
 						cout<<"movq "<<"%rax, "<<-t2.second->offset<<"(%rbp)"<<endl;
 					}

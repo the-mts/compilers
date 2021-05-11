@@ -304,7 +304,7 @@ postfix_expression
 
 																	vector<qi> arg_names;
 																	vector<pair<pair<string,string>,tt_entry*>> arg_list;
-																	if(entry->type_name == IS_BUILTIN_FUNC){
+																	if(entry->type_name == REQUIRES_TYPECHECK){
 																		// arg_names = $3->v;
 																		for(auto i : $3->v) arg_names.push_back(i->place);
 																		goto skip_arg_check;
@@ -829,19 +829,23 @@ unary_expression
 																				$$->ttentry = $2->ttentry;
 																				break;
 																			}
-
+																			int no_3ac = 0;
 																			if($2->value_type == LVALUE){
 																				$$->value_type = RVALUE;
 																				if($2->node_data.back() == '*'){
 																					$$->node_data = $2->node_data+'*';
 																				}
-																				else if($2->node_data.back() == ']'){
-																					$$->node_data = increase_array_level($2->node_data);
+																				else if($2->node_data.find("[]") != string::npos){
+																					$$->node_data = get_equivalent_pointer($2->node_data).first+'*';
 																				}
 																				else{
 																					$$->node_data = $2->node_data + " *";
 																				}
 																				$$->ttentry = $2->ttentry;
+																			}
+																			else if($2->node_data.back() == ']' && $2->node_data.find("[]") == string::npos){
+																				$$->node_data = increase_array_level($2->node_data);
+																				no_3ac = 1;
 																			}
 																			else{
 																				printf("\e[1;31mError [line %d]:\e[0m Address-of operator cannot be applied on rvalue.\n",line);
@@ -852,11 +856,14 @@ unary_expression
 																			if(!strcmp($2->name, "UNARY*")){
 																				$$->place = $2->v[0]->place;
 																			}
-																			else{
+																			else if (!no_3ac){
 																				// printf("asdasd\n");
 																				$$->place = getNewTemp($$->node_data, $$->ttentry);
 																				emit("UNARY" + string((const char*)$1), $2->place, {"", NULL}, $$->place);
 																			}
+																			else{
+																				$$->place = getNewTemp($$->node_data, $$->ttentry);
+																				emit("=", $2->place, {"", NULL}, $$->place);																			}
 																			/////////////////////////////////////																			
 																		}
 																		break;
