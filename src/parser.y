@@ -2349,7 +2349,19 @@ M7
 															if(tmp->token == CONSTANT){
 																tmp->place = emitConstant(tmp);
 															}
-															int x = emit("=", tmp->place, {"", NULL}, {"", NULL}); /////// See this again after assignment
+															
+															int x;
+															if (!is_struct_or_union(tmp->node_data)){
+																qi tmpvar = {"", NULL};
+																string cast = "(-to-)";
+																emit(cast, tmp->place, {"", NULL}, tmpvar);
+																x = emit("=", tmpvar, {"", NULL}, {"", NULL});
+															}
+															else{
+																x = emit("=", tmp->place, {"", NULL}, {"", NULL});
+															}
+
+															// int x = emit("=", tmp->place, {"", NULL}, {"", NULL}); /////// See this again after assignment
 															int y = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
 															tmp->nextlist.push_back(y);
 															backpatch($<nodes>-4->falselist, nextquad);
@@ -2434,6 +2446,10 @@ conditional_expression
 																		$$->node_data = "void *";
 																	}
 																	else if(p2.first == p3.first){
+																		if(is_struct_or_union($4->node_data) && $4->ttentry!=$7->ttentry){
+																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for ternary operator.\n",line);
+																			exit(-1);
+																		}
 																		$$->node_data = p3.first;
 																	}else{
 																		$$->node_data = arithmetic_type_upgrade(p2.first, p3.first, "ternary");
@@ -2445,8 +2461,46 @@ conditional_expression
 																	if($7->token == CONSTANT){
 																		$7->place = emitConstant($7);
 																	}
-																	$$->place = getNewTemp($$->node_data);
-																	emit("=", $7->place, {"", NULL}, $$->place);
+
+																	if($4->ttentry){
+																		$$->ttentry = $4->ttentry;
+																	}
+																	if($7->ttentry){
+																		$$->ttentry = $7->ttentry;
+																	}
+
+																	$$->place = getNewTemp($$->node_data, $$->ttentry);
+																	
+																	if(!is_struct_or_union($7->node_data)){
+																		string type1, type2;
+																		type1 = $4->node_data;
+																		type2 = $7->node_data;
+
+																		{
+																			qi tmpvar = getNewTemp($$->node_data, $$->ttentry);
+																			string op = "(" + type1 + "-to-" + $$->node_data + ")";
+																			code_array[$6 - 1].res = tmpvar;
+																			code_array[$6 - 1].op = op;
+																			code_array[$6].op1 = tmpvar;
+																		}
+
+																		if(type2 != $$->node_data){
+																			qi tmpvar = getNewTemp($$->node_data, $$->ttentry);
+																			string cast = "("+ type2 +"-to-"+ $$->node_data +")";
+																			emit(cast, $7->place, {"", NULL}, tmpvar);
+
+																			emit("=", tmpvar, {"", NULL}, $$->place);
+																		}
+																		else{
+																			emit("=", $7->place, {"", NULL}, $$->place);
+																		}
+																	}
+																	else{
+																		emit("=", $7->place, {"", NULL}, $$->place);
+																	}
+
+																	// emit("=", $7->place, {"", NULL}, $$->place);
+
 																	code_array[$6].res = $$->place;
 																	backpatch($4->nextlist, nextquad);
 																	$$->nextlist.insert($$->nextlist.end(), $7->nextlist.begin(), $7->nextlist.end());
@@ -2489,7 +2543,7 @@ assignment_expression
 																			}
 																			if(entry1 && entry2){
 																				if(entry1 != entry2 || $2->name[0] != '='){
-																					printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operators '%s'.\n",line, $2->name);
+																					printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2->name);
 																					exit(-1);
 																				}
 																			}
@@ -2819,17 +2873,29 @@ assignment_expression
 																				/* int x = emit(op, $1->place, $3->place, $1->place); */
 
 																				auto tmp = getNewTemp(type);
-																				int x = emit(op+"int", $1->place, $3->place, tmp);
+																				int x = emit(op, $1->place, $3->place, tmp);
 
 																				// Typecasting before assignment
 																				if($1->node_data!=$3->node_data){
 																					auto tmp2 = getNewTemp($1->node_data);
 																					string cast = "("+ $3->node_data +"-to-"+ $1->node_data +")";
 																					emit(cast, tmp, {"", NULL}, tmp2);
-																					emit("=", tmp2, {"", NULL}, $1->place);
+																					// emit("=", tmp2, {"", NULL}, $1->place);
+																					if(!strcmp($1->name, "UNARY*")){
+																						emit("ADDR=", tmp2, {"", NULL}, $1->v[0]->place);
+																					}
+																					else{
+																						emit("=", tmp2, {"", NULL}, $1->place);
+																					}
 																				}
 																				else{
-																					emit("=", tmp, {"", NULL}, $1->place);
+																					// emit("=", tmp, {"", NULL}, $1->place);
+																					if(!strcmp($1->name, "UNARY*")){
+																						emit("ADDR=", tmp, {"", NULL}, $1->v[0]->place);
+																					}
+																					else{
+																						emit("=", tmp, {"", NULL}, $1->place);
+																					}
 																				}
 																				/////////////////////////////////////
 																			}
@@ -3056,6 +3122,7 @@ init_declarator
 																			}
 																		}
 																		else if(entry1 || entry2){
+																			// printf("hi 1. %s 2. %s     %p %p\n", data_type_.c_str(), $3->node_data.c_str(), entry1, entry2);
 																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '='.\n",line);
 																			exit(-1);
 																		}

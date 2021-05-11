@@ -9,9 +9,27 @@ typtab types_table;
 table_tree* st_root;
 table_tree* curr;
 unordered_map<string, string> equiv_types;
+unordered_map<char, char> escape_chars;
+
 
 vector<long> offset;
 int curr_width;
+
+void init_escape_chars(){
+	escape_chars['a'] = '\a';
+	escape_chars['b'] = '\b';
+	escape_chars['e'] = '\e';
+	escape_chars['f'] = '\f';
+	escape_chars['n'] = '\n';
+	escape_chars['r'] = '\r';
+	escape_chars['t'] = '\t';
+	escape_chars['v'] = '\v';
+	escape_chars['0'] = '\0';
+	escape_chars['\\'] = '\\';
+	escape_chars['\''] = '\'';
+	escape_chars['\"'] = '\"';
+	escape_chars['\?'] = '\?';
+}
 
 void init_equiv_types(){
 	equiv_types.insert({"int","int"});
@@ -342,6 +360,34 @@ void init_symtab(){
 	tmp = add_entry("pow", "double", 0, 0, IS_FUNC);
 	tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
 	tmp->arg_list->push_back({{"double",""},NULL});
+
+	tmp = add_entry("strlen", "int", 0, 0, IS_FUNC);
+	tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
+	tmp->arg_list->push_back({{"char *",""},NULL});
+
+	tmp = add_entry("strcmp", "int", 0, 0, IS_FUNC);
+	tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
+	tmp->arg_list->push_back({{"char *",""},NULL});
+	tmp->arg_list->push_back({{"char *",""},NULL});
+	
+	tmp = add_entry("strcat", "char *", 0, 0, IS_FUNC);
+	tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
+	tmp->arg_list->push_back({{"char *",""},NULL});
+	tmp->arg_list->push_back({{"char *",""},NULL});
+
+	tmp = add_entry("strcpy", "char *", 0, 0, IS_FUNC);
+	tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
+	tmp->arg_list->push_back({{"char *",""},NULL});
+	tmp->arg_list->push_back({{"char *",""},NULL});
+
+	tmp = add_entry("strchr", "char *", 0, 0, IS_FUNC);
+	tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
+	tmp->arg_list->push_back({{"char *",""},NULL});
+	tmp->arg_list->push_back({{"int",""},NULL});
+
+	tmp = add_entry("strdup", "char *", 0, 0, IS_FUNC);
+	tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
+	tmp->arg_list->push_back({{"char *",""},NULL});
 }
 
 st_entry* add_entry(string key, string type, unsigned long size, long offset, enum sym_type type_name){
@@ -818,11 +864,35 @@ pair<constant, enum const_type> parse_constant(string s){
 		pair<constant, enum const_type> ans;
 		ans.second = IS_CHAR;
 		ans.first.char_const = 0;
-		long long mult = 1;
-		for(int i=n-1;i>=1;i--){
-			ans.first.char_const += mult*s[i];
-			mult*=256;
+		// long long mult = 1;
+		// for(int i=n-1;i>=1;i--){
+		// 	ans.first.char_const += mult*s[i];
+		// 	mult*=256;
+		// }
+		int size = s.length();
+		char s1 = 0;
+		char s2 = 0;
+		for(int i = 1; i<s.length()-1; i++){
+			if(s[i]=='\\'){
+				s1 = '\\';
+				i++;
+				s2 = s[i];
+			}
+			else{
+				s1 = 0;
+				s2 = s[i];
+			}
 		}
+		if(s1!='\\') ans.first.char_const = s2;
+		else{
+			if(escape_chars.find(s2)==escape_chars.end()){
+				ans.first.char_const = s2;
+			}
+			else{
+				ans.first.char_const = escape_chars[s2];
+			}
+		}
+		// printf("char const: %c\n", ans.first.char_const);
 		return ans;
 	}
 	unordered_map <char, int> m; 

@@ -289,6 +289,7 @@ int main(int argc, char const* argv[]){
 	}
 	init_symtab();
 	init_equiv_types();
+	init_escape_chars();
 	int x = yyparse();
 	if(x != 0){
 		return -1;

@@ -31,7 +31,7 @@ int main(){
     scanf("%d", &n);
     printf("%d\n", n);
     a = (int*) malloc(n*sizeof(int));
-    printf("%p\n", a);
+    // printf("%p\n", a);
     printf("Enter the numbers to sort:\n");
     for(i=0;i<n;i++){
       scanf("%d", &a[i]);
