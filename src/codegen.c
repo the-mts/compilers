@@ -429,38 +429,40 @@ void codegen(){
 				string var, type;
 				map <string, string> param2reg;
 				int size;
-				/*if (args.size() != params_list.size()) {
-					cout << "Args: " << args.size() << ", Params: " << params_list.size() << endl;
-					cout << "Dead!" << endl;
-					return;
-				}*/
-				/*for (auto param: params_list){
-					var = param.first;
-					type = param.second->type;
-					if (param2reg.find(var) == param2reg.end()){
-						for (auto arg: args){
-							if (var == arg.first.second){
-								if (type == "float" || type == "double"){
-									param2reg[var] = "%xmm" + to_string(freef);
-									if (type == "float"){
-										cout << "movss ";
-									} else {
-										cout << "movsd ";
+				{
+					/*if (args.size() != params_list.size()) {
+						cout << "Args: " << args.size() << ", Params: " << params_list.size() << endl;
+						cout << "Dead!" << endl;
+						return;
+					}*/
+					/*for (auto param: params_list){
+						var = param.first;
+						type = param.second->type;
+						if (param2reg.find(var) == param2reg.end()){
+							for (auto arg: args){
+								if (var == arg.first.second){
+									if (type == "float" || type == "double"){
+										param2reg[var] = "%xmm" + to_string(freef);
+										if (type == "float"){
+											cout << "movss ";
+										} else {
+											cout << "movsd ";
+										}
+										cout << -param.second->offset << "(%rbp), " << "%xmm" << freef << endl; 
+										freef++;
 									}
-									cout << -param.second->offset << "(%rbp), " << "%xmm" << freef << endl; 
-									freef++;
+									else {
+										size = get_size(type);
+										param2reg[var] = genregs[{freei, size}];
+										cout << "mov" << sizechar(size) << " " << -param.second->offset << "(%rbp), " << param2reg[var] << endl;
+										freei++;
+									}
+									break;
 								}
-								else {
-									size = get_size(type);
-									param2reg[var] = genregs[{freei, size}];
-									cout << "mov" << sizechar(size) << " " << -param.second->offset << "(%rbp), " << param2reg[var] << endl;
-									freei++;
-								}
-								break;
 							}
 						}
-					}
-				}*/
+					}*/
+				}
 				//return;
 				qi param;
 				string arg;

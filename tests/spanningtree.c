@@ -76,7 +76,6 @@ void Merge(struct edge *arr,int p,int q,int r){
     int x, y;
     R[r-q].weight = 1000000;
     L[q-p+1].weight = 1000000;
-    printf("phatt gayi gaand\n");
     for(i=0;i<=q-p;i++){
         L[i] = arr[p+i] ;
     }

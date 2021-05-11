@@ -144,8 +144,8 @@ string emitGlobalConstant(node* tmp){
 } 
 
 int tailposs(qi caller, qi callee){
-	if (caller.first != callee.first) return 0;
 	int fcount=0, icount= 0;
+	if (caller.first != callee.first) return 0;
 	for (auto arg: *(caller.second->arg_list)){
 		if (is_struct_or_union(arg.first.first)){
 			return 0;
@@ -218,14 +218,12 @@ void handle_dead_block(int b){
 }
 
 void make_blocks(){
-//	printf("chick0\n");
 	int n = code_array.size();
 	if (n == 0) return;
 	int leader[n];
 	int blocknum[n];
 	int curr = -1, s, f=0;
  	int vstart, vend, prev;	
-//	printf("chick1\n");
 	// Replace some obviously redundant GOTOs with DUMMY statements
 	qi func;	
 	int tail = 1;
@@ -356,7 +354,7 @@ void make_blocks(){
 			blocks[blocks[i].succ].pred.push_back(i);
 			if (blocks[i].cond_succ != -1) blocks[blocks[i].cond_succ].pred.push_back(i);
 		}
-		//blocks[i].code.erase(remove_if(blocks[i].code.begin(), blocks[i].code.end(), [](quad q){return q.op == "DUMMY";}), blocks[i].code.end());
+		blocks[i].code.erase(remove_if(blocks[i].code.begin(), blocks[i].code.end(), [](quad q){return q.op == "DUMMY";}), blocks[i].code.end());
 	}
 //	printf("chick5\n");
 	//return;
@@ -409,11 +407,11 @@ void print_map(const map<pair<string, pair<string, string>>, qi>& m)
 }
 
 int opt_cse(){
-	map<pair<string, pair<st_entry*, st_entry*>>, qi> expr;
+	map<pair<string, pair<qi, qi>>, qi> expr;
 	//map<string, vector<pair<string, pair<string, string>>>> used;
 	int i;
 	string op;
-	st_entry *op1, *op2, *res;
+	qi op1, op2, res;
 	//cout<<"chick1\n";
 	//print_map(expr);
 	int c = 0;
@@ -423,9 +421,9 @@ int opt_cse(){
 		if (blocks[b].isglobal || blocks[b].code[0].op == "FUNC_START" || blocks[b].code[0].op == "FUNC_END") continue;
 		for (; i < blocks[b].code.size(); i++){
 			op = blocks[b].code[i].op;
-			op1 = blocks[b].code[i].op1.second;
-			op2 = blocks[b].code[i].op2.second;
-			res = blocks[b].code[i].res.second;
+			op1 = blocks[b].code[i].op1;
+			op2 = blocks[b].code[i].op2;
+			res = blocks[b].code[i].res;
 			if (op == "IF_TRUE_GOTO" || op == "GOTO" ||
 				op == "PARAM" || op == "CALL" || op == "TAIL" ||
 				op == "RETURN" || op == "RETURN_VOID") break;
@@ -475,12 +473,13 @@ void print_copy_map(const map<string, qi>& m)
 }
 
 int opt_copy(){
-	map<st_entry*, qi> expr;
+	map<qi, qi> expr;
 	//map<string, vector<pair<string, pair<string, string>>>> used;
 	int i;
 	int c = 0;
 	string op;
-	st_entry *op1, *op2, *res;
+	qi op1, op2, res;
+	// st_entry *op1, *op2, *res;
 	//cout<<"chick1\n";
 	//print_copy_map(expr);
 	for (int b = 0; b != -1; b = blocks[b].next){
@@ -489,9 +488,9 @@ int opt_copy(){
 		if (blocks[b].code[0].op == "FUNC_START" || blocks[b].code[0].op == "FUNC_END") continue;
 		for (; i < blocks[b].code.size(); i++){
 			op = blocks[b].code[i].op;
-			op1 = blocks[b].code[i].op1.second;
-			op2 = blocks[b].code[i].op2.second;
-			res = blocks[b].code[i].res.second;
+			op1 = blocks[b].code[i].op1;
+			op2 = blocks[b].code[i].op2;
+			res = blocks[b].code[i].res;
 			if (op == "GOTO" || op == "CALL" || op == "TAIL" ||
 			    op == "RETURN_VOID") break;
 			if (expr.find(op1) != expr.end() && (op == "=" || (expr[op1].first)[0] != '$' && (expr[op1].first)[0] != '.')){
@@ -508,7 +507,7 @@ int opt_copy(){
 				expr[res] = blocks[b].code[i].op1;
 				auto pred = [&](const auto& item) {
     	    		auto const& [key, value] = item;
-				    return value.second == res;
+				    return value == res;
 				};
 	
 				for (auto i = expr.begin(), last = expr.end(); i != last; ) {
@@ -523,7 +522,7 @@ int opt_copy(){
 			else {
 				auto pred = [&](const auto& item) {
   	    			auto const& [key, value] = item;
-			        return value.second == res || key == res;
+			        return value == res || key == res;
 				};
 
 				for (auto i = expr.begin(), last = expr.end(); i != last; ) {
@@ -581,7 +580,6 @@ int opt_dead_expr(){
 						var = blocks[b].code[i].res;
 						if (var.second && !istemp(var) && !(var.second->is_global)) user[var] = 0;
 					}
-					printf("HERE\n");
 				}
 				if (blocks[b].code[l].op == "RETURN_VOID" || blocks[b].code[l].op == "GOTO") l--;
 				else if (blocks[b].code[l].op == "RETURN" || blocks[b].code[l].op == "IF_TRUE_GOTO") {
