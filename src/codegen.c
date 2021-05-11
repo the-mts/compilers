@@ -478,13 +478,13 @@ void codegen(){
 							} else {
 								cout << "movsd ";
 							}
-							cout << -param.second->offset << "(%rbp), " << "%xmm" << freef << endl; 
+							cout << set_offset(param) << ", " << "%xmm" << freef << endl;
 							freef++;
 						}
 						else {
 							size = get_size(type);
 							param2reg[var] = genregs[{freei, size}];
-							cout << "mov" << sizechar(size) << " " << -param.second->offset << "(%rbp), " << param2reg[var] << endl;
+							cout << "mov" << sizechar(size) << " " << set_offset(param) << ", " << param2reg[var] << endl;
 							freei++;
 						}
 					}
