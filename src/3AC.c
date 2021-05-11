@@ -546,7 +546,9 @@ void print_copy_map(const map<string, qi>& m)
 }
 
 int opt_copy(){
+	int n = blocks.size();
 	map<qi, qi> expr;
+	vector<map<qi, qi>> gexpr(n);
 	//map<string, vector<pair<string, pair<string, string>>>> used;
 	int i;
 	int c = 0;
@@ -559,6 +561,9 @@ int opt_copy(){
 		expr.clear();
 		i = 0;
 		if (blocks[b].code[0].op == "FUNC_START" || blocks[b].code[0].op == "FUNC_END") continue;
+		if (!blocks[b].isglobal) {
+			if (blocks[b].pred.size() == 1 && blocks[b].pred[0] < b) expr = gexpr[blocks[b].pred[0]];
+		}
 		for (; i < blocks[b].code.size(); i++){
 			op = blocks[b].code[i].op;
 			op1 = blocks[b].code[i].op1;
@@ -605,8 +610,9 @@ int opt_copy(){
 			      		++i;
 			  		}
 				}
-			}		
+			}
 		}
+		gexpr[b] = expr;
 		//print_copy_map(expr);
 		//cout<<"chick2\n";
 	}
@@ -615,6 +621,14 @@ int opt_copy(){
 
 int istemp(qi v){
 	return v.first[0] >= 48 && v.first[0] <= 57;
+}
+
+void print_dead_map(const map<qi, int>& m)
+{
+	   for (const auto& [key, value] : m) {
+	        cout << key.first << " = " << value << "; ";
+	   }
+	   cout<<"\n";
 }
 
 int opt_dead_expr(){
@@ -627,20 +641,20 @@ int opt_dead_expr(){
 	int c = 0;
 	qi var, op;
 	for (int b = n-1; b >= 0; b--){
-
 		if (blocks[b].alive && blocks[b].code[0].op != "FUNC_END" && blocks[b].code[0].op != "FUNC_START"){
 			user.clear();
 			temp.clear();
+			//printf("Starting block %d\n", b);
 			if (!blocks[b].isglobal) {
 				l = blocks[b].code.size() - 1;
 				if ((blocks[b].succ != -1 && blocks[b].succ <= b) || (blocks[b].cond_succ != -1 && blocks[b].cond_succ <= b)){
-					printf("%d: case 1\n", b);
+					//printf("%d: case 1\n", b);
 					temp = gtemp[blocks[b].succ];
 					/*for (int l = blocks[b].varstart; l < blocks[b].varend; l++)
 					temp[to_string(l)+"_tmp"] = 1;*/
 				}
 				else if (blocks[b].succ == -1 || (blocks[b].cond_succ == -1 && blocks[blocks[b].succ].code[0].op == "FUNC_END")){
-					printf("%d: case 2\n", b);
+					//printf("%d: case 2\n", b);
 					for (int c = b; c >= 0 && blocks[c].code[0].op != "FUNC_START"; c--) {
 						for (int i = 0; i < blocks[c].code.size(); i++){
 						/*var = blocks[b].code[i].op1;
@@ -653,7 +667,7 @@ int opt_dead_expr(){
 					}
 				}
 				else if (blocks[b].succ != -1 && blocks[b].succ > b){
-					printf("%d: case 3\n", b);
+					//printf("%d: case 3\n", b);
 					temp = gtemp[blocks[b].succ];
 					user = guser[blocks[b].succ];
 					if (blocks[b].cond_succ != -1 && blocks[b].cond_succ > b){
@@ -665,6 +679,10 @@ int opt_dead_expr(){
 								user[s.first] = 1;
 					}
 				}
+				/*printf("Temp: ");
+				print_dead_map(temp);
+				printf("User: ");
+				print_dead_map(user);*/
 				
 				if (blocks[b].code[l].op == "RETURN_VOID" || blocks[b].code[l].op == "GOTO") l--;
 				else if (blocks[b].code[l].op == "RETURN" || blocks[b].code[l].op == "IF_TRUE_GOTO") {
@@ -774,7 +792,12 @@ int opt_dead_expr(){
 			// 	printf("\ninside %d\n", b);
 			// 	debug_print();
 			// }
-			handle_dead_block(b);	
+			handle_dead_block(b);
+			/*printf("Leaving block %d\n", b);
+			printf("Temp: ");
+			print_dead_map(temp);
+			printf("User: ");
+			print_dead_map(user);*/
 		}
 	}
 	return c;
