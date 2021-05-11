@@ -75,7 +75,7 @@ primary_expression
 																	$$->node_data = entry->type;
 																	if((entry->type.back() == ']' && entry->type.find("[]")==string::npos)){
 																		$$->value_type = RVALUE;
-																		$$->place = getNewTemp(entry->type, entry->ttentry);
+																		$$->place = getNewTemp(entry->type, entry->ttentry, 8);
 																		emit("UNARY&", {string((const char*)$1), entry}, {"", NULL}, $$->place);
 																	}
 																	else if(is_struct_or_union(entry->type) && entry->type_name!=IS_FUNC){
