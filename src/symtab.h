@@ -49,6 +49,7 @@ struct st_entry{
 	int is_init;
 	enum sym_type type_name;
 	symtab* sym_table;
+	int top_of_stack = -16;
 	vector<pair<pair<string, string>,tt_entry*>> *arg_list;
 	vector<int> * dim = NULL;
 	tt_entry* ttentry = NULL;
@@ -70,6 +71,7 @@ struct tt_entry{
 	int is_typedef = 0;
 	typtab* typ_table = NULL;
 };
+
 struct table_tree{
 	symtab * val;
 	typtab* types;

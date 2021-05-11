@@ -129,11 +129,13 @@ unsigned long get_size(string s, tt_entry* entry){
 	else{
 		if(entry->mem_list == NULL)
 			return 0ul;
-		if(entry->type == "struct")
+		if(entry->type == "struct"){
 			for(auto x : *(entry->mem_list)){
 				unsigned long f = get_size(x.first.first, x.second);
 				ans+=f;
 			}
+			ans+=(8-(ans%8))%8;
+		}
 		else
 			for(auto x : *(entry->mem_list)){
 				ans=max(ans,get_size(x.first.first, x.second));
@@ -355,6 +357,9 @@ st_entry* add_entry(string key, string type, unsigned long size, long offset, en
 	// 	offset += size;
 	// 	offset += (8 - offset % 8) % 8;
 	// }
+	if(type_name==IS_FUNC){
+		size = 0, offset = 0;
+	}
 	if(type=="" || type[0] == '*' || type[0] == ' '){
 		printf("\e[1;31mError [line %d]:\e[0m Type supplied is empty/invalid.\n", line);
 		exit(-1);
@@ -362,8 +367,8 @@ st_entry* add_entry(string key, string type, unsigned long size, long offset, en
 	offset += size;
 	st_entry * new_entry = new st_entry(type, size, offset, type_name);
 	if(type_name != IS_FUNC)
-		::offset.back() = offset;
-	curr_width += size;
+		::offset.back() += size;
+	// curr_width += size;
 	symtab * temp = table_scope.back();
 	temp->insert({key, new_entry});
 	return new_entry;

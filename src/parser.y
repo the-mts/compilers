@@ -19,6 +19,7 @@
 	int break_level=0;
 	int continue_level=0;
 	string next_name;
+	st_entry* curr_func = NULL;
 	string func_ret_type = "";
 	int temp_var;
 %}
@@ -77,7 +78,7 @@ primary_expression
 																		$$->place = getNewTemp(entry->type, entry->ttentry);
 																		emit("UNARY&", {string((const char*)$1), entry}, {"", NULL}, $$->place);
 																	}
-																	else if(is_struct_or_union(entry->type)){
+																	else if(is_struct_or_union(entry->type) && entry->type_name!=IS_FUNC){
 																		$$->value_type = LVALUE;
 																		$$->place = getNewTemp(entry->type+" #", entry->ttentry);
 																		$$->node_data+= " #";
@@ -176,6 +177,7 @@ postfix_expression
 																		exit(-1);
 																	}
 																	$$->node_data = reduce_pointer_level($1->node_data);
+																	//cout<<"check "<<$$->node_data<<endl;
 																	$$->ttentry = $1->ttentry;
 																	if($$->node_data.back() == ']'){
 																		$$->value_type = RVALUE;
@@ -250,7 +252,6 @@ postfix_expression
 																			$$->node_data += " #";
 																			$$->place = getNewTemp($$->node_data, $$->ttentry);
 																			emit("+int", $1->place, $3->place, $$->place);
-																			$$->place.second->type += " #";
 																		}
 																	}
 																	/////////////////////////////////////
@@ -282,9 +283,17 @@ postfix_expression
 																	$$->node_data = entry->type;
 																	$$->value_type = RVALUE;
 																	$$->ttentry = entry->ttentry;
-
 																	//////////////// 3AC ////////////////
-																	$$->place = getNewTemp($$->node_data, $$->ttentry);
+																	qi tmp = getNewTemp($$->node_data, $$->ttentry);
+																	if(is_struct_or_union($$->node_data)){
+																		qi tmp2 = getNewTemp($$->node_data+" #", $$->ttentry);
+																		emit("UNARY&", tmp, {"", NULL}, tmp2);
+																		$$->place = tmp2;
+																		$$->node_data+= " #";
+																	}
+																	else{
+																		$$->place = tmp;
+																	}
 																	emit("CALL", $1->place, {"", NULL}, $$->place, 0);
 																	/////////////////////////////////////
 																}
@@ -402,7 +411,7 @@ postfix_expression
 																			}
 
 																			//////////////// 3AC ////////////////
-																			if(tmp1 != tmp2){
+																			if(tmp1 != tmp2 && !(is_struct_or_union(tmp1) && is_struct_or_union(tmp2))){
 																				string op2 = "("+tmp1 + "-to-" + tmp2+")"; // Modify
 																				qi tmp = getNewTemp(tmp2, entry1);  
 																				int x = emit(op2, $3->v[i]->place, {"", NULL}, tmp);
@@ -425,7 +434,16 @@ postfix_expression
 																	for(auto i: arg_names){
 																		emit("PARAM", i, {"", NULL}, {"", NULL});
 																	}
-																	$$->place = getNewTemp($$->node_data, $$->ttentry);
+																	qi tmp = getNewTemp($$->node_data, $$->ttentry);
+																	if(is_struct_or_union($$->node_data)){
+																		qi tmp2 = getNewTemp($$->node_data+" #", $$->ttentry);
+																		emit("UNARY&", tmp, {"", NULL}, tmp2);
+																		$$->place = tmp2;
+																		$$->node_data+= " #";
+																	}
+																	else{
+																		$$->place = tmp;
+																	}
 																	emit("CALL", $1->place, {"", NULL}, $$->place, $3->sz);
 																	/////////////////////////////////////
 																}
@@ -869,12 +887,16 @@ unary_expression
 																		break;
 																		case '*':{
 																			if(is_struct_or_union(reduce_pointer_level($2->node_data))){
-																				free($$);
-																				$$ = $2;
-																				$$->node_data.pop_back();
-																				$$->node_data += '#';
-																				$$->place.second->type.pop_back();
-																				$$->place.second->type+='#';
+																				$$->node_data = reduce_pointer_level($2->node_data)+ " #";
+																				$$->ttentry = $2->ttentry;
+																				$$->place = getNewTemp($$->node_data, $$->ttentry);
+																				$$->value_type = LVALUE;
+																				emit("=", $2->place, {"", NULL}, $$->place);
+																				// free($$);
+																				// $$->node_data.pop_back();
+																				// $$->node_data += '#';
+																				// $$->place.second->type.pop_back();
+																				// $$->place.second->type+='#';
 																				break;
 																			}
 																			if(temp_data.back() != '*'){
@@ -2511,7 +2533,10 @@ assignment_expression
 																					$3->place = emitConstant($3);
 																				}
 
-																				if(type1 != type2){
+																				if(is_struct_or_union($1->node_data) && is_struct_or_union($3->node_data)){
+																					emit("=struct", $3->place, {"", NULL}, $1->place);
+																				}
+																				else if(type1 != type2){
 																					qi tmpvar = getNewTemp($1->node_data, $1->ttentry);
 																					string cast = "("+ type2 +"-to-"+ type1 +")";
 																					emit(cast, $3->place, {"", NULL}, tmpvar);
@@ -2975,6 +3000,9 @@ init_declarator
 																			printf("\e[1;31mError [line %d]:\e[0m Variable or field '%s' declared void.\n", line, $1->node_name.c_str());
 																			exit(-1);
 																		}
+																		if(table_scope.back() == &global){
+																			emit("UNINIT_GLOBAL", {"", NULL}, {"", NULL}, {$1->node_name, tmp});
+																		}
 																	}
 																	$$ = NULL; free($1);
 																}
@@ -3058,29 +3086,134 @@ init_declarator
 																		$$->value_type = RVALUE;
 
 																		//////////////// 3AC ////////////////
-
-																		if($3->token == CONSTANT){
-																			$3->place = emitConstant($3);
-																		}
-																		if(type1 != type2){
-																			qi tmpvar = getNewTemp($$->node_data, $$->ttentry);
-
-																			string cast = "("+ type2 +"-to-"+ type1 +")";
-																			emit(cast, $3->place, {"", NULL}, tmpvar);
-
-																			if(!strcmp($1->name, "UNARY*")){
-																				emit("ADDR=", tmpvar, {"", NULL}, $1->v[0]->place);
+																		if(table_scope.back() == &global){
+																			node* tmp_node = node_(0,"tmp",-1);
+																			if(data_type_.back()=='*' || data_type_ =="long int"){
+																				tmp_node->val_dt = IS_LONG;
 																			}
-																			else{
-																				emit("=", tmpvar, {"", NULL}, $1->place);
+																			else if(data_type_ == "int"){
+																				tmp_node->val_dt = IS_INT;
 																			}
+																			else if(data_type_ == "short int"){
+																				tmp_node->val_dt = IS_SHORT;
+																			}
+																			else if(data_type_ == "float"){
+																				tmp_node->val_dt = IS_FLOAT;
+																			}
+																			else if(data_type_ == "char"){
+																				tmp_node->val_dt = IS_CHAR;
+																			}
+																			else if(data_type_ == "double"){
+																				tmp_node->val_dt = IS_DOUBLE;
+																			}
+																			switch($3->val_dt){
+																				case IS_CHAR: {
+																					char ch = $3->val.char_const;
+																					switch(tmp_node->val_dt){
+																						case IS_CHAR:	tmp_node->val.char_const = ch; break;
+																						case IS_INT:	tmp_node->val.int_const = ch; break;
+																						case IS_LONG:	tmp_node->val.long_const = ch; break;
+																						case IS_SHORT:	tmp_node->val.short_const = ch; break;
+																						case IS_FLOAT:	tmp_node->val.float_const = ch; break;
+																						case IS_DOUBLE:	tmp_node->val.double_const = ch; break;
+																					}
+																					break;
+																				}
+																				case IS_INT: {
+																					int ch = $3->val.int_const;
+																					switch(tmp_node->val_dt){
+																						case IS_CHAR:	tmp_node->val.char_const = ch; break;
+																						case IS_INT:	tmp_node->val.int_const = ch; break;
+																						case IS_LONG:	tmp_node->val.long_const = ch; break;
+																						case IS_SHORT:	tmp_node->val.short_const = ch; break;
+																						case IS_FLOAT:	tmp_node->val.float_const = ch; break;
+																						case IS_DOUBLE:	tmp_node->val.double_const = ch; break;
+																					}
+																					break;
+																				}
+																				case IS_SHORT: {
+																					short int ch = $3->val.short_const;
+																					switch(tmp_node->val_dt){
+																						case IS_CHAR:	tmp_node->val.char_const = ch; break;
+																						case IS_INT:	tmp_node->val.int_const = ch; break;
+																						case IS_LONG:	tmp_node->val.long_const = ch; break;
+																						case IS_SHORT:	tmp_node->val.short_const = ch; break;
+																						case IS_FLOAT:	tmp_node->val.float_const = ch; break;
+																						case IS_DOUBLE:	tmp_node->val.double_const = ch; break;
+																					}
+																					break;
+																				}
+																				case IS_LONG: {
+																					long int ch = $3->val.long_const;
+																					switch(tmp_node->val_dt){
+																						case IS_CHAR:	tmp_node->val.char_const = ch; break;
+																						case IS_INT:	tmp_node->val.int_const = ch; break;
+																						case IS_LONG:	tmp_node->val.long_const = ch; break;
+																						case IS_SHORT:	tmp_node->val.short_const = ch; break;
+																						case IS_FLOAT:	tmp_node->val.float_const = ch; break;
+																						case IS_DOUBLE:	tmp_node->val.double_const = ch; break;
+																					}
+																					break;
+																				}
+																				case IS_FLOAT: {
+																					float ch = $3->val.float_const;
+																					switch(tmp_node->val_dt){
+																						case IS_CHAR:	tmp_node->val.char_const = ch; break;
+																						case IS_INT:	tmp_node->val.int_const = ch; break;
+																						case IS_LONG:	tmp_node->val.long_const = ch; break;
+																						case IS_SHORT:	tmp_node->val.short_const = ch; break;
+																						case IS_FLOAT:	tmp_node->val.float_const = ch; break;
+																						case IS_DOUBLE:	tmp_node->val.double_const = ch; break;
+																					}
+																					break;
+																				}
+																				case IS_DOUBLE: {
+																					double ch = $3->val.double_const;
+																					switch(tmp_node->val_dt){
+																						case IS_CHAR:	tmp_node->val.char_const = ch; break;
+																						case IS_INT:	tmp_node->val.int_const = ch; break;
+																						case IS_LONG:	tmp_node->val.long_const = ch; break;
+																						case IS_SHORT:	tmp_node->val.short_const = ch; break;
+																						case IS_FLOAT:	tmp_node->val.float_const = ch; break;
+																						case IS_DOUBLE:	tmp_node->val.double_const = ch; break;
+																					}
+																					break;
+																				}
+																			}
+																			$3->val_dt = tmp_node->val_dt;
+																			$3->val = tmp_node->val;
+																			string ss = emitGlobalConstant($3);
+																			emit("=global", {ss, NULL}, {"", NULL}, {$1->node_name, tmp});
 																		}
 																		else{
-																			if(!strcmp($1->name, "UNARY*")){
-																				emit("ADDR=", $3->place, {"", NULL}, $1->v[0]->place);
+																			if($3->token == CONSTANT){
+																				$3->place = emitConstant($3);
+																			}
+																			if(is_struct_or_union(data_type_) && is_struct_or_union($3->node_data)){
+																				qi tmp = getNewTemp(data_type_ + "#", $1->ttentry);
+																				emit("UNARY&", $1->place, {"", NULL}, tmp);
+																				emit("=struct", $3->place, {"", NULL}, tmp);
+																			}
+																			else if(type1 != type2){
+																				qi tmpvar = getNewTemp($$->node_data, $$->ttentry);
+
+																				string cast = "("+ type2 +"-to-"+ type1 +")";
+																				emit(cast, $3->place, {"", NULL}, tmpvar);
+
+																				if(!strcmp($1->name, "UNARY*")){
+																					emit("ADDR=", tmpvar, {"", NULL}, $1->v[0]->place);
+																				}
+																				else{
+																					emit("=", tmpvar, {"", NULL}, $1->place);
+																				}
 																			}
 																			else{
-																				emit("=", $3->place, {"", NULL}, $1->place);
+																				if(!strcmp($1->name, "UNARY*")){
+																					emit("ADDR=", $3->place, {"", NULL}, $1->v[0]->place);
+																				}
+																				else{
+																					emit("=", $3->place, {"", NULL}, $1->place);
+																				}
 																			}
 																		}
 																		
@@ -3671,6 +3804,7 @@ M1
 																		}
 																		if(flag == 1 && int_char<6){
 																			st_entry* st = add_entry(p.first.second, p.first.first, get_size(p.first.first), accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
+																			st->ttentry = p.second;
 																			int_char++;
 																		}
 																		else if(flag == 2 && double_float<8){
@@ -3679,10 +3813,12 @@ M1
 																		}
 																		else if(flag == 1 && int_char == 6){
 																			st_entry* st = add_entry(p.first.second, p.first.first, 0, accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
+																			st->ttentry = p.second;
 																			st->size = get_size(p.first.first);
 																			curr_offset -= (8-(-curr_offset)%8)%8;
 																			st->offset = curr_offset;
 																			curr_offset -= 8;
+																			st->top_of_stack = min(st->top_of_stack, curr_offset);
 																		}
 																		else if(flag == 2 && double_float == 8){
 																			st_entry* st = add_entry(p.first.second, p.first.first, 0, accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
@@ -3697,6 +3833,7 @@ M1
 																				st->offset = curr_offset;
 																				curr_offset -= 8;
 																			}
+																			st->top_of_stack = min(st->top_of_stack, curr_offset);
 																		}
 																		else if(flag == 3){
 																			st_entry* st = add_entry(p.first.second, p.first.first, 0, accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
@@ -3705,6 +3842,7 @@ M1
 																			curr_offset -= (8-(-curr_offset)%8)%8;
 																			st->offset = curr_offset;
 																			curr_offset-=get_size(p.first.first, p.second);
+																			st->top_of_stack = min(st->top_of_stack, curr_offset);
 																		}
 																	}
 																	func_params.clear();
@@ -3715,6 +3853,7 @@ M2
 	: 	/* empty */												{
 																	scope_cleanup();
 																	long long temp = offset.back();
+																	curr_func->size = max((long long)curr_func->size, (long long)accumulate(offset.begin()+1, offset.end(), 0));
 																	offset.pop_back();
 																}
 	;
@@ -4075,7 +4214,7 @@ jump_statement
 																				exit(-1);
 																			}
 																		}
-																		if(entry1 || entry2){
+																		else if(entry1 || entry2){
 																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types when returning type ‘%s’ but ‘%s’ was expected.\n",line, tmp2.c_str(), tmp1.c_str());
 																			exit(-1);
 																		}
@@ -4118,12 +4257,12 @@ jump_statement
 																			$2->place = emitConstant($2);
 																		}
 																		tmp = $2->place;
-																		if(tmp1!=tmp2){
+																		if(entry1==NULL && entry2==NULL && tmp1!=tmp2){
 																			tmp = getNewTemp(tmp1, entry1);
 																			string op = "("+tmp2+"-to-"+tmp1+")";
 																			emit(op, $2->place, {"", NULL}, tmp);
 																		}
-																		emit("RETURN", tmp, {"", NULL}, {"", NULL});
+																		emit("RETURN", tmp, {"", NULL}, {"", curr_func});
 																	}
 																}
 	;
@@ -4159,6 +4298,7 @@ function_definition
 													$1->node_data += " "+$3->node_data;
 												}
 												st_entry* tmp = lookup($3->node_name);
+												curr_func = tmp; 
 												for(auto p : func_params){
 													if(p.first.second == ""){
 														printf("\e[1;31mError [line %d]:\e[0m Parameter name omitted\n", line);
@@ -4216,6 +4356,7 @@ function_definition
 													while(tmpp.back()=='*' || tmpp.back()==' ')
 														tmpp.pop_back();
 													func_entry->ttentry = type_lookup(tmpp);
+													curr_func = func_entry; 
 												}
 												next_name = $3->node_name;
 												func_ret_type = $1->node_data;
@@ -4226,7 +4367,7 @@ function_definition
 											$$ = node_(2,"fun_def",-1); $$->v[0] = $3; $$->v[1] = $5;
 											st_entry* tmp = lookup($3->node_name); 
 											tmp->sym_table = curr->v.back()->val;
-											tmp->size = curr_width;
+											//tmp->size = curr_width;
 											func_ret_type = "";
 
 											backpatch($5->nextlist, nextquad);
@@ -4247,6 +4388,7 @@ function_definition
 												}
 											} 
 											st_entry* tmp = lookup($1->node_name); 
+											curr_func = tmp; 
 											if(tmp != NULL && tmp->type_name != IS_FUNC){
 												printf("\e[1;31mError [line %d]:\e[0m Conflicting declarations of '%s'.\n", line ,($1->node_name).c_str());
 												exit(-1);
@@ -4300,13 +4442,14 @@ function_definition
 											func_ret_type = temp->type; 
 
 											emit("FUNC_START", {$1->node_name, lookup($1->node_name)}, {"", NULL}, {"", NULL}, var_no);
+											curr_func = temp; 
 										}
 
 	compound_statement					{
 											$$ = node_(2,"fun_def",-1); $$->v[0] = $1; $$->v[1] = $3; 
-											st_entry* tmp = lookup($1->node_name); 
+											st_entry* tmp = lookup($1->node_name);
 											tmp->sym_table = curr->v.back()->val;
-											tmp->size = curr_width;
+											//tmp->size = curr_width;
 											func_ret_type = "";
 
 											backpatch($3->nextlist, nextquad);

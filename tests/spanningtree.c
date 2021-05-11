@@ -50,9 +50,7 @@ void BFS(struct vertex **adj,int * parent, int* weight, int* status,int n,int v1
     while(head!=tail){
         int current = queue[head++];
         struct vertex* temp = adj[current];
-        // printf("hi %d %d\n", head, tail);
         while(temp!=0){
-            // printf("hi %p\n", temp);
             if(status[temp->value]==0){
                 queue[tail++]=temp->value;
                 parent[temp->value]=current;
@@ -127,9 +125,6 @@ void Union(struct edge* array,struct node* set,int i){
     int r_x = find(set[array[i].u],set);
     
     int r_y = find(set[array[i].v],set);
-    // printf("Union\n");
-    // printf("%d %d %d\n", set[r_x].parent, set[r_x].rank, set[r_x].key);
-    // printf("%d %d %d\n", set[r_y].parent, set[r_y].rank, set[r_y].key);
     
     if(set[r_x].parent==set[r_y].parent) return;
     if(set[r_x].rank > set[r_y].rank) set[r_y].parent = set[r_x].key;
@@ -193,27 +188,23 @@ int main() {
 
      set = (struct node*)malloc(n*sizeof(struct node));
     
-    printf("\n");
     for(i =0;i<n;i++){
         set[i].rank = 0;
         set[i].parent = i;
         set[i].key = i;
-        // printf("%d %d\n", set[i].parent, set[i].key);
     }
-    // for(i=0;i<n;i++)
-    //     printf("%d %d %d\n", set[i].rank, set[i].parent, set[i].key);
     
     MST = 0;
-            // int ii;
     for(i=0;i<e;i++){
         
         if((set[find(set[array[i].u],set)].key)!=(set[find(set[array[i].v],set)].key)){
             
+            
             MST = MST + array[i].weight;
             Union(array,set,i);
-            // printf("i = %d\n", i);
             edge_includer(array[i].u,array[i].v,adjacency,array[i].weight);
             edge_includer(array[i].v,array[i].u,adjacency,array[i].weight);
+           
         }
     }
     printf("%d\n",MST);

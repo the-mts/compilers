@@ -26,6 +26,7 @@ int emit(string op, qi op1, qi op2, qi res, int goto_addr){
 
 qi getNewTemp(string type, tt_entry* ttentry){
     //static int var_no = 0;
+    // cout<<" temp "<<type<<endl;
     string var_name = to_string(var_no) + "_tmp";
     var_no++;
     qi q;
@@ -99,9 +100,52 @@ qi emitConstant(node* tmp){
     return temp;
 }
 
+string emitGlobalConstant(node* tmp){
+	string s;
+    switch(tmp->val_dt){
+        case IS_INT:        
+			s = ".long " + to_string(tmp->val.int_const);
+			break;
+        case IS_LONG:       
+			s = ".quad " + to_string(tmp->val.long_const);
+			break;
+        case IS_SHORT:
+			s = ".value " + to_string(tmp->val.short_const);
+			break;
+        case IS_U_INT:      
+			s = ".long " + to_string(tmp->val.u_int_const);
+			break;
+        case IS_U_LONG:
+			s = ".quad " + to_string(tmp->val.u_long_const);
+			break;
+        case IS_U_SHORT:
+			s = ".value " + to_string(tmp->val.u_short_const);
+			break;
+        case IS_CHAR:
+			s = ".byte " + to_string((int)tmp->val.char_const);
+			break;
+        case IS_FLOAT:
+			{
+				unsigned int* xf = (unsigned int*) &tmp->val.float_const;
+				unsigned int yf = *xf;
+				s = ".long " + to_string(yf);
+			}
+			break;
+        case IS_DOUBLE:
+			{	
+				unsigned long long* xd = (unsigned long long*) &tmp->val.double_const;
+				unsigned long long yd = *xd;
+				s = ".quad " + to_string(yd);
+			}
+			break;
+    }
+
+    return s;
+} 
+
 int tailposs(qi caller, qi callee){
-	if (caller.first != callee.first) return 0;
 	int fcount=0, icount= 0;
+	if (caller.first != callee.first) return 0;
 	for (auto arg: *(caller.second->arg_list)){
 		if (is_struct_or_union(arg.first.first)){
 			return 0;
@@ -110,6 +154,25 @@ int tailposs(qi caller, qi callee){
 		else icount++;
 	}
 	return fcount < 16 && icount < 14;
+}
+
+void merge_blocks(int first, int next){
+	if (blocks[next].pred.size() > 1) return;
+	if (blocks[next].pred[0] != first) {
+		printf("Something went wrong in merging blocks %d and %d\n", first, next);
+		exit(-1);
+	}
+	for (auto c: blocks[next].code) blocks[first].code.push_back(c);
+	blocks[next].code.clear();
+	blocks[next].alive = 0;
+	blocks[first].next = blocks[next].next;
+	blocks[first].succ = blocks[next].succ;
+	if (blocks[next].succ != -1){
+		int s = blocks[next].succ;
+		blocks[s].pred.erase(remove(blocks[s].pred.begin(), blocks[s].pred.end(), next), blocks[s].pred.end());
+		blocks[s].pred.push_back(first);
+		blocks[next].succ = -1;
+	}
 }
 
 void handle_dead_block(int b){
@@ -155,14 +218,12 @@ void handle_dead_block(int b){
 }
 
 void make_blocks(){
-//	printf("chick0\n");
 	int n = code_array.size();
 	if (n == 0) return;
 	int leader[n];
 	int blocknum[n];
 	int curr = -1, s, f=0;
  	int vstart, vend, prev;	
-//	printf("chick1\n");
 	// Replace some obviously redundant GOTOs with DUMMY statements
 	qi func;	
 	int tail = 1;
@@ -293,7 +354,7 @@ void make_blocks(){
 			blocks[blocks[i].succ].pred.push_back(i);
 			if (blocks[i].cond_succ != -1) blocks[blocks[i].cond_succ].pred.push_back(i);
 		}
-		//blocks[i].code.erase(remove_if(blocks[i].code.begin(), blocks[i].code.end(), [](quad q){return q.op == "DUMMY";}), blocks[i].code.end());
+		blocks[i].code.erase(remove_if(blocks[i].code.begin(), blocks[i].code.end(), [](quad q){return q.op == "DUMMY";}), blocks[i].code.end());
 	}
 //	printf("chick5\n");
 	//return;
@@ -346,11 +407,11 @@ void print_map(const map<pair<string, pair<string, string>>, qi>& m)
 }
 
 int opt_cse(){
-	map<pair<string, pair<st_entry*, st_entry*>>, qi> expr;
+	map<pair<string, pair<qi, qi>>, qi> expr;
 	//map<string, vector<pair<string, pair<string, string>>>> used;
 	int i;
 	string op;
-	st_entry *op1, *op2, *res;
+	qi op1, op2, res;
 	//cout<<"chick1\n";
 	//print_map(expr);
 	int c = 0;
@@ -360,9 +421,9 @@ int opt_cse(){
 		if (blocks[b].isglobal || blocks[b].code[0].op == "FUNC_START" || blocks[b].code[0].op == "FUNC_END") continue;
 		for (; i < blocks[b].code.size(); i++){
 			op = blocks[b].code[i].op;
-			op1 = blocks[b].code[i].op1.second;
-			op2 = blocks[b].code[i].op2.second;
-			res = blocks[b].code[i].res.second;
+			op1 = blocks[b].code[i].op1;
+			op2 = blocks[b].code[i].op2;
+			res = blocks[b].code[i].res;
 			if (op == "IF_TRUE_GOTO" || op == "GOTO" ||
 				op == "PARAM" || op == "CALL" || op == "TAIL" ||
 				op == "RETURN" || op == "RETURN_VOID") break;
@@ -373,10 +434,10 @@ int opt_cse(){
 				blocks[b].code[i].op2 = {"", NULL};
 				c = 1;
 			}
-			else if (op == "ADDR="){
+			else if (op == "ADDR=" || op == "=struct"){
 				expr.clear();
 			}
-			else if (op != "UNARY*" && op != "="){
+			else if (op != "UNARY&" && op != "UNARY*" && op != "="){
 				//cout<<"Adding expr\n";
 				expr[{op, {op1, op2}}] = blocks[b].code[i].res;	
 			}
@@ -386,7 +447,7 @@ int opt_cse(){
 
 			auto pred = [&](const auto& item) {
         		auto const& [key, value] = item;
-		        return (key.second.first == res || key.second.second == res) && key.first != "UNARY&";
+		        return (key.second.first == res || key.second.second == res);
 			};
 
 			for (auto i = expr.begin(), last = expr.end(); i != last; ) {
@@ -412,12 +473,13 @@ void print_copy_map(const map<string, qi>& m)
 }
 
 int opt_copy(){
-	map<st_entry*, qi> expr;
+	map<qi, qi> expr;
 	//map<string, vector<pair<string, pair<string, string>>>> used;
 	int i;
 	int c = 0;
 	string op;
-	st_entry *op1, *op2, *res;
+	qi op1, op2, res;
+	// st_entry *op1, *op2, *res;
 	//cout<<"chick1\n";
 	//print_copy_map(expr);
 	for (int b = 0; b != -1; b = blocks[b].next){
@@ -426,26 +488,26 @@ int opt_copy(){
 		if (blocks[b].code[0].op == "FUNC_START" || blocks[b].code[0].op == "FUNC_END") continue;
 		for (; i < blocks[b].code.size(); i++){
 			op = blocks[b].code[i].op;
-			op1 = blocks[b].code[i].op1.second;
-			op2 = blocks[b].code[i].op2.second;
-			res = blocks[b].code[i].res.second;
+			op1 = blocks[b].code[i].op1;
+			op2 = blocks[b].code[i].op2;
+			res = blocks[b].code[i].res;
 			if (op == "GOTO" || op == "CALL" || op == "TAIL" ||
 			    op == "RETURN_VOID") break;
-			if (expr.find(op1) != expr.end() && (op == "=" || (expr[op1].first)[0] != '$')){
+			if (expr.find(op1) != expr.end() && (op == "=" || (expr[op1].first)[0] != '$' && (expr[op1].first)[0] != '.')){
 				//cout<<"Found expr\n";
 				blocks[b].code[i].op1 = expr[op1];
 				c = 1;
 			}
-			if (expr.find(op2) != expr.end() && (expr[op2].first)[0] != '$'){
+			if (expr.find(op2) != expr.end() && expr[op2].first[0] != '$' && expr[op2].first[0] != '.'){
 				blocks[b].code[i].op2 = expr[op2];
 				c = 1;
 			}
 			if (op == "="){
-				if (blocks[b].code[i].op1.first[0] != '.')
-					expr[res] = blocks[b].code[i].op1;
+				//if (blocks[b].code[i].op1.first[0] != '.')
+				expr[res] = blocks[b].code[i].op1;
 				auto pred = [&](const auto& item) {
     	    		auto const& [key, value] = item;
-				    return value.second == res;
+				    return value == res;
 				};
 	
 				for (auto i = expr.begin(), last = expr.end(); i != last; ) {
@@ -456,11 +518,11 @@ int opt_copy(){
 			 		}
 				}
 			}
-			else if (op == "ADDR=") expr.clear();
+			else if (op == "ADDR=" || op == "struct=") expr.clear();
 			else {
 				auto pred = [&](const auto& item) {
   	    			auto const& [key, value] = item;
-			        return value.second == res || key == res;
+			        return value == res || key == res;
 				};
 
 				for (auto i = expr.begin(), last = expr.end(); i != last; ) {
@@ -509,16 +571,16 @@ int opt_dead_expr(){
 				}
 			
 				l = blocks[b].code.size() - 1;
-				/*if (blocks[b].succ == -1 || (blocks[b].cond_succ == -1 && blocks[blocks[b].succ].code[0].op == "FUNC_END")){
+				if (blocks[b].succ == -1 || (blocks[b].cond_succ == -1 && blocks[blocks[b].succ].code[0].op == "FUNC_END")){
 					for (int i = 0; i <= l; i++){
-						var = blocks[b].code[i].op1;
-						if (var.first != "" && !istemp(var)) user[var] = 0;
+						/*var = blocks[b].code[i].op1;
+						if (var.second && !istemp(var) && !(var.second->is_global)) user[var] = 0;
 						var = blocks[b].code[i].op2;
-						if (var.first != "" && !istemp(var)) user[var] = 0;
+						if (var.second && !istemp(var) && !(var.second->is_global)) user[var] = 0;*/
 						var = blocks[b].code[i].res;
-						if (var.first != "" && !istemp(var)) user[var] = 0;
+						if (var.second && !istemp(var) && !(var.second->is_global)) user[var] = 0;
 					}
-				}*/
+				}
 				if (blocks[b].code[l].op == "RETURN_VOID" || blocks[b].code[l].op == "GOTO") l--;
 				else if (blocks[b].code[l].op == "RETURN" || blocks[b].code[l].op == "IF_TRUE_GOTO") {
 					var = blocks[b].code[l].op1;
@@ -543,7 +605,7 @@ int opt_dead_expr(){
 			for (;l >= 0; l--){
 				var = blocks[b].code[l].res;
 				op = blocks[b].code[l].op1;
-				if (blocks[b].code[l].op == "ADDR="){
+				if (blocks[b].code[l].op == "ADDR=" || blocks[b].code[l].op == "=struct"){
 					if (istemp(op)) temp[op] = 1;
 					else user[op] = 1;
 					if (istemp(var)) temp[var] = 1;
@@ -640,6 +702,7 @@ int opt_gotos(){
 				if (blocks[b].succ == blocks[b].next){
 					blocks[b].code.pop_back();
 					handle_dead_block(b);
+					if (blocks[b].alive && blocks[b].succ != -1) merge_blocks(b, blocks[b].succ);
 					c = 1;
 				}
 			}
@@ -652,6 +715,7 @@ int opt_gotos(){
 					blocks[b].code.pop_back();
 					blocks[b].cond_succ = -1;
 					handle_dead_block(b);
+					if (blocks[b].alive && blocks[b].succ != -1) merge_blocks(b, blocks[b].succ);
 					c = 1;
 				}
 				else {
@@ -660,6 +724,7 @@ int opt_gotos(){
 						op = blocks[b].code[l].op;
 						res = blocks[b].code[l].res;
 						op1 = blocks[b].code[l].op1.first;
+						if (op == "ADDR=" || op == "=struct") break;
 						if (res == cond){
 							if (op == "=" && op1[0] == '$'){
 								op1.erase(op1.begin());
