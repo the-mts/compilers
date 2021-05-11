@@ -180,7 +180,7 @@ void merge_blocks(int first, int next){
 			s = blocks[next].cond_succ;
 			blocks[s].pred.erase(remove(blocks[s].pred.begin(), blocks[s].pred.end(), next), blocks[s].pred.end());
 			blocks[s].pred.push_back(first);
-			blocks[next].succ = -1;
+			blocks[next].cond_succ = -1;
 		}
 	}
 }
@@ -557,6 +557,7 @@ int istemp(qi v){
 int opt_dead_expr(){
 	int n = blocks.size();
 	vector<map<qi, int>> gtemp(n);
+	vector<map<qi, int>> guser(n);
 	map<qi, int> user;
 	map<qi, int> temp;
 	int l, e;
@@ -567,30 +568,40 @@ int opt_dead_expr(){
 			user.clear();
 			temp.clear();
 			if (!blocks[b].isglobal) {
-				/*if ((blocks[b].succ != -1 && blocks[b].succ <= b) || (blocks[b].cond_succ != -1 && blocks[b].cond_succ <= b)){
-					for (int l = blocks[b].varstart; l < blocks[b].varend; l++)
-					temp[to_string(l)+"_tmp"] = 1;
-				}
-				else*/ 
-				if (blocks[b].succ != -1 && blocks[b].succ > b){
-					temp = gtemp[blocks[b].succ];
-					if (blocks[b].cond_succ != -1 && blocks[b].cond_succ > b){
-						for (auto s: gtemp[blocks[b].cond_succ])
-							if (s.second) temp[s.first] = 1;
-					}
-				}
-			
 				l = blocks[b].code.size() - 1;
-				if (blocks[b].succ == -1 || (blocks[b].cond_succ == -1 && blocks[blocks[b].succ].code[0].op == "FUNC_END")){
-					for (int i = 0; i <= l; i++){
+				if ((blocks[b].succ != -1 && blocks[b].succ <= b) || (blocks[b].cond_succ != -1 && blocks[b].cond_succ <= b)){
+					printf("%d: case 1\n", b);
+					temp = gtemp[blocks[b].succ];
+					/*for (int l = blocks[b].varstart; l < blocks[b].varend; l++)
+					temp[to_string(l)+"_tmp"] = 1;*/
+				}
+				else if (blocks[b].succ == -1 || (blocks[b].cond_succ == -1 && blocks[blocks[b].succ].code[0].op == "FUNC_END")){
+					//printf("%d case 2\n", b);
+					for (int c = b; c >= 0 && blocks[c].code[0].op != "FUNC_START"; c--) {
+						for (int i = 0; i < blocks[c].code.size(); i++){
 						/*var = blocks[b].code[i].op1;
 						if (var.second && !istemp(var) && !(var.second->is_global)) user[var] = 0;
 						var = blocks[b].code[i].op2;
 						if (var.second && !istemp(var) && !(var.second->is_global)) user[var] = 0;*/
-						var = blocks[b].code[i].res;
-						if (var.second && !istemp(var) && !(var.second->is_global)) user[var] = 0;
+							var = blocks[c].code[i].res;
+							if (var.second && !istemp(var) && !(var.second->is_global)) user[var] = 0;
+						}
 					}
 				}
+				else if (blocks[b].succ != -1 && blocks[b].succ > b){
+					//printf("%d: case 3\n", b);
+					temp = gtemp[blocks[b].succ];
+					user = guser[blocks[b].succ];
+					if (blocks[b].cond_succ != -1 && blocks[b].cond_succ > b){
+						for (auto s: gtemp[blocks[b].cond_succ])
+							if (s.second) 
+								temp[s.first] = 1;
+						for (auto s: guser[blocks[b].succ])
+							if (guser[blocks[b].cond_succ].find(s.first) == guser[blocks[b].cond_succ].end() || guser[blocks[b].cond_succ][s.first]) 
+								user[s.first] = 1;
+					}
+				}
+				
 				if (blocks[b].code[l].op == "RETURN_VOID" || blocks[b].code[l].op == "GOTO") l--;
 				else if (blocks[b].code[l].op == "RETURN" || blocks[b].code[l].op == "IF_TRUE_GOTO") {
 					var = blocks[b].code[l].op1;
@@ -693,6 +704,7 @@ int opt_dead_expr(){
 				}
 			}
 			gtemp[b] = temp;
+			guser[b] = user;
 			blocks[b].code.erase(remove_if(blocks[b].code.begin(), blocks[b].code.end(), [](quad q){return q.op == "DUMMY";}), blocks[b].code.end());
 			handle_dead_block(b);	
 		}
