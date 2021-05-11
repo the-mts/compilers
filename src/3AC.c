@@ -24,14 +24,17 @@ int emit(string op, qi op1, qi op2, qi res, int goto_addr){
     return nextquad - 1;
 }
 
-qi getNewTemp(string type, tt_entry* ttentry){
+qi getNewTemp(string type, tt_entry* ttentry, int size){
     //static int var_no = 0;
     // cout<<" temp "<<type<<endl;
     string var_name = to_string(var_no) + "_tmp";
     var_no++;
     qi q;
     q.first = var_name;
-    q.second = add_entry(q.first, type, get_size(type, ttentry), accumulate(offset.begin()+1, offset.end(), 0), IS_TEMP);
+	if(size == -1){
+		size = get_size(type, ttentry);
+	}
+    q.second = add_entry(q.first, type, size, accumulate(offset.begin()+1, offset.end(), 0), IS_TEMP);
     q.second->ttentry = ttentry;
     return q;
 }
