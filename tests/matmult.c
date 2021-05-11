@@ -1,4 +1,4 @@
-void mult(int l, int m, int n, int a[][2], int b[][2], int c[][2]){
+void mult(int l, int m, int n, int a[][3], int b[][3], int c[][3]){
 	int i, j, k;
 	for (i = 0; i < l; i++){
 		for (j = 0; j < n; j++){
@@ -9,9 +9,9 @@ void mult(int l, int m, int n, int a[][2], int b[][2], int c[][2]){
 }
 
 int main(){
-	int l = 2, m = 2, n = 2;
+	int l = 3, m = 3, n = 3;
 	int i, j;
-	int a[2][2], b[2][2], c[2][2];
+	int a[3][3], b[3][3], c[3][3];
 	printf("Enter a %d x %d matrix:\n", l, m);
 	for (i = 0; i < l; i++)
 	for (j = 0; j < m; j++)

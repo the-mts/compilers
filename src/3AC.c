@@ -634,13 +634,13 @@ int opt_dead_expr(){
 			if (!blocks[b].isglobal) {
 				l = blocks[b].code.size() - 1;
 				if ((blocks[b].succ != -1 && blocks[b].succ <= b) || (blocks[b].cond_succ != -1 && blocks[b].cond_succ <= b)){
-					printf("%d: case 1\n", b);
+					// printf("%d: case 1\n", b);
 					temp = gtemp[blocks[b].succ];
 					/*for (int l = blocks[b].varstart; l < blocks[b].varend; l++)
 					temp[to_string(l)+"_tmp"] = 1;*/
 				}
 				else if (blocks[b].succ == -1 || (blocks[b].cond_succ == -1 && blocks[blocks[b].succ].code[0].op == "FUNC_END")){
-					printf("%d: case 2\n", b);
+					// printf("%d: case 2\n", b);
 					for (int c = b; c >= 0 && blocks[c].code[0].op != "FUNC_START"; c--) {
 						for (int i = 0; i < blocks[c].code.size(); i++){
 						/*var = blocks[b].code[i].op1;
@@ -653,7 +653,7 @@ int opt_dead_expr(){
 					}
 				}
 				else if (blocks[b].succ != -1 && blocks[b].succ > b){
-					printf("%d: case 3\n", b);
+					// printf("%d: case 3\n", b);
 					temp = gtemp[blocks[b].succ];
 					user = guser[blocks[b].succ];
 					if (blocks[b].cond_succ != -1 && blocks[b].cond_succ > b){

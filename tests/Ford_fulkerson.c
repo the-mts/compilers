@@ -83,14 +83,14 @@ int main() {
   n = 6;
   e = 7;
 
-  capacity[0][1] = 8;
-  capacity[0][4] = 3;
-  capacity[1][2] = 9;
-  capacity[2][4] = 7;
-  capacity[2][5] = 2;
-  capacity[3][5] = 5;
-  capacity[4][2] = 7;
-  capacity[4][3] = 4;
+  capacity[0][1] = 80;
+  capacity[0][4] = 30;
+  capacity[1][2] = 90;
+  capacity[2][4] = 70;
+  capacity[2][5] = 20;
+  capacity[3][5] = 50;
+  capacity[4][2] = 70;
+  capacity[4][3] = 40;
 
   printf("Max Flow: %d\n", fordFulkerson(s, t));
 }
