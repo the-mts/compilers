@@ -303,45 +303,45 @@ void init_symtab(){
 	st_entry * tmp;
 	add_entry("printf", "int", 0, 0, REQUIRES_TYPECHECK);
 	add_entry("scanf", "int", 0, 0, REQUIRES_TYPECHECK);
-	tmp = add_entry("malloc", "void *", 0, 0);
+	tmp = add_entry("malloc", "void *", 0, 0,IS_FUNC);
 	tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
 	tmp->arg_list->push_back({{"long int",""},NULL});
 
-	tmp = add_entry("free", "void", 0, 0);
+	tmp = add_entry("free", "void", 0, 0, IS_FUNC);
 	tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
 	tmp->arg_list->push_back({{"void *",""},NULL});
 
-	tmp = add_entry("sin", "double", 0, 0);
+	tmp = add_entry("sin", "double", 0, 0, IS_FUNC);
 	tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
 	tmp->arg_list->push_back({{"double",""},NULL});
 
-	tmp = add_entry("cos", "double", 0, 0);
+	tmp = add_entry("cos", "double", 0, 0, IS_FUNC);
 	tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
-	tmp->arg_list->push_back({{"long int",""},NULL});
+	tmp->arg_list->push_back({{"double",""},NULL});
 
-	tmp = add_entry("tan", "double", 0, 0);
+	tmp = add_entry("tan", "double", 0, 0, IS_FUNC);
 	tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
-	tmp->arg_list->push_back({{"long int",""},NULL});
+	tmp->arg_list->push_back({{"double",""},NULL});
 
-	tmp = add_entry("log", "double", 0, 0);
+	tmp = add_entry("log", "double", 0, 0, IS_FUNC);
 	tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
-	tmp->arg_list->push_back({{"long int",""},NULL});
+	tmp->arg_list->push_back({{"double",""},NULL});
 
-	tmp = add_entry("log10", "double", 0, 0);
+	tmp = add_entry("log10", "double", 0, 0, IS_FUNC);
 	tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
-	tmp->arg_list->push_back({{"long int",""},NULL});
+	tmp->arg_list->push_back({{"double",""},NULL});
 
-	tmp = add_entry("sqrt", "double", 0, 0);
+	tmp = add_entry("sqrt", "double", 0, 0, IS_FUNC);
 	tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
-	tmp->arg_list->push_back({{"long int",""},NULL});
+	tmp->arg_list->push_back({{"double",""},NULL});
 
-	tmp = add_entry("exp", "double", 0, 0);
+	tmp = add_entry("exp", "double", 0, 0, IS_FUNC);
 	tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
-	tmp->arg_list->push_back({{"long int",""},NULL});
+	tmp->arg_list->push_back({{"double",""},NULL});
 
-	tmp = add_entry("pow", "double", 0, 0);
+	tmp = add_entry("pow", "double", 0, 0, IS_FUNC);
 	tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
-	tmp->arg_list->push_back({{"long int",""},NULL});
+	tmp->arg_list->push_back({{"double",""},NULL});
 }
 
 st_entry* add_entry(string key, string type, unsigned long size, long offset, enum sym_type type_name){
