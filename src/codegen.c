@@ -2565,6 +2565,10 @@ void codegen(){
 					}
 				}
 				else if(t1.first[0]=='.'){ //RIP address for floats
+					if(constLabels.find(t1.first)!=constLabels.end() && constLabels[t1.first].first == ".string"){
+						cout<<"leaq "<<t1.first<<"(%rip)"<<", "<<"%rax"<<endl;
+						cout<< "movq "<<"%rax"<<", "<<set_offset(t2)<<endl;
+					}
 					if(type1 == "float"){
 						cout << "movss " << t1.first << "(%rip)" << ", " << "%xmm0" << endl;
 						cout << "movss " << "%xmm0, " << set_offset(t2) << endl;
