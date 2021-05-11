@@ -2880,10 +2880,22 @@ assignment_expression
 																					auto tmp2 = getNewTemp($1->node_data);
 																					string cast = "("+ $3->node_data +"-to-"+ $1->node_data +")";
 																					emit(cast, tmp, {"", NULL}, tmp2);
-																					emit("=", tmp2, {"", NULL}, $1->place);
+																					// emit("=", tmp2, {"", NULL}, $1->place);
+																					if(!strcmp($1->name, "UNARY*")){
+																						emit("ADDR=", tmp2, {"", NULL}, $1->v[0]->place);
+																					}
+																					else{
+																						emit("=", tmp2, {"", NULL}, $1->place);
+																					}
 																				}
 																				else{
-																					emit("=", tmp, {"", NULL}, $1->place);
+																					// emit("=", tmp, {"", NULL}, $1->place);
+																					if(!strcmp($1->name, "UNARY*")){
+																						emit("ADDR=", tmp, {"", NULL}, $1->v[0]->place);
+																					}
+																					else{
+																						emit("=", tmp, {"", NULL}, $1->place);
+																					}
 																				}
 																				/////////////////////////////////////
 																			}
