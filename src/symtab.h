@@ -94,6 +94,7 @@ extern table_tree* curr;
 extern typtab types_table;
 extern void init_equiv_types();
 extern void init_symtab();
+extern void init_escape_chars();
 
 extern string get_eqtype(string type, int flag = 1);
 
