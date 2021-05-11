@@ -1,3 +1,4 @@
+// Only Return Statement Executed
 int main(){
 int i = 1234;
 return 0;

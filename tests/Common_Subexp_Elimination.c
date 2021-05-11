@@ -1,6 +1,6 @@
+int a, b, c, d, e, f, g;
+float x, y;
 int main(){
-	int a, b, c, d, e, f, g;
-	float x, y;
 	a = 3;
 	b = 3;
 	c = a + b;

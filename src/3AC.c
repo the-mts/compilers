@@ -158,6 +158,23 @@ int tailposs(qi caller, qi callee){
 	}
 	return fcount < 16 && icount < 14;
 }
+void debug_print(){
+	int c = 0;
+	for (auto b: blocks){
+			cout<<"Block "<<c<<":"<<endl;
+			if (b.alive) cout<<"alive\n";
+			else cout<<"dead\n";
+			// cout<<"isglobal: "<<b.isglobal<<endl;
+			cout<<"pred: ";
+			for (auto p: b.pred)
+			cout << p << ", ";
+			cout<<endl;
+			//cout<<"varstart: " << b.varstart << ", varend: " << b.varend << endl;
+			cout<<"succ: " << b.succ << ", cond_succ: " << b.cond_succ << endl;
+			cout<<"next: "<< b.next << endl << endl;
+			c++;
+		}
+}
 
 void merge_blocks(int first, int next){
 	if (blocks[next].pred.size() > 1) return;
@@ -174,12 +191,26 @@ void merge_blocks(int first, int next){
 	if (blocks[next].succ != -1){
 		int s = blocks[next].succ;
 		blocks[s].pred.erase(remove(blocks[s].pred.begin(), blocks[s].pred.end(), next), blocks[s].pred.end());
-		blocks[s].pred.push_back(first);
+		int flag = 1;
+		for(int i=0; i<blocks[s].pred.size(); i++){
+			if(blocks[s].pred[i] == first){
+				flag = 0;
+				break;
+			}
+		}
+		if(flag) blocks[s].pred.push_back(first);
 		blocks[next].succ = -1;
 		if (blocks[next].cond_succ != -1){
 			s = blocks[next].cond_succ;
 			blocks[s].pred.erase(remove(blocks[s].pred.begin(), blocks[s].pred.end(), next), blocks[s].pred.end());
-			blocks[s].pred.push_back(first);
+			int flag = 1;
+			for(int i=0; i<blocks[s].pred.size(); i++){
+				if(blocks[s].pred[i] == first){
+					flag = 0;
+					break;
+				}
+			}
+			if(flag) blocks[s].pred.push_back(first);
 			blocks[next].cond_succ = -1;
 		}
 	}
@@ -199,14 +230,30 @@ void handle_dead_block(int b){
 				}
 				blocks[j].succ = blocks[b].succ;
 				if (blocks[b].succ != -1) {
-					blocks[blocks[b].succ].pred.push_back(j);
+					int flag = 1;
+					for(int i=0; i<blocks[blocks[b].succ].pred.size(); i++){
+						if(blocks[blocks[b].succ].pred[i] == j){
+							flag = 0;
+							break;
+						}
+					}
+					if(flag) blocks[blocks[b].succ].pred.push_back(j);
 				}
 			}
 			if (blocks[j].cond_succ == b){
 				f = 0;
 				blocks[j].code.back().goto_addr = blocks[b].succ;
 				blocks[j].cond_succ = blocks[b].succ;
-				if (blocks[b].succ != -1) blocks[blocks[b].succ].pred.push_back(j);
+				if (blocks[b].succ != -1) {
+					int flag = 1;
+					for(int i=0; i<blocks[blocks[b].succ].pred.size(); i++){
+						if(blocks[blocks[b].succ].pred[i] == j){
+							flag = 0;
+							break;
+						}
+					}
+					if(flag) blocks[blocks[b].succ].pred.push_back(j);
+				}
 			}
 			if (f){
 				printf("Something went horribly wrong in handle_dead_block(%d)", b);
@@ -361,8 +408,24 @@ void make_blocks(){
 	//return;
 	for (int i = 0; i < blocks.size(); i++){
 		if (blocks[i].succ != -1) {
-			blocks[blocks[i].succ].pred.push_back(i);
-			if (blocks[i].cond_succ != -1) blocks[blocks[i].cond_succ].pred.push_back(i);
+			int flag = 1;
+			for(int ii=0; ii<blocks[blocks[i].succ].pred.size(); ii++){
+				if(blocks[blocks[i].succ].pred[ii] == i){
+					flag = 0;
+					break;
+				}
+			}
+			if(flag) blocks[blocks[i].succ].pred.push_back(i);
+			if (blocks[i].cond_succ != -1) {
+				int flag = 1;
+				for(int ii=0; ii<blocks[blocks[i].cond_succ].pred.size(); ii++){
+					if(blocks[blocks[i].cond_succ].pred[ii] == i){
+						flag = 0;
+						break;
+					}
+				}
+				if(flag) blocks[blocks[i].cond_succ].pred.push_back(i);
+			}
 		}
 		blocks[i].code.erase(remove_if(blocks[i].code.begin(), blocks[i].code.end(), [](quad q){return q.op == "DUMMY";}), blocks[i].code.end());
 	}
@@ -564,6 +627,7 @@ int opt_dead_expr(){
 	int c = 0;
 	qi var, op;
 	for (int b = n-1; b >= 0; b--){
+
 		if (blocks[b].alive && blocks[b].code[0].op != "FUNC_END" && blocks[b].code[0].op != "FUNC_START"){
 			user.clear();
 			temp.clear();
@@ -576,7 +640,7 @@ int opt_dead_expr(){
 					temp[to_string(l)+"_tmp"] = 1;*/
 				}
 				else if (blocks[b].succ == -1 || (blocks[b].cond_succ == -1 && blocks[blocks[b].succ].code[0].op == "FUNC_END")){
-					//printf("%d case 2\n", b);
+					printf("%d: case 2\n", b);
 					for (int c = b; c >= 0 && blocks[c].code[0].op != "FUNC_START"; c--) {
 						for (int i = 0; i < blocks[c].code.size(); i++){
 						/*var = blocks[b].code[i].op1;
@@ -589,7 +653,7 @@ int opt_dead_expr(){
 					}
 				}
 				else if (blocks[b].succ != -1 && blocks[b].succ > b){
-					//printf("%d: case 3\n", b);
+					printf("%d: case 3\n", b);
 					temp = gtemp[blocks[b].succ];
 					user = guser[blocks[b].succ];
 					if (blocks[b].cond_succ != -1 && blocks[b].cond_succ > b){
@@ -706,6 +770,10 @@ int opt_dead_expr(){
 			gtemp[b] = temp;
 			guser[b] = user;
 			blocks[b].code.erase(remove_if(blocks[b].code.begin(), blocks[b].code.end(), [](quad q){return q.op == "DUMMY";}), blocks[b].code.end());
+			// if(b==4) {
+			// 	printf("\ninside %d\n", b);
+			// 	debug_print();
+			// }
 			handle_dead_block(b);	
 		}
 	}
@@ -741,6 +809,7 @@ int opt_gotos(){
 					c = 1;
 				}
 				else {
+					// printf("%d reached\n", b);
 					cond = blocks[b].code.back().op1;
 					for (int l = blocks[b].code.size()-2; l >= 0; l--){
 						op = blocks[b].code[l].op;
@@ -765,6 +834,9 @@ int opt_gotos(){
 									blocks[b].cond_succ = -1;
 									blocks[b].code.pop_back();
 									handle_dead_block(b);
+									if (blocks[b].alive && blocks[b].succ != -1) merge_blocks(b, blocks[b].succ);
+
+
 								}
 								c = 1;
 							}
@@ -782,16 +854,22 @@ int opt_gotos(){
 
 void optimize(){
 	if (blocks.size() == 0) return;
-	//opt_ret_dead();
 	int limit = 10;
 	int c = 1, l = limit;
 	while (l-- && c){
 		c = 0;
+		// debug_print();
 		opt_ret_dead();
+		// printf("\n***iter num %d after opt_ret_dead***\n", l);
+		// debug_print();
 		c = c | opt_cse();
 		c = c | opt_copy();
 		c = c | opt_dead_expr();
+		// printf("\n***iter num %d after opt_dead_expr***\n", l);
+		// debug_print();
 		c = c | opt_gotos();
+		// printf("\n***iter num %d after opt_gotos***\n", l);
+		// debug_print();
 	}
 	//cout<<"Opt time: "<< limit-1-l << endl;
 }
