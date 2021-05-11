@@ -322,7 +322,7 @@ void codegen(){
 					}
 					else if(flag == 2 && double_float<8){
 						if(p.find("float") != string::npos){
-							if(instr.op1.second->type_name == IS_BUILTIN_FUNC){
+							if(instr.op1.second->type_name == REQUIRES_TYPECHECK){
 								cout << "cvtss2sd " << set_offset(x) << ", " << "%xmm" << double_float << endl;
 							}
 							else{
