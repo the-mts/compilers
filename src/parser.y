@@ -2873,7 +2873,7 @@ assignment_expression
 																				/* int x = emit(op, $1->place, $3->place, $1->place); */
 
 																				auto tmp = getNewTemp(type);
-																				int x = emit(op+"int", $1->place, $3->place, tmp);
+																				int x = emit(op, $1->place, $3->place, tmp);
 
 																				// Typecasting before assignment
 																				if($1->node_data!=$3->node_data){

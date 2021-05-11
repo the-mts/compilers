@@ -1861,7 +1861,7 @@ void codegen(){
 				}
 			}
 
-			else if(instr.op == " << "){
+			else if(instr.op == "<<"){
 				qi t1 = instr.op1;
 				qi t2 = instr.op2;
 				string type1 = instr.op1.second->type, type2 = instr.op2.second->type;
