@@ -170,11 +170,18 @@ void merge_blocks(int first, int next){
 	blocks[next].alive = 0;
 	blocks[first].next = blocks[next].next;
 	blocks[first].succ = blocks[next].succ;
+	blocks[first].cond_succ = blocks[next].cond_succ;
 	if (blocks[next].succ != -1){
 		int s = blocks[next].succ;
 		blocks[s].pred.erase(remove(blocks[s].pred.begin(), blocks[s].pred.end(), next), blocks[s].pred.end());
 		blocks[s].pred.push_back(first);
 		blocks[next].succ = -1;
+		if (blocks[next].cond_succ != -1){
+			s = blocks[next].cond_succ;
+			blocks[s].pred.erase(remove(blocks[s].pred.begin(), blocks[s].pred.end(), next), blocks[s].pred.end());
+			blocks[s].pred.push_back(first);
+			blocks[next].succ = -1;
+		}
 	}
 }
 
