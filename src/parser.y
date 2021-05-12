@@ -459,7 +459,10 @@ postfix_expression
 																		printf("\e[1;31mError [line %d]:\e[0m '.' operator applied on non-struct or non-union type.\n",line);
 																		exit(-1);
 																	}
-																	
+																	if(type_entry->is_init == 0){
+																		printf("\e[1;31mError [line %d]:\e[0m '.' operator applied to incomplete type.\n",line);
+																		exit(-1);
+																	}
 																	int flag = 0;
 																	string name = string((const char*)$3);
 																	string type;
@@ -538,6 +541,10 @@ postfix_expression
 																	tt_entry * type_entry = $1->ttentry;
 																	if(type_entry == NULL){
 																		printf("\e[1;31mError [line %d]:\e[0m '->' operator applied on non-struct or non-union pointer type.\n",line);
+																		exit(-1);
+																	}
+																	if(type_entry->is_init == 0){
+																		printf("\e[1;31mError [line %d]:\e[0m '->' operator applied to incomplete type.\n",line);
 																		exit(-1);
 																	}
 																	int flag = 0;
@@ -1063,6 +1070,10 @@ unary_expression
 																	string tmp = $3->node_data;
 																	if(tmp.back() == '#'){
 																		tmp.pop_back(); tmp.pop_back();
+																	}
+																	if(is_struct_or_union($3->node_data) && $3->ttentry->is_init == 0){
+																		printf("\e[1;31mError [line %d]:\e[0m invalid application of ‘sizeof’ to incomplete type ‘%s’\n",line, $3->node_data.c_str());
+																		exit(-1);
 																	}
 																	long sz = get_size(tmp, $3->ttentry);
 																	$$ = node_(0,(char*)to_string(sz).c_str(),CONSTANT);
@@ -3063,6 +3074,10 @@ init_declarator
 																		exit(-1);
 																	}
 																	check_valid_array(data_type_);
+																	if(is_struct_or_union(data_type_) && type_lookup(data_type_) && type_lookup(data_type_)->is_init == 0){
+																		printf("\e[1;31mError [line %d]:\e[0m Storage size of '%s' is not known.\n", line, $1->node_name.c_str());
+																		exit(-1);
+																	}
 																	if($1->node_type == 1){
 																		st_entry* tmp = add_entry($1->node_name, data_type_,get_size(data_type_),accumulate(offset.begin()+1, offset.end(), 0),IS_FUNC);
 																		tmp->type_name = IS_FUNC;
@@ -3108,6 +3123,10 @@ init_declarator
 																		}
 																		if(table_scope.back()==&global && $3->token != CONSTANT){
 																			printf("\e[1;31mError [line %d]:\e[0m Initializer for '%s' must be a constant.\n", line, $1->node_name.c_str());
+																			exit(-1);
+																		}
+																		if(is_struct_or_union(data_type_) && type_lookup(data_type_) && type_lookup(data_type_)->is_init == 0){
+																			printf("\e[1;31mError [line %d]:\e[0m Storage size of '%s' is not known.\n", line, $1->node_name.c_str());
 																			exit(-1);
 																		}
 																		tt_entry* datatype_entry = type_lookup(data_type);

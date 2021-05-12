@@ -145,6 +145,10 @@ unsigned long get_size(string s, tt_entry* entry){
 		}
 	}
 	else{
+		if(entry->is_init == 0){
+			printf("\e[1;31mError [line %d]:\e[0m Trying to get size of incomplete type.\n",line);
+			exit(-1);
+		}
 		if(entry->mem_list == NULL)
 			return 0ul;
 		if(entry->type == "struct"){
