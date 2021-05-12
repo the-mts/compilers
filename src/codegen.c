@@ -2168,7 +2168,7 @@ void codegen(){
 				string type1 = t1.second->type;
 				if (type1.back() == '*') type1 = "long int";
 				string type2 = t2.second->type;
-				if (type1.back() == '*') type2 = "long int";
+				if (type2.back() == '*') type2 = "long int";
 				map<string, int> rank = {{"char", 1}, {"short int", 2}, {"int", 4}, {"long int", 8}};
 				
 				if (rank[type1] > rank[type2]){

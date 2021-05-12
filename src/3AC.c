@@ -182,6 +182,9 @@ void merge_blocks(int first, int next){
 		printf("Something went wrong in merging blocks %d and %d\n", first, next);
 		exit(-1);
 	}
+	if(blocks[next].code[0].op == "FUNC_END"){
+		return;
+	}
 	for (auto c: blocks[next].code) blocks[first].code.push_back(c);
 	blocks[next].code.clear();
 	blocks[next].alive = 0;
@@ -586,7 +589,7 @@ int opt_copy(){
 			res = blocks[b].code[i].res;
 			if (op == "GOTO" || op == "CALL" || op == "TAIL" ||
 			    op == "RETURN_VOID") break;
-			if (expr.find(op1) != expr.end() && (op == "=" || (expr[op1].first)[0] != '$' && (expr[op1].first)[0] != '.')){
+			if (expr.find(op1) != expr.end() && (op == "=" || (expr[op1].first)[0] != '$' && (expr[op1].first)[0] != '.') && (op != "x++" && op != "++x" && op != "x--" && op != "--x")){
 				//cout<<"Found expr\n";
 				blocks[b].code[i].op1 = expr[op1];
 				c = 1;
@@ -612,6 +615,20 @@ int opt_copy(){
 				}
 			}
 			else if (op == "ADDR=" || op == "struct=") expr.clear();
+			else if(!(op != "x++" && op != "++x" && op != "x--" && op != "--x")){
+				auto pred = [&](const auto& item) {
+  	    			auto const& [key, value] = item;
+			        return value == res || key == res || value == op1 || key == op1;
+				};
+
+				for (auto i = expr.begin(), last = expr.end(); i != last; ) {
+			  		if (pred(*i)) {
+				    	i = expr.erase(i);
+			  		} else {
+			      		++i;
+			  		}
+				}
+			}
 			else {
 				auto pred = [&](const auto& item) {
   	    			auto const& [key, value] = item;
