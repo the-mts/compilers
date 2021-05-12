@@ -935,7 +935,7 @@ unary_expression
 																				$$->val_dt = IS_INT;
 																				break;
 																			}
-																			if(temp_data.back() == '*'){
+																			if(!is_struct_or_union(temp_data)){
 																				$$->value_type = RVALUE;
 																				$$->node_data = "int";
 																				$$->ttentry = NULL;
@@ -944,10 +944,13 @@ unary_expression
 																				$$->place = getNewTemp($$->node_data, $$->ttentry);
 																				int x = emit("UNARY"+string((const char*) $1), $2->place, {"", NULL}, $$->place);
 																				/////////////////////////////////////
-
-																				break;
+																			}
+																			else {
+																				printf("\e[1;31mError [line %d]:\e[0m Incompatible type for %c operator.\n",line,*($1));
+																				exit(-1);
 																			}
 																		}
+																		break;
 																		case '-':
 																		case '+':{
 																			if($2->token==CONSTANT && *($1)=='+'){
@@ -3334,7 +3337,7 @@ struct_or_union_specifier
 																		$$->node_data = string((const char*)$1) + " " + string((const char*)$2);
 																		string temp1((const char*)$1);
 																		string temp2((const char*)$2);
-																		tt_entry* tmp2 = current_type_lookup(temp2+" "+temp1); 
+																		tt_entry* tmp2 = current_type_lookup(temp1+" "+temp2); 
 																		$$->ttentry = tmp2;
 																	}	
 
@@ -3343,7 +3346,7 @@ struct_or_union_specifier
 																		$$->node_data = string((const char*)$1) + " " + string((const char*)$2);
 																		string temp1((const char*)$1);
 																		string temp2((const char*)$2);
-																		tt_entry* tmp2 = current_type_lookup(temp2+" "+temp1); 
+																		tt_entry* tmp2 = current_type_lookup(temp1+" "+temp2); 
 																		$$->ttentry = tmp2;
 																	}
 
@@ -4088,6 +4091,12 @@ M8
 								tmp->place = emitConstant(tmp);
 								// printf("Ternary condition constant. %s %d\n", tmp->place.first.c_str(), tmp->val.int_const);
 							}
+
+							if(is_struct_or_union(tmp->node_data)){
+								printf("\e[1;31mError [line %d]:\e[0m Used struct type value where scalar is required.\n", line);
+								exit(-1);
+							}
+							
 							int x = emit("IF_TRUE_GOTO", tmp->place, {"", NULL}, {"", NULL});
 							int y = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
 							tmp->truelist.push_back(x);
@@ -4103,6 +4112,11 @@ iteration_statement
 												//////////////// 3AC ////////////////
 												if($4->token == CONSTANT){
 													$4->place = emitConstant($4);
+												}
+
+												if(is_struct_or_union($4->node_data)){
+													printf("\e[1;31mError [line %d]:\e[0m Used struct type value where scalar is required.\n", line);
+													exit(-1);
 												}
 
 												int x = emit("IF_TRUE_GOTO", $4->place, {"", NULL}, {"", NULL});
@@ -4142,6 +4156,11 @@ iteration_statement
 											$4->place = emitConstant($4);
 										}
 
+										if(is_struct_or_union($8->node_data)){
+											printf("\e[1;31mError [line %d]:\e[0m Used struct type value where scalar is required.\n", line);
+											exit(-1);
+										}
+
 										int x = emit("IF_TRUE_GOTO", $8->place, {"", NULL}, {"", NULL});
 										// int y = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
 										// $4->falselist.push_back(y);
@@ -4159,6 +4178,11 @@ iteration_statement
 										//////////////// 3AC ////////////////
 										if($6->token == CONSTANT){
 											$6->place = emitConstant($6);
+										}
+
+										if(is_struct_or_union($6->node_data)){
+											printf("\e[1;31mError [line %d]:\e[0m Used struct type value where scalar is required.\n", line);
+											exit(-1);
 										}
 
 										int x = emit("IF_TRUE_GOTO", $6->place, {"", NULL}, {"", NULL});
@@ -4186,6 +4210,11 @@ iteration_statement
 										//////////////// 3AC ////////////////
 										if($6->token == CONSTANT){
 											$6->place = emitConstant($6);
+										}
+
+										if(is_struct_or_union($6->node_data)){
+											printf("\e[1;31mError [line %d]:\e[0m Used struct type value where scalar is required.\n", line);
+											exit(-1);
 										}
 
 										int x = emit("IF_TRUE_GOTO", $6->place, {"", NULL}, {"", NULL});

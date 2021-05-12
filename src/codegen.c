@@ -275,6 +275,22 @@ void codegen(){
 					cout << "cmp" << sizechar(size) << " $0, " << set_offset(instr.op1) << endl;
 					cout << "jne .L" << instr.goto_addr << endl;
 				}
+				else if(p == "float"){
+					cout<< "pxor " << "%xmm0" << ", " << "%xmm0" << endl;
+					cout<< "ucomiss " << set_offset(instr.op1) << ", " << "%xmm0" << endl;
+					cout << "jp .L" << instr.goto_addr << endl;
+					cout<< "pxor " << "%xmm0" << ", " << "%xmm0" << endl;
+					cout<< "ucomiss " << set_offset(instr.op1) << ", " << "%xmm0" << endl;
+					cout << "jne .L" << instr.goto_addr << endl;
+				}
+				else if(p == "double"){
+					cout<< "pxor " << "%xmm0" << ", " << "%xmm0" << endl;
+					cout<< "ucomisd " << set_offset(instr.op1) << ", " << "%xmm0" << endl;
+					cout << "jp .L" << instr.goto_addr << endl;
+					cout<< "pxor " << "%xmm0" << ", " << "%xmm0" << endl;
+					cout<< "ucomisd " << set_offset(instr.op1) << ", " << "%xmm0" << endl;
+					cout << "jne .L" << instr.goto_addr << endl;
+				}
 			}
 
 			else if(instr.op == "PARAM"){
