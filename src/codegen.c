@@ -1752,7 +1752,22 @@ void codegen(){
 					cout << "movb " << set_offset(t1) << ", " << "%al" << endl;
 					cout << "movb " << "%al, " << set_offset(instr.res) << endl;
 				}
-
+				else if(type1 == "float"){
+					cout<< "movl "<<"$1, "<<"%eax"<<endl;
+					cout<<"cvtsi2ss "<<"%eax, "<<"%xmm0"<<endl;
+					cout<<"movss "<<set_offset(t1)<<", "<<"%xmm1"<<endl;
+					cout<<"addss %xmm0, %xmm1"<<endl;
+					cout<<"movss "<<"%xmm1, "<<set_offset(t1)<<endl;
+					cout<<"movss "<<"%xmm1, "<<set_offset(instr.res)<<endl;
+				}
+				else if(type1 == "double"){
+					cout<< "movl "<<"$1, "<<"%eax"<<endl;
+					cout<<"cvtsi2sd "<<"%eax, "<<"%xmm0"<<endl;
+					cout<<"movsd "<<set_offset(t1)<<", "<<"%xmm1"<<endl;
+					cout<<"addsd %xmm0, %xmm1"<<endl;
+					cout<<"movsd "<<"%xmm1, "<<set_offset(t1)<<endl;
+					cout<<"movsd "<<"%xmm1, "<<set_offset(instr.res)<<endl;
+				}
 				else if(type1.back() == '*'){
 					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1, t1.second->ttentry);
@@ -1785,7 +1800,22 @@ void codegen(){
 					cout << "movb " << "%al, " << set_offset(instr.res) << endl;
 					cout << "addb $1, " << set_offset(t1) << endl;
 				}
-
+				else if(type1 == "float"){
+					cout<< "movl "<<"$1, "<<"%eax"<<endl;
+					cout<<"cvtsi2ss "<<"%eax, "<<"%xmm0"<<endl;
+					cout<<"movss "<<set_offset(t1)<<", "<<"%xmm1"<<endl;
+					cout<<"movss "<<"%xmm1, "<<set_offset(instr.res)<<endl;
+					cout<<"addss %xmm0, %xmm1"<<endl;
+					cout<<"movss "<<"%xmm1, "<<set_offset(t1)<<endl;
+				}
+				else if(type1 == "double"){
+					cout<< "movl "<<"$1, "<<"%eax"<<endl;
+					cout<<"cvtsi2sd "<<"%eax, "<<"%xmm0"<<endl;
+					cout<<"movsd "<<set_offset(t1)<<", "<<"%xmm1"<<endl;
+					cout<<"movsd "<<"%xmm1, "<<set_offset(instr.res)<<endl;
+					cout<<"addsd %xmm0, %xmm1"<<endl;
+					cout<<"movsd "<<"%xmm1, "<<set_offset(t1)<<endl;
+				}
 				else if(type1.back() == '*'){
 					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1, t1.second->ttentry);
@@ -1818,7 +1848,22 @@ void codegen(){
 					cout << "movb " << set_offset(t1) << ", " << "%al" << endl;
 					cout << "movb " << "%al, " << set_offset(instr.res) << endl;
 				}
-
+				else if(type1 == "float"){
+					cout<< "movl "<<"$1, "<<"%eax"<<endl;
+					cout<<"cvtsi2ss "<<"%eax, "<<"%xmm0"<<endl;
+					cout<<"movss "<<set_offset(t1)<<", "<<"%xmm1"<<endl;
+					cout<<"subss %xmm0, %xmm1"<<endl;
+					cout<<"movss "<<"%xmm1, "<<set_offset(t1)<<endl;
+					cout<<"movss "<<"%xmm1, "<<set_offset(instr.res)<<endl;
+				}
+				else if(type1 == "double"){
+					cout<< "movl "<<"$1, "<<"%eax"<<endl;
+					cout<<"cvtsi2sd "<<"%eax, "<<"%xmm0"<<endl;
+					cout<<"movsd "<<set_offset(t1)<<", "<<"%xmm1"<<endl;
+					cout<<"subsd %xmm0, %xmm1"<<endl;
+					cout<<"movsd "<<"%xmm1, "<<set_offset(t1)<<endl;
+					cout<<"movsd "<<"%xmm1, "<<set_offset(instr.res)<<endl;
+				}
 				else if(type1.back() == '*'){
 					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1, t1.second->ttentry);
@@ -1851,7 +1896,22 @@ void codegen(){
 					cout << "movb " << "%al, " << set_offset(instr.res) << endl;
 					cout << "subb $1, " << set_offset(t1) << endl;
 				}
-
+				else if(type1 == "float"){
+					cout<< "movl "<<"$1, "<<"%eax"<<endl;
+					cout<<"cvtsi2ss "<<"%eax, "<<"%xmm0"<<endl;
+					cout<<"movss "<<set_offset(t1)<<", "<<"%xmm1"<<endl;
+					cout<<"movss "<<"%xmm1, "<<set_offset(instr.res)<<endl;
+					cout<<"subss %xmm0, %xmm1"<<endl;
+					cout<<"movss "<<"%xmm1, "<<set_offset(t1)<<endl;
+				}
+				else if(type1 == "double"){
+					cout<< "movl "<<"$1, "<<"%eax"<<endl;
+					cout<<"cvtsi2sd "<<"%eax, "<<"%xmm0"<<endl;
+					cout<<"movsd "<<set_offset(t1)<<", "<<"%xmm1"<<endl;
+					cout<<"movsd "<<"%xmm1, "<<set_offset(instr.res)<<endl;
+					cout<<"subsd %xmm0, %xmm1"<<endl;
+					cout<<"movsd "<<"%xmm1, "<<set_offset(t1)<<endl;
+				}
 				else if(type1.back() == '*'){
 					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1, t1.second->ttentry);
@@ -2410,6 +2470,14 @@ void codegen(){
 					cout << "movb " << set_offset(t1) << ", " << "%al" << endl;
 					cout << "movb " << "%al" << ", " << set_offset(t2) << endl;
 				}
+				else if(type1 == "float"){
+					cout << "movss " << set_offset(t1) << ", " << "%xmm0" << endl;
+					cout << "movss " << "%xmm0" << ", " << set_offset(t2) << endl;
+				}
+				else if(type1 == "double"){
+					cout << "movsd " << set_offset(t1) << ", " << "%xmm0" << endl;
+					cout << "movsd " << "%xmm0" << ", " << set_offset(t2) << endl;
+				}
 				else if(type1.back()=='*'){
 					cout << "movq " << set_offset(t1) << ", " << "%rax" << endl;
 					cout << "movq " << "%rax" << ", " << set_offset(t2) << endl;
@@ -2439,6 +2507,20 @@ void codegen(){
 					cout << "movb " << set_offset(t1) << ", " << "%al" << endl;
 					cout << "negb " << "%al" << endl;
 					cout << "movb " << "%al" << ", " << set_offset(t2) << endl;
+				}
+				else if(type1 == "float"){
+					cout<< "movl "<<"$0, "<<"%eax"<<endl;
+					cout<<"cvtsi2ss "<<"%eax, "<<"%xmm0"<<endl;
+					cout<<"movss "<<set_offset(t1)<<", "<<"%xmm1"<<endl;
+					cout<<"subss %xmm1, %xmm0"<<endl;
+					cout<<"movss "<<"%xmm0, "<<set_offset(instr.res)<<endl;
+				}
+				else if(type1 == "double"){
+					cout<< "movl "<<"$0, "<<"%eax"<<endl;
+					cout<<"cvtsi2sd "<<"%eax, "<<"%xmm0"<<endl;
+					cout<<"movsd "<<set_offset(t1)<<", "<<"%xmm1"<<endl;
+					cout<<"subsd %xmm1, %xmm0"<<endl;
+					cout<<"movsd "<<"%xmm0, "<<set_offset(instr.res)<<endl;
 				}
 			}
 

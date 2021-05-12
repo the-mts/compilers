@@ -513,7 +513,7 @@ int opt_cse(){
 			else if (op == "ADDR=" || op == "=struct"){
 				expr.clear();
 			}
-			else if (op != "UNARY&" && op != "UNARY*" && op != "="){
+			else if (op != "UNARY&" && op != "UNARY*" && op != "=" &&(blocks[b].code[i].op != "x++" && blocks[b].code[i].op != "++x" && blocks[b].code[i].op != "x--" && blocks[b].code[i].op != "--x")){
 				//cout<<"Adding expr\n";
 				expr[{op, {op1, op2}}] = blocks[b].code[i].res;	
 			}
