@@ -167,6 +167,7 @@ void print_table(symtab* table){
 	for(auto i : order){
 		st_entry* temp = i.second.first;
 		cout << "\t\t" << i.second.second << "\t\t" << temp->size << "\t\t" << temp->offset << "\t\t" << temp->type << "\n";
+		cout << "\t\tTop of stack = " << temp->top_of_stack << "\n";
 		if(temp->type_name == IS_FUNC){
 			cout<< "\t\t\t" << temp->arg_list->size() <<" arguments " << (temp->arg_list->size()? "{\n" : "\n");
 			for(auto i : *(temp->arg_list)){

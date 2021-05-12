@@ -244,19 +244,23 @@ void codegen(){
 					type1.pop_back();
 					int size = get_size(type1, t1.second->ttentry);
 					int ptr = instr.res.second->top_of_stack;
-					int sz = 8;
-					if(size){
-						cout << "movq " << -ptr << "(%rbp)" << ", " << "%rcx" << endl;
-						cout << "movq " << set_offset(t1) << ", " << "%rax" << endl;
-						cout << "movq " << "(%rax), " << "%rbx" << endl;
-						cout << "movq " << "%rbx, " << "(%rcx)" << endl;
-					}
-					while(sz<size){
-						cout<< "addq " << "$8" << ", " << "%rcx" << endl;
-						cout<< "addq " << "$8" << ", " << "%rax" << endl;
-						cout << "movq " << "(%rax), " << "%rbx" << endl;
-						cout << "movq " << "%rbx, " << "(%rcx)" << endl;
-						sz+=8;
+					cout << "movq " << -ptr << "(%rbp)" << ", " << "%rcx" << endl;
+					cout << "movq " << set_offset(t1) << ", " << "%rax" << endl;
+					vector<int> tmp;
+					tmp.push_back(1);
+					tmp.push_back(2);
+					tmp.push_back(4);
+					tmp.push_back(8);
+					while(!tmp.empty()){
+						int x = tmp.back();
+						tmp.pop_back();
+						while(size>=x){
+							cout << "mov" << sizechar(x) << " " << "(%rax), " << genregs[{1,x}] << endl;
+							cout << "mov" << sizechar(x) << " " << genregs[{1,x}] << ", " << "(%rcx)" << endl;
+							cout<< "addq " << "$" << x << ", " << "%rcx" << endl;
+							cout<< "addq " << "$" << x << ", " << "%rax" << endl;
+							size-=x;
+						}
 					}
 				}
 				cout << "leave" << endl;
@@ -363,6 +367,7 @@ void codegen(){
 						string actual_type = p;
 						actual_type.pop_back(); actual_type.pop_back();
 						int size = get_size(actual_type, stk_params[x].second->ttentry);
+						size += (8-size%8)%8;
 						param_stk_size += size;
 					}
 				}
@@ -391,6 +396,7 @@ void codegen(){
 						string actual_type = p;
 						actual_type.pop_back(); actual_type.pop_back();
 						size = get_size(actual_type, stk_params[x].second->ttentry);
+						size += (8-size%8)%8;
 						param_stk_size += size;
 						cout<<"movq "<< set_offset(stk_params[x]) << ", "<<"%rax"<< endl;
 						cout<<"addq "<< "$"<< size-8<<", "<<"%rax"<<endl;
@@ -2747,22 +2753,29 @@ void codegen(){
 				type1.pop_back();
 				type1.pop_back();
 				int size = get_size(type1, t1.second->ttentry);
-				int sz = 8;
-				if(size){
-					cout << "movq " << set_offset(t2) << ", " << "%rcx" << endl;
-					cout << "movq " << set_offset(t1) << ", " << "%rax" << endl;
-					cout << "movq " << "(%rax), " << "%rbx" << endl;
-					cout << "movq " << "%rbx, " << "(%rcx)" << endl;
+				cout << "movq " << set_offset(t2) << ", " << "%rcx" << endl;
+				cout << "movq " << set_offset(t1) << ", " << "%rax" << endl;
+				vector<int> tmp;
+				tmp.push_back(1);
+				tmp.push_back(2);
+				tmp.push_back(4);
+				tmp.push_back(8);
+				while(!tmp.empty()){
+					int x = tmp.back();
+					tmp.pop_back();
+					while(size>=x){
+						cout << "mov" << sizechar(x) << " " << "(%rax), " << genregs[{1,x}] << endl;
+						cout << "mov" << sizechar(x) << " " << genregs[{1,x}] << ", " << "(%rcx)" << endl;
+						cout<< "addq " << "$" << x << ", " << "%rcx" << endl;
+						cout<< "addq " << "$" << x << ", " << "%rax" << endl;
+						size-=x;
+					}
 				}
-				while(sz<size){
-					cout<< "addq " << "$8" << ", " << "%rcx" << endl;
-					cout<< "addq " << "$8" << ", " << "%rax" << endl;
-					cout << "movq " << "(%rax), " << "%rbx" << endl;
-					cout << "movq " << "%rbx, " << "(%rcx)" << endl;
-					sz+=8;
-				}
-
-
+				// while(sz<size){
+				// 	cout << "movq " << "(%rax), " << "%rbx" << endl;
+				// 	cout << "movq " << "%rbx, " << "(%rcx)" << endl;
+				// 	sz+=8;
+				// }
 			}
 			else if(instr.op == "ADDR="){
 				qi t1 = instr.op1;

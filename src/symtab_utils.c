@@ -162,7 +162,7 @@ unsigned long get_size(string s, tt_entry* entry){
 				ans=max(ans,get_size(x.first.first, x.second));
 			}
 		}
-		ans+=(8-(ans%8))%8;
+		// ans+=(8-(ans%8))%8;
 		return ans*elements;
 	}
 	return 0;

@@ -3945,7 +3945,9 @@ M1
 																			curr_offset -= (8-(-curr_offset)%8)%8;
 																			st->offset = curr_offset;
 																			curr_offset-=get_size(p.first.first, p.second);
-																			curr_func->top_of_stack = min(curr_func->top_of_stack, curr_offset);
+																			int tmp = curr_offset;
+																			tmp -= (8-(-tmp)%8)%8;
+																			curr_func->top_of_stack = min(curr_func->top_of_stack, tmp);
 																		}
 																	}
 																	func_params.clear();
