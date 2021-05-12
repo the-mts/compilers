@@ -152,12 +152,13 @@ unsigned long get_size(string s, tt_entry* entry){
 				unsigned long f = get_size(x.first.first, x.second);
 				ans+=f;
 			}
-			ans+=(8-(ans%8))%8;
 		}
-		else
+		else{
 			for(auto x : *(entry->mem_list)){
 				ans=max(ans,get_size(x.first.first, x.second));
 			}
+		}
+		ans+=(8-(ans%8))%8;
 		return ans*elements;
 	}
 	return 0;
@@ -358,6 +359,19 @@ void init_symtab(){
 	tmp->arg_list->push_back({{"double",""},NULL});
 
 	tmp = add_entry("pow", "double", 0, 0, IS_FUNC);
+	tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
+	tmp->arg_list->push_back({{"double",""},NULL});
+	tmp->arg_list->push_back({{"double",""},NULL});
+
+	tmp = add_entry("abs", "int", 0, 0, IS_FUNC);
+	tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
+	tmp->arg_list->push_back({{"int",""},NULL});
+
+	tmp = add_entry("labs", "long int", 0, 0, IS_FUNC);
+	tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
+	tmp->arg_list->push_back({{"long int",""},NULL});
+
+	tmp = add_entry("fabs", "double", 0, 0, IS_FUNC);
 	tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
 	tmp->arg_list->push_back({{"double",""},NULL});
 

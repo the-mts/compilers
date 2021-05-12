@@ -1,5 +1,4 @@
-
-//Struct, Array of Struct, Passing Array of Struct as an Argument and Recursion
+//Struct, Array of Struct, Passing Array of Struct as an Argument and Recursion, Tail Call Optimization, For Loop
 struct array{
     int x;
     int dummy;
@@ -21,6 +20,7 @@ int main(){
 	for (i = 0; i < 10; i++){
         scanf("%d", &arr[i].x);
     }
+    printf("You can only make 10 queries, use them wisely.\n");
     for(i=0; i<10; i++){
 		printf("Enter item to search for: ");
 		scanf("%d", &item);
