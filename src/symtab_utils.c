@@ -152,12 +152,13 @@ unsigned long get_size(string s, tt_entry* entry){
 				unsigned long f = get_size(x.first.first, x.second);
 				ans+=f;
 			}
-			ans+=(8-(ans%8))%8;
 		}
-		else
+		else{
 			for(auto x : *(entry->mem_list)){
 				ans=max(ans,get_size(x.first.first, x.second));
 			}
+		}
+		ans+=(8-(ans%8))%8;
 		return ans*elements;
 	}
 	return 0;

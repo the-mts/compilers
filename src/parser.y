@@ -474,6 +474,9 @@ postfix_expression
 																		}
 																		struct_offset += get_size(it.first.first, it.second);
 																	}
+																	if($1->node_data[0] == 'u'){
+																		struct_offset = 0;
+																	}
 																	if(!flag){
 																		printf("\e[1;31mError [line %d]:\e[0m '%s' has no member named '%s'.\n",line, $1->node_data.c_str(),$3);/*typedef changes*/
 																		exit(-1);
@@ -550,6 +553,9 @@ postfix_expression
 																			break;
 																		}
 																		struct_offset += get_size(it.first.first, it.second);
+																	}
+																	if($1->node_data[0] == 'u'){
+																		struct_offset = 0;
 																	}
 																	if(!flag){
 																		printf("\e[1;31mError [line %d]:\e[0m '%s' has no member named '%s'.\n",line, type1.c_str(),$3);/*typedef changes*/
@@ -3896,7 +3902,7 @@ M1
 																			curr_offset -= (8-(-curr_offset)%8)%8;
 																			st->offset = curr_offset;
 																			curr_offset -= 8;
-																			st->top_of_stack = min(st->top_of_stack, curr_offset);
+																			curr_func->top_of_stack = min(curr_func->top_of_stack, curr_offset);
 																		}
 																		else if(flag == 2 && double_float == 8){
 																			st_entry* st = add_entry(p.first.second, p.first.first, 0, accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
@@ -3911,7 +3917,7 @@ M1
 																				st->offset = curr_offset;
 																				curr_offset -= 8;
 																			}
-																			st->top_of_stack = min(st->top_of_stack, curr_offset);
+																			curr_func->top_of_stack = min(curr_func->top_of_stack, curr_offset);
 																		}
 																		else if(flag == 3){
 																			st_entry* st = add_entry(p.first.second, p.first.first, 0, accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
@@ -3920,7 +3926,7 @@ M1
 																			curr_offset -= (8-(-curr_offset)%8)%8;
 																			st->offset = curr_offset;
 																			curr_offset-=get_size(p.first.first, p.second);
-																			st->top_of_stack = min(st->top_of_stack, curr_offset);
+																			curr_func->top_of_stack = min(curr_func->top_of_stack, curr_offset);
 																		}
 																	}
 																	func_params.clear();

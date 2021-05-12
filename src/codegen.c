@@ -2675,7 +2675,8 @@ void codegen(){
 						cout << "movw " << t1.first << ", " << set_offset(t2) << endl;
 					}
 					else if(type1 == "long int" || type1 == "unsigned long int"){
-						cout << "movq " << t1.first << ", " << set_offset(t2) << endl;
+						cout << "movabsq " << t1.first << ", " << "%rax" << endl;
+						cout << "movq " << "%rax" << ", " << set_offset(t2) << endl;
 					}
 					else if(type1 == "char"){
 						cout << "movb " << t1.first << ", " << set_offset(t2) << endl;
