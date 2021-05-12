@@ -26,7 +26,6 @@ void Heapify (struct Heapnode** H, int size, int i){
         H[minIndex] = temp;
         Heapify(H, size, minIndex);
     }
-    
 }
 
 struct Heapnode* Extract_Min(struct Heapnode** H, int size){

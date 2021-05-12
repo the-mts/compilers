@@ -145,6 +145,10 @@ unsigned long get_size(string s, tt_entry* entry){
 		}
 	}
 	else{
+		if(entry->is_init == 0){
+			printf("\e[1;31mError [line %d]:\e[0m Trying to get size of incomplete type.\n",line);
+			exit(-1);
+		}
 		if(entry->mem_list == NULL)
 			return 0ul;
 		if(entry->type == "struct"){
@@ -158,7 +162,7 @@ unsigned long get_size(string s, tt_entry* entry){
 				ans=max(ans,get_size(x.first.first, x.second));
 			}
 		}
-		ans+=(8-(ans%8))%8;
+		// ans+=(8-(ans%8))%8;
 		return ans*elements;
 	}
 	return 0;
