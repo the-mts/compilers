@@ -363,6 +363,18 @@ void init_symtab(){
 	tmp->arg_list->push_back({{"double",""},NULL});
 	tmp->arg_list->push_back({{"double",""},NULL});
 
+	tmp = add_entry("abs", "int", 0, 0, IS_FUNC);
+	tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
+	tmp->arg_list->push_back({{"int",""},NULL});
+
+	tmp = add_entry("labs", "long int", 0, 0, IS_FUNC);
+	tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
+	tmp->arg_list->push_back({{"long int",""},NULL});
+
+	tmp = add_entry("fabs", "double", 0, 0, IS_FUNC);
+	tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
+	tmp->arg_list->push_back({{"double",""},NULL});
+
 	tmp = add_entry("strlen", "int", 0, 0, IS_FUNC);
 	tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
 	tmp->arg_list->push_back({{"char *",""},NULL});

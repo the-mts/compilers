@@ -1,4 +1,4 @@
-// Dynamic Memory, Returning Pointer to a Struct
+// Dynamic Memory, Returning Pointer to a Struct, Tail Call Optimization
 struct node {
     int data;
     struct node* left;
