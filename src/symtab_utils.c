@@ -151,6 +151,10 @@ unsigned long get_size(string s, tt_entry* entry){
 		}
 	}
 	else{
+		if(entry->is_init == 0){
+			printf("\e[1;31mError [line %d]:\e[0m Trying to get size of incomplete type.\n",line);
+			exit(-1);
+		}
 		if(entry->mem_list == NULL)
 			return 0ul;
 		if(entry->type == "struct"){
@@ -164,7 +168,7 @@ unsigned long get_size(string s, tt_entry* entry){
 				ans=max(ans,get_size(x.first.first, x.second));
 			}
 		}
-		ans+=(8-(ans%8))%8;
+		// ans+=(8-(ans%8))%8;
 		return ans*elements;
 	}
 	return 0;
@@ -375,6 +379,18 @@ void init_symtab(){
 	tmp = add_entry("pow", "double", 0, 0, IS_FUNC);
 	tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
 	tmp->arg_list->push_back({{"double",""},NULL});
+	tmp->arg_list->push_back({{"double",""},NULL});
+
+	tmp = add_entry("abs", "int", 0, 0, IS_FUNC);
+	tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
+	tmp->arg_list->push_back({{"int",""},NULL});
+
+	tmp = add_entry("labs", "long int", 0, 0, IS_FUNC);
+	tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
+	tmp->arg_list->push_back({{"long int",""},NULL});
+
+	tmp = add_entry("fabs", "double", 0, 0, IS_FUNC);
+	tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
 	tmp->arg_list->push_back({{"double",""},NULL});
 
 	tmp = add_entry("strlen", "int", 0, 0, IS_FUNC);

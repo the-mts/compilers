@@ -1,4 +1,5 @@
-// Dynamic Memory, Passing Pointers (of Structs) as Arguments and Struct Pointers (Multi-level also)
+// Dynamic Memory, Ternary with Inbuilt Function Call 
+// Passing Pointers (of Structs) as Arguments and Struct Pointers (Multi-level also)
 struct Node
 {
     int key;
@@ -32,15 +33,28 @@ int main()
 {
 
     struct Node* head = 0;
-    int x = 21; // Should Give Yes.
-    // int x = 20; // Should Give No.
- 
-    push(&head, 10);
-    push(&head, 30);
-    push(&head, 11);
-    push(&head, 21);
-    push(&head, 14);
- 
-    search(head, x)? printf("Yes, %d is present in the linked list.\n", x) : printf("No, %d is not present in the linked list.\n", x);
+    
+    int n;
+    int i;
+    int tmp;
+    int x;
+    int cont = 1;
+
+    printf("Enter the number of nodes in the linked list: ");
+    scanf("%d", &n);
+    printf("Enter %d numbers: \n", n);
+
+    for(i = 0; i < n ; i++){
+        scanf("%d", &tmp);
+        push(&head, tmp);
+    }
+    while(cont){
+        printf("Which number do you want to search in the linked list?\n");
+        scanf("%d", &x);
+        search(head, x)? printf("Yes, %d is present in the linked list.\n", x) : printf("No, %d is not present in the linked list.\n", x);
+        printf("Want to continue? (1/0)\n");
+        scanf("%d", &cont);
+    }
+
     return 0;
 }

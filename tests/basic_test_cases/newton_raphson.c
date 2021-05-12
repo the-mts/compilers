@@ -14,7 +14,7 @@ double derivFunc(double x)
 void newtonRaphson(double x, double c)
 {
     double h = func(x, c) / derivFunc(x);
-    while (h >= EPSILON || h <= -EPSILON)
+    while (fabs(h) >= EPSILON)
     {
         h = func(x, c)/derivFunc(x);
   

@@ -182,6 +182,9 @@ void merge_blocks(int first, int next){
 		printf("Something went wrong in merging blocks %d and %d\n", first, next);
 		exit(-1);
 	}
+	if(blocks[next].code[0].op == "FUNC_END"){
+		return;
+	}
 	for (auto c: blocks[next].code) blocks[first].code.push_back(c);
 	blocks[next].code.clear();
 	blocks[next].alive = 0;
@@ -292,10 +295,20 @@ void make_blocks(){
 				}
 			}
 			else if(code_array[i].op == "CALL"){
-				if (code_array[i+1].op == "RETURN" && code_array[i].res.first == code_array[i+1].op1.first && tailposs(func, code_array[i].op1)){
-					code_array[i+1].op = "TAIL";
-					code_array[i+1].op1 = code_array[i].op1;
-					code_array[i].op = "DUMMY";
+				if(tailposs(func, code_array[i].op1)){
+					if(code_array[i+1].op == "RETURN" && (code_array[i].res.first == code_array[i+1].op1.first)){
+						code_array[i+1].op = "TAIL";
+						code_array[i+1].op1 = code_array[i].op1;
+						code_array[i].op = "DUMMY";
+					}
+					else if(code_array[i+1].op == "RETURN_VOID"){
+						code_array[i+1].op = "TAIL";
+						code_array[i+1].op1 = code_array[i].op1;
+						code_array[i].op = "DUMMY";
+					}
+					else if(code_array[i+1].op == "FUNC_END"){
+						code_array[i].op = "TAIL";
+					}
 				}
 			}
 			else if (code_array[i].op == "FUNC_START"){
@@ -377,7 +390,7 @@ void make_blocks(){
 			if (code_array[i].op == "FUNC_START") {
 				f = 1;
 				//vstart = code_array[i].goto_addr;
-				prev = curr+1;
+				prev = i+1;
 			}
 		}
 		blocks[curr].code.push_back(code_array[i]);
@@ -565,10 +578,8 @@ int opt_copy(){
 	for (int b = 0; b != -1; b = blocks[b].next){
 		expr.clear();
 		i = 0;
-		if (blocks[b].code[0].op == "FUNC_START" || blocks[b].code[0].op == "FUNC_END") continue;
-		if (!blocks[b].isglobal) {
-			if (blocks[b].pred.size() == 1 && blocks[b].pred[0] < b) expr = gexpr[blocks[b].pred[0]];
-		}
+		if (blocks[b].isglobal || blocks[b].code[0].op == "FUNC_START" || blocks[b].code[0].op == "FUNC_END") continue;
+		if (blocks[b].pred.size() == 1 && blocks[b].pred[0] < b) expr = gexpr[blocks[b].pred[0]];
 		for (; i < blocks[b].code.size(); i++){
 			op = blocks[b].code[i].op;
 			op1 = blocks[b].code[i].op1;
@@ -576,7 +587,7 @@ int opt_copy(){
 			res = blocks[b].code[i].res;
 			if (op == "GOTO" || op == "CALL" || op == "TAIL" ||
 			    op == "RETURN_VOID") break;
-			if (expr.find(op1) != expr.end() && (op == "=" || (expr[op1].first)[0] != '$' && (expr[op1].first)[0] != '.')){
+			if (expr.find(op1) != expr.end() && (op == "=" || (expr[op1].first)[0] != '$' && (expr[op1].first)[0] != '.') && (op != "x++" && op != "++x" && op != "x--" && op != "--x")){
 				//cout<<"Found expr\n";
 				blocks[b].code[i].op1 = expr[op1];
 				c = 1;
@@ -602,6 +613,20 @@ int opt_copy(){
 				}
 			}
 			else if (op == "ADDR=" || op == "struct=") expr.clear();
+			else if(!(op != "x++" && op != "++x" && op != "x--" && op != "--x")){
+				auto pred = [&](const auto& item) {
+  	    			auto const& [key, value] = item;
+			        return value == res || key == res || value == op1 || key == op1;
+				};
+
+				for (auto i = expr.begin(), last = expr.end(); i != last; ) {
+			  		if (pred(*i)) {
+				    	i = expr.erase(i);
+			  		} else {
+			      		++i;
+			  		}
+				}
+			}
 			else {
 				auto pred = [&](const auto& item) {
   	    			auto const& [key, value] = item;

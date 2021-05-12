@@ -1,3 +1,4 @@
+// More than 6 variables in case of ints and more than 8 variables in case of floats
 int F(int b, int c, int d, long int e, short int f, int g, char h, long int i){
 	return b+c+d+e+f+g+h+i;
 }

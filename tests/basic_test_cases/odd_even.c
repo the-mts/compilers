@@ -1,21 +1,25 @@
 //Mutual Recursion
-int fac2(int x);
-int fac1(int x){
-	if(!x){
+long int fac2(long int x);
+long int fac1(long int x){
+	if(x<=0){
 		return 1;
 	}
 	return fac2(x-1)*x;
 }
-int fac2(int x){
-	if(!x){
+long int fac2(long int x){
+	if(x<=0){
 		return 1;
 	}
 	return fac1(x-1)*x;
 }
 int main(){
-	int x;
+	long int x;
 	printf("Enter the number to compute the factorial for: ");
-	scanf("%d", &x);
-	printf("The factorial of %d is %d\n", x, fac1(x));
-
+	scanf("%ld", &x);
+	if(x<0){
+		printf("Factorial not defined for negative numbers.\n");
+		return 0;
+	}
+	printf("The factorial of %ld is %ld\n", x, fac1(x));
+	return 0;
 }

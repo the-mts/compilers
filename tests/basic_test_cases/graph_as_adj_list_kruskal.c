@@ -1,4 +1,4 @@
-//Dynamic Memory
+//Dynamic Memory, Structs, Pointers to Structs, While Loop, Function Declarations, Global Variables and Linked Lists
 struct edge
 {
         int u;
