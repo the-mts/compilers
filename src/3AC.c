@@ -578,10 +578,8 @@ int opt_copy(){
 	for (int b = 0; b != -1; b = blocks[b].next){
 		expr.clear();
 		i = 0;
-		if (blocks[b].code[0].op == "FUNC_START" || blocks[b].code[0].op == "FUNC_END") continue;
-		if (!blocks[b].isglobal) {
-			if (blocks[b].pred.size() == 1 && blocks[b].pred[0] < b) expr = gexpr[blocks[b].pred[0]];
-		}
+		if (blocks[b].isglobal || blocks[b].code[0].op == "FUNC_START" || blocks[b].code[0].op == "FUNC_END") continue;
+		if (blocks[b].pred.size() == 1 && blocks[b].pred[0] < b) expr = gexpr[blocks[b].pred[0]];
 		for (; i < blocks[b].code.size(); i++){
 			op = blocks[b].code[i].op;
 			op1 = blocks[b].code[i].op1;
