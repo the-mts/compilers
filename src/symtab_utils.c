@@ -3,6 +3,7 @@
 using namespace std;
 extern string next_name;
 extern int file_ptrs;
+extern int enable_warn;
 vector<symtab*> table_scope;
 vector<typtab*> type_scope;
 symtab global;
@@ -433,6 +434,13 @@ void init_symtab(){
 
 		tmp = add_entry("fprintf", "int", 0, 0, REQUIRES_TYPECHECK);
 		tmp = add_entry("fscanf", "int", 0, 0, REQUIRES_TYPECHECK);
+
+		tmp = add_entry("fseek", "int", 0, 0, IS_FUNC);
+		
+		tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
+		tmp->arg_list->push_back({{"FILEP",""},NULL});
+		tmp->arg_list->push_back({{"int",""},NULL});
+		tmp->arg_list->push_back({{"int",""},NULL});
 
 	}
 }
@@ -918,8 +926,10 @@ string arithmetic_type_upgrade(string type1, string type2, string op, tt_entry* 
 	exit(-1);
 
 	implicit_warn:
-	if(type1!=ans && op!="evaluate_const") printf("\e[1;35mWarning [line %d]:\e[0m Implicit conversion from '%s' to '%s'.\n", line, type1.c_str(), ans.c_str());
-	if(type2!=ans && op!="evaluate_const") printf("\e[1;35mWarning [line %d]:\e[0m Implicit conversion from '%s' to '%s'.\n", line, type2.c_str(), ans.c_str());
+	if(enable_warn){
+		if(type1!=ans && op!="evaluate_const") printf("\e[1;35mWarning [line %d]:\e[0m Implicit conversion from '%s' to '%s'.\n", line, type1.c_str(), ans.c_str());
+		if(type2!=ans && op!="evaluate_const") printf("\e[1;35mWarning [line %d]:\e[0m Implicit conversion from '%s' to '%s'.\n", line, type2.c_str(), ans.c_str());
+	}
 	return ans;
 }
 

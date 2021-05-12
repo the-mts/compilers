@@ -14,7 +14,10 @@ FILE* out_file;
 int typ_file = 0;
 int scope_num = 0;
 string curr_fun = "";
-int file_ptrs = 0;
+int file_ptrs = 1;
+int enable_opt = 1;
+int enable_tail = 1;
+int enable_warn = 1;
 
 // For debugging purposes
 // Have to rewrite
@@ -264,7 +267,7 @@ int main(int argc, char const* argv[]){
 		}
 		int j = 1;
 		while(argv[i][j]!='\0'){
-			if(argv[i][j] != 'g' && argv[i][j] != 'o' && argv[i][j] != 't' && argv[i][j] != 'f'){
+			if(argv[i][j] != 'g' && argv[i][j] != 'o' && argv[i][j] != 't' && argv[i][j] != 'f' && argv[i][j]!='O' && argv[i][j]!='W' && argv[i][j]!='T'){
 				fprintf(stderr,"Invalid Option\n");
 				return 1;
 			}
@@ -287,7 +290,16 @@ int main(int argc, char const* argv[]){
 				typ_file = 1;
 			}
 			if(argv[i][j] == 'f'){
-				file_ptrs = 1;
+				file_ptrs = 0;
+			}
+			if(argv[i][j] == 'O'){
+				enable_opt = 0;
+			}
+			if(argv[i][j] == 'W'){
+				enable_warn = 0;
+			}
+			if(argv[i][j] == 'T'){
+				enable_tail = 0;
 			}
 			j++;
 		}
@@ -323,7 +335,9 @@ int main(int argc, char const* argv[]){
 
 //	cout<<"Check me\n";
 	make_blocks();
-	optimize();
+	if(enable_opt){
+		optimize();
+	}
 
  	freopen("bin/basic_blocks.txt", "w", stdout);
  	print_blocks(0);

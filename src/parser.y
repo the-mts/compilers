@@ -2456,8 +2456,13 @@ logical_and_expression
 																	}
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
 																	pair<string,int> p2 = get_equivalent_pointer($4->node_data);
-																	arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2),$1->ttentry,$4->ttentry);
-																	
+
+																	//arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2),$1->ttentry,$4->ttentry);
+																	if(is_struct_or_union(p1.first) || is_struct_or_union(p2.first)){
+																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for &&.\n",line);
+																		exit(-1);
+																	}
+
 																	$$ = node_(2,$2,-1);
 																	$$->v[0] = $1;
 																	$$->v[1] = $4;
@@ -2510,8 +2515,12 @@ logical_or_expression
 																	}
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
 																	pair<string,int> p2 = get_equivalent_pointer($4->node_data);
-																	arithmetic_type_upgrade(p1.first,p2.first,string((const char*)$2),$1->ttentry,$4->ttentry);
-																	
+																	//arithmetic_type_upgrade(p1.first,p2.first,string((const char*)$2),$1->ttentry,$4->ttentry);
+																	if(is_struct_or_union(p1.first) || is_struct_or_union(p2.first)){
+																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for ||.\n",line);
+																		exit(-1);
+																	}
+
 																	$$ = node_(2,$2,-1);
 																	$$->v[0] = $1;
 																	$$->v[1] = $4;
@@ -2600,6 +2609,10 @@ conditional_expression
 															/////////////////////////////////////
 														}
 	expression ':' M7 conditional_expression					{
+																	if($4->node_data == "FILEP" || $7->node_data == "FILEP"){
+																		printf("\e[1;31mError [line %d]:\e[0m Ternary not supported for file pointers.\n",line);
+																		exit(-1);
+																	}
 																	if($1->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
@@ -2776,11 +2789,11 @@ assignment_expression
 																							printf("\e[1;35mWarning [line %d]:\e[0m Implicit assignment typecast to '%s' from pointer type '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
 																							goto tac_skip_ass;
 																						}
-																						else if(p2.second == 0 && p2.first.find("int") != string::npos){
+																						else if(p2.second == 0 && (p2.first.find("int") != string::npos || p2.first.find("char") != string::npos)){
 																							printf("\e[1;35mWarning [line %d]:\e[0m Implicit assignment typecast to '%s' from pointer type '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
 																							goto tac_skip_ass;
 																						}
-																						else if(p2.second == 0 && p2.first.find("int") == string::npos){
+																						else if(p2.second == 0 && (p2.first.find("int") == string::npos && p2.first.find("char") == string::npos)){
 																							printf("\e[1;31mError [line %d]:\e[0m Cannot assign floating point values to pointers.\n",line);
 																							exit(-1);
 																						}
@@ -2790,11 +2803,11 @@ assignment_expression
 																							printf("\e[1;35mWarning [line %d]:\e[0m Implicit assignment typecast to '%s' from pointer type '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
 																							goto tac_skip_ass;
 																						}
-																						else if(p1.second == 0 && p1.first.find("int") != string::npos){
+																						else if(p1.second == 0 && (p1.first.find("int") != string::npos || p1.first.find("char") != string::npos)){
 																							printf("\e[1;35mWarning [line %d]:\e[0m Implicit assignment typecast to '%s' from pointer type '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
 																							goto tac_skip_ass;
 																						}
-																						else if(p1.second == 0 && p1.first.find("int") == string::npos){
+																						else if(p1.second == 0 && (p1.first.find("int") == string::npos && p1.first.find("char") == string::npos)){
 																							printf("\e[1;31mError [line %d]:\e[0m Cannot assign pointers to floating point values.\n",line);
 																							exit(-1);
 																						}
@@ -3302,6 +3315,12 @@ init_declarator
 																		tmp->ttentry = type_lookup(data_type);
 																	}
 																	else{
+																		if(file_ptrs){
+																			if(table_scope.back()==&global && data_type_ == "FILEP"){
+																				printf("\e[1;31mError [line %d]:\e[0m File pointers not supported as global variables.\n", line);
+																				exit(-1);
+																			}
+																		}
 																		tt_entry* entry = type_lookup(data_type);
 																		st_entry* tmp = add_entry($1->node_name, data_type_, get_size(data_type_, entry),accumulate(offset.begin()+1, offset.end(), 0),IS_VAR);
 																		tmp->type_name = IS_VAR;
@@ -3330,6 +3349,12 @@ init_declarator
 																		if($1->node_data!=""){
 																			data_type_ += " ";
 																			data_type_ += $1->node_data;
+																		}
+																		if(file_ptrs){
+																			if(table_scope.back()==&global && data_type_ == "FILEP"){
+																				printf("\e[1;31mError [line %d]:\e[0m File pointers not supported as global variables.\n", line);
+																				exit(-1);
+																			}
 																		}
 																		
 																		if(current_lookup($1->node_name)!=NULL){
@@ -3381,6 +3406,42 @@ init_declarator
 																			printf("\e[1;31mError [line %d]:\e[0m Array variables cannot be reassigned.\n",line);
 																			exit(-1);
 																		}
+																		if(file_ptrs){
+																			if(p1.first == "FILEP"){
+																				p1.second = 1;
+																			}
+																			if(p2.first == "FILEP"){
+																				p2.second = 1;
+																			}
+																			if(p1.first == "FILEP"){
+																				if(p2.second && p2.first != "FILEP"){
+																					printf("\e[1;35mWarning [line %d]:\e[0m Implicit assignment typecast to '%s' from pointer type '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
+																					goto tic_skip_ass;
+																				}
+																				else if(p2.second == 0 && (p2.first.find("int") != string::npos || p2.first.find("char") != string::npos)){
+																					printf("\e[1;35mWarning [line %d]:\e[0m Implicit assignment typecast to '%s' from pointer type '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
+																					goto tic_skip_ass;
+																				}
+																				else if(p2.second == 0 && (p2.first.find("int") == string::npos && p2.first.find("char") == string::npos)){
+																					printf("\e[1;31mError [line %d]:\e[0m Cannot assign floating point values to pointers.\n",line);
+																					exit(-1);
+																				}
+																			}
+																			if(p2.first == "FILEP"){
+																				if(p1.second && p1.first != "FILEP"){
+																					printf("\e[1;35mWarning [line %d]:\e[0m Implicit assignment typecast to '%s' from pointer type '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
+																					goto tic_skip_ass;
+																				}
+																				else if(p1.second == 0 && (p1.first.find("int") != string::npos || p1.first.find("char") != string::npos)){
+																					printf("\e[1;35mWarning [line %d]:\e[0m Implicit assignment typecast to '%s' from pointer type '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
+																					goto tic_skip_ass;
+																				}
+																				else if(p1.second == 0 && (p1.first.find("int") == string::npos && p1.first.find("char") == string::npos)){
+																					printf("\e[1;31mError [line %d]:\e[0m Cannot assign pointers to floating point values.\n",line);
+																					exit(-1);
+																				}
+																			}
+																		}
 																		if(p1.second && p2.second){
 																			if(p1.first != p2.first){
 																				printf("\e[1;35mWarning [line %d]:\e[0m Assignment to '%s' from incompatible pointer type '%s'.\n",line, data_type_.c_str(), $3->node_data.c_str());
@@ -3400,6 +3461,7 @@ init_declarator
 																			}
 																			printf("\e[1;35mWarning [line %d]:\e[0m Assignment to '%s' from incompatible type '%s'.\n",line, data_type_.c_str(), $3->node_data.c_str());
 																		}
+																		tic_skip_ass: ;
 																		$$->node_data = data_type_;
 																		$$->value_type = RVALUE;
 
@@ -4112,7 +4174,7 @@ M1
 																	int curr_offset = -16;
 																	for(auto p: func_params){
 																		int flag = 0;
-																		if(!is_struct_or_union(p.first.first) && (p.first.first.find("int") != string::npos || p.first.first.find("char") != string::npos || p.first.first.back() == ']' || p.first.first.back() == '*')){
+																		if(!is_struct_or_union(p.first.first) && (p.first.first.find("int") != string::npos || p.first.first.find("char") != string::npos || p.first.first.back() == ']' || p.first.first.back() == '*' || (file_ptrs && p.first.first == "FILEP"))){
 																			flag = 1;
 																		}
 																		else if(!is_struct_or_union(p.first.first) && (p.first.first.find("double") != string::npos || p.first.first.find("float") != string::npos)){
