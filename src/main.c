@@ -263,7 +263,7 @@ int main(int argc, char const* argv[]){
 		}
 		int j = 1;
 		while(argv[i][j]!='\0'){
-			if(argv[i][j] != 'g' && argv[i][j] != 'o' && argv[i][j] != 't'){
+			if(argv[i][j] != 'g' && argv[i][j] != 'o' && argv[i][j] != 't' && argv[i][j] != 'f'){
 				fprintf(stderr,"Invalid Option\n");
 				return 1;
 			}
@@ -291,7 +291,7 @@ int main(int argc, char const* argv[]){
 			j++;
 		}
 	}
-	file_ptrs = 1;
+	// file_ptrs = 1;
 	init_symtab();
 	init_equiv_types();
 	init_escape_chars();

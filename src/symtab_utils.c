@@ -404,6 +404,21 @@ void init_symtab(){
 	tmp = add_entry("strdup", "char *", 0, 0, IS_FUNC);
 	tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
 	tmp->arg_list->push_back({{"char *",""},NULL});
+
+	if(file_ptrs){
+		tmp = add_entry("fopen", "FILEP", 0, 0, IS_FUNC);
+		tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
+		tmp->arg_list->push_back({{"char *",""},NULL});
+		tmp->arg_list->push_back({{"char *",""},NULL});
+
+		tmp = add_entry("fclose", "int", 0, 0, IS_FUNC);
+		tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
+		tmp->arg_list->push_back({{"FILEP",""},NULL});
+
+		tmp = add_entry("fprintf", "int", 0, 0, REQUIRES_TYPECHECK);
+		tmp = add_entry("fscanf", "int", 0, 0, REQUIRES_TYPECHECK);
+
+	}
 }
 
 st_entry* add_entry(string key, string type, unsigned long size, long offset, enum sym_type type_name){
@@ -657,7 +672,30 @@ string increase_array_level(string s){
 string arithmetic_type_upgrade(string type1, string type2, string op, tt_entry* ttentry1, tt_entry* ttentry2){
 	// float double long double int long unsigned int unsigned long int char pointer
 	// printf("Entered upgrade with '%s'.\n", op.c_str());
-	
+	if(file_ptrs){
+		if(type1 == "FILEP"){
+			if(is_struct_or_union(type2)){
+				printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, op.c_str());
+				exit(-1);
+			}
+			else if(type2.find("int") == string::npos || type2.back() == '*' || type2.back() == ']'){
+				printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, op.c_str());
+				exit(-1);
+			}
+			return "FILEP";
+		}
+		if(type2 == "FILEP"){
+			if(is_struct_or_union(type1)){
+				printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, op.c_str());
+				exit(-1);
+			}
+			else if(type1.find("int") == string::npos || type1.back() == '*' || type1.back() == ']'){
+				printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, op.c_str());
+				exit(-1);
+			}
+			return "FILEP";
+		}
+	}
 	if((ttentry1!=NULL && type1.back()!='*' && type1.back()!=']') || (ttentry2!=NULL && type2.back()!='*' && type2.back()!=']')){
 		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, op.c_str());
 		exit(-1);

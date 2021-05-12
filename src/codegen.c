@@ -7,6 +7,7 @@ map<pair<int, int>, string> intregs;
 map<int, string> retregs;
 map<pair<int, int>, string> genregs;
 vector<qi> params_list;
+extern int file_ptrs;
 
 string set_offset(qi quad){
 	if(quad.second->is_global == 0){
@@ -236,7 +237,7 @@ void codegen(){
 				else if(type1 == "char"){
 					cout << "movb " << set_offset(t1) << ", " << "%al" << endl;
 				}
-				else if(type1.back()=='*'){
+				else if(type1.back()=='*' || (file_ptrs && type1 == "FILEP")){
 					cout << "movq " << set_offset(t1) << ", " << "%rax" << endl;
 				}
 				else if(is_struct_or_union(type1)){
@@ -269,7 +270,7 @@ void codegen(){
 
 			else if(instr.op == "IF_TRUE_GOTO"){
 				string p = instr.op1.second->type;
-				if(p.find("int") != string::npos || p.find("char") != string::npos || p.back() == ']' || p.back() == '*'){
+				if(p.find("int") != string::npos || p.find("char") != string::npos || p.back() == ']' || p.back() == '*' || (file_ptrs && p == "FILEP")){
 					int size = get_size(p);
 					if(p.back() == ']') size = 8;
 					cout << "cmp" << sizechar(size) << " $0, " << set_offset(instr.op1) << endl;
@@ -318,7 +319,7 @@ void codegen(){
 					}
 					string p = x.second->type;
 					int flag = 0;
-					if(!is_struct_or_union(p) && (p.find("int") != string::npos || p.find("char") != string::npos || p.back() == ']' || p.back() == '*')){
+					if(!is_struct_or_union(p) && (p.find("int") != string::npos || p.find("char") != string::npos || p.back() == ']' || p.back() == '*' || (file_ptrs && p == "FILEP"))){
 						flag = 1;
 					}
 					else if(!is_struct_or_union(p) && (p.find("double") != string::npos || p.find("float") != string::npos)){
@@ -423,7 +424,7 @@ void codegen(){
 				else if(type1 == "char"){
 					cout << "movb " << "%al, " << set_offset(t1) << endl;
 				}
-				else if(type1.back()=='*'){
+				else if(type1.back()=='*' || (file_ptrs && type1 == "FILEP")){
 					cout << "movq " << "%rax, " << set_offset(t1) << endl;
 				}
 
@@ -2160,9 +2161,9 @@ void codegen(){
 				qi t2 = instr.op2;
 				qi r  = instr.res;
 				string type1 = t1.second->type;
-				if (type1.back() == '*') type1 = "long int";
+				if (type1.back() == '*' || (file_ptrs && type1 == "FILEP")) type1 = "long int";
 				string type2 = t2.second->type;
-				if (type1.back() == '*') type2 = "long int";
+				if (type2.back() == '*' || (file_ptrs && type1 == "FILEP")) type2 = "long int";
 				map<string, int> rank = {{"char", 1}, {"short int", 2}, {"int", 4}, {"long int", 8}};
 				
 				if (rank[type1] > rank[type2]){
@@ -2681,7 +2682,7 @@ void codegen(){
 					else if(type1 == "char"){
 						cout << "movb " << t1.first << ", " << set_offset(t2) << endl;
 					}
-					else if(type1.back()=='*'){
+					else if(type1.back()=='*' || (file_ptrs && type1 == "FILEP")){
 						cout << "movq " << t1.first << ", " << set_offset(t2) << endl;
 					}
 				}
@@ -2720,7 +2721,7 @@ void codegen(){
 						cout << "movb " << set_offset(t1) << ", " << "%al" << endl;
 						cout << "movb " << "%al, " << set_offset(t2) << endl;
 					}
-					else if(type1.back()=='*' || type1.back() == ']'){
+					else if(type1.back()=='*' || type1.back() == ']' || (file_ptrs && type1 == "FILEP")){
 						cout << "movq " << set_offset(t1) << ", " << "%rax" << endl;
 						cout << "movq " << "%rax, " << set_offset(t2) << endl;
 					}
@@ -2813,7 +2814,7 @@ void codegen(){
 					type1 = instr.op1.second->type;
 					type2 = instr.res.second->type;
 				}
-				if(type1 == type2 && (type1.back()!='*')){
+				if(type1 == type2 && (type1.back()!='*' || (file_ptrs && type1 == "FILEP"))){
 					if(type1 == "char"){
 						cout << "movb " << set_offset(t1) << ", " << "%al" << endl;
 						cout << "movb " << "%al, " << set_offset(t2) << endl;
@@ -2840,15 +2841,15 @@ void codegen(){
 					}
 				}
 				// Between ints and pointers
-				else if(type1.back()=='*' && type2.back()=='*'){
+				else if((type1.back()=='*' || (file_ptrs && type1 == "FILEP")) && (type2.back()=='*' || (file_ptrs && type2 == "FILEP"))){
 					cout << "movq " << set_offset(t1) << ", " << "%rax" << endl;
 					cout << "movq " << "%rax, " << set_offset(t2) << endl;
 				}
-				else if(type1.back()==']' && type2.back()=='*'){
+				else if(type1.back()==']' && (type2.back()=='*' || (file_ptrs && type2 == "FILEP"))){
 					cout << "movq " << set_offset(t1) << ", " << "%rax" << endl;
 					cout << "movq " << "%rax, " << set_offset(t2) << endl;
 				}
-				else if((type1=="char" || type1=="short int" || type1=="int") && (type2=="long int" || type2.back()=='*')){
+				else if((type1=="char" || type1=="short int" || type1=="int") && (type2=="long int" || (type2.back()=='*' || (file_ptrs && type2 == "FILEP")))){
 					int size = get_size(type1);
 					cout << "movs" << sizechar(size) << "q " << set_offset(t1) << ", " << "%rax" << endl;
 					cout << "movq " << "%rax, " << set_offset(t2) << endl;
@@ -2863,7 +2864,7 @@ void codegen(){
 					cout << "movs" << sizechar(size) << "w " << set_offset(t1) << ", " << "%ax" << endl;
 					cout << "movw " << "%ax, " << set_offset(t2) << endl;
 				}
-				else if((type2=="char" || type2=="short int" || type2=="int") && (type1=="long int" || type1.back()=='*')){
+				else if((type2=="char" || type2=="short int" || type2=="int") && (type1=="long int" || (type1.back()=='*' || (file_ptrs && type1 == "FILEP")))){
 					int size = get_size(type2);
 					cout << "movq " << set_offset(t1) << ", " << "%rax" << endl;
 					cout << "mov" << sizechar(size) << " " << retregs[size] << ", " << set_offset(t2) << endl;
