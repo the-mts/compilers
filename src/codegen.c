@@ -275,6 +275,22 @@ void codegen(){
 					cout << "cmp" << sizechar(size) << " $0, " << set_offset(instr.op1) << endl;
 					cout << "jne .L" << instr.goto_addr << endl;
 				}
+				else if(p == "float"){
+					cout<< "pxor " << "%xmm0" << ", " << "%xmm0" << endl;
+					cout<< "ucomiss " << set_offset(instr.op1) << ", " << "%xmm0" << endl;
+					cout << "jp .L" << instr.goto_addr << endl;
+					cout<< "pxor " << "%xmm0" << ", " << "%xmm0" << endl;
+					cout<< "ucomiss " << set_offset(instr.op1) << ", " << "%xmm0" << endl;
+					cout << "jne .L" << instr.goto_addr << endl;
+				}
+				else if(p == "double"){
+					cout<< "pxor " << "%xmm0" << ", " << "%xmm0" << endl;
+					cout<< "ucomisd " << set_offset(instr.op1) << ", " << "%xmm0" << endl;
+					cout << "jp .L" << instr.goto_addr << endl;
+					cout<< "pxor " << "%xmm0" << ", " << "%xmm0" << endl;
+					cout<< "ucomisd " << set_offset(instr.op1) << ", " << "%xmm0" << endl;
+					cout << "jne .L" << instr.goto_addr << endl;
+				}
 			}
 
 			else if(instr.op == "PARAM"){
@@ -296,7 +312,7 @@ void codegen(){
 								continue;
 							}
 							else{
-								// Should do something here
+								// stk_params.push_back(x); // this???
 							}
 						}
 					}
@@ -478,13 +494,13 @@ void codegen(){
 							} else {
 								cout << "movsd ";
 							}
-							cout << -param.second->offset << "(%rbp), " << "%xmm" << freef << endl; 
+							cout << set_offset(param) << ", " << "%xmm" << freef << endl;
 							freef++;
 						}
 						else {
 							size = get_size(type);
 							param2reg[var] = genregs[{freei, size}];
-							cout << "mov" << sizechar(size) << " " << -param.second->offset << "(%rbp), " << param2reg[var] << endl;
+							cout << "mov" << sizechar(size) << " " << set_offset(param) << ", " << param2reg[var] << endl;
 							freei++;
 						}
 					}
@@ -1752,7 +1768,22 @@ void codegen(){
 					cout << "movb " << set_offset(t1) << ", " << "%al" << endl;
 					cout << "movb " << "%al, " << set_offset(instr.res) << endl;
 				}
-
+				else if(type1 == "float"){
+					cout<< "movl "<<"$1, "<<"%eax"<<endl;
+					cout<<"cvtsi2ss "<<"%eax, "<<"%xmm0"<<endl;
+					cout<<"movss "<<set_offset(t1)<<", "<<"%xmm1"<<endl;
+					cout<<"addss %xmm0, %xmm1"<<endl;
+					cout<<"movss "<<"%xmm1, "<<set_offset(t1)<<endl;
+					cout<<"movss "<<"%xmm1, "<<set_offset(instr.res)<<endl;
+				}
+				else if(type1 == "double"){
+					cout<< "movl "<<"$1, "<<"%eax"<<endl;
+					cout<<"cvtsi2sd "<<"%eax, "<<"%xmm0"<<endl;
+					cout<<"movsd "<<set_offset(t1)<<", "<<"%xmm1"<<endl;
+					cout<<"addsd %xmm0, %xmm1"<<endl;
+					cout<<"movsd "<<"%xmm1, "<<set_offset(t1)<<endl;
+					cout<<"movsd "<<"%xmm1, "<<set_offset(instr.res)<<endl;
+				}
 				else if(type1.back() == '*'){
 					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1, t1.second->ttentry);
@@ -1785,7 +1816,22 @@ void codegen(){
 					cout << "movb " << "%al, " << set_offset(instr.res) << endl;
 					cout << "addb $1, " << set_offset(t1) << endl;
 				}
-
+				else if(type1 == "float"){
+					cout<< "movl "<<"$1, "<<"%eax"<<endl;
+					cout<<"cvtsi2ss "<<"%eax, "<<"%xmm0"<<endl;
+					cout<<"movss "<<set_offset(t1)<<", "<<"%xmm1"<<endl;
+					cout<<"movss "<<"%xmm1, "<<set_offset(instr.res)<<endl;
+					cout<<"addss %xmm0, %xmm1"<<endl;
+					cout<<"movss "<<"%xmm1, "<<set_offset(t1)<<endl;
+				}
+				else if(type1 == "double"){
+					cout<< "movl "<<"$1, "<<"%eax"<<endl;
+					cout<<"cvtsi2sd "<<"%eax, "<<"%xmm0"<<endl;
+					cout<<"movsd "<<set_offset(t1)<<", "<<"%xmm1"<<endl;
+					cout<<"movsd "<<"%xmm1, "<<set_offset(instr.res)<<endl;
+					cout<<"addsd %xmm0, %xmm1"<<endl;
+					cout<<"movsd "<<"%xmm1, "<<set_offset(t1)<<endl;
+				}
 				else if(type1.back() == '*'){
 					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1, t1.second->ttentry);
@@ -1818,7 +1864,22 @@ void codegen(){
 					cout << "movb " << set_offset(t1) << ", " << "%al" << endl;
 					cout << "movb " << "%al, " << set_offset(instr.res) << endl;
 				}
-
+				else if(type1 == "float"){
+					cout<< "movl "<<"$1, "<<"%eax"<<endl;
+					cout<<"cvtsi2ss "<<"%eax, "<<"%xmm0"<<endl;
+					cout<<"movss "<<set_offset(t1)<<", "<<"%xmm1"<<endl;
+					cout<<"subss %xmm0, %xmm1"<<endl;
+					cout<<"movss "<<"%xmm1, "<<set_offset(t1)<<endl;
+					cout<<"movss "<<"%xmm1, "<<set_offset(instr.res)<<endl;
+				}
+				else if(type1 == "double"){
+					cout<< "movl "<<"$1, "<<"%eax"<<endl;
+					cout<<"cvtsi2sd "<<"%eax, "<<"%xmm0"<<endl;
+					cout<<"movsd "<<set_offset(t1)<<", "<<"%xmm1"<<endl;
+					cout<<"subsd %xmm0, %xmm1"<<endl;
+					cout<<"movsd "<<"%xmm1, "<<set_offset(t1)<<endl;
+					cout<<"movsd "<<"%xmm1, "<<set_offset(instr.res)<<endl;
+				}
 				else if(type1.back() == '*'){
 					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1, t1.second->ttentry);
@@ -1851,7 +1912,22 @@ void codegen(){
 					cout << "movb " << "%al, " << set_offset(instr.res) << endl;
 					cout << "subb $1, " << set_offset(t1) << endl;
 				}
-
+				else if(type1 == "float"){
+					cout<< "movl "<<"$1, "<<"%eax"<<endl;
+					cout<<"cvtsi2ss "<<"%eax, "<<"%xmm0"<<endl;
+					cout<<"movss "<<set_offset(t1)<<", "<<"%xmm1"<<endl;
+					cout<<"movss "<<"%xmm1, "<<set_offset(instr.res)<<endl;
+					cout<<"subss %xmm0, %xmm1"<<endl;
+					cout<<"movss "<<"%xmm1, "<<set_offset(t1)<<endl;
+				}
+				else if(type1 == "double"){
+					cout<< "movl "<<"$1, "<<"%eax"<<endl;
+					cout<<"cvtsi2sd "<<"%eax, "<<"%xmm0"<<endl;
+					cout<<"movsd "<<set_offset(t1)<<", "<<"%xmm1"<<endl;
+					cout<<"movsd "<<"%xmm1, "<<set_offset(instr.res)<<endl;
+					cout<<"subsd %xmm0, %xmm1"<<endl;
+					cout<<"movsd "<<"%xmm1, "<<set_offset(t1)<<endl;
+				}
 				else if(type1.back() == '*'){
 					type1 = reduce_pointer_level(type1);
 					int size = get_size(type1, t1.second->ttentry);
@@ -2410,6 +2486,14 @@ void codegen(){
 					cout << "movb " << set_offset(t1) << ", " << "%al" << endl;
 					cout << "movb " << "%al" << ", " << set_offset(t2) << endl;
 				}
+				else if(type1 == "float"){
+					cout << "movss " << set_offset(t1) << ", " << "%xmm0" << endl;
+					cout << "movss " << "%xmm0" << ", " << set_offset(t2) << endl;
+				}
+				else if(type1 == "double"){
+					cout << "movsd " << set_offset(t1) << ", " << "%xmm0" << endl;
+					cout << "movsd " << "%xmm0" << ", " << set_offset(t2) << endl;
+				}
 				else if(type1.back()=='*'){
 					cout << "movq " << set_offset(t1) << ", " << "%rax" << endl;
 					cout << "movq " << "%rax" << ", " << set_offset(t2) << endl;
@@ -2439,6 +2523,20 @@ void codegen(){
 					cout << "movb " << set_offset(t1) << ", " << "%al" << endl;
 					cout << "negb " << "%al" << endl;
 					cout << "movb " << "%al" << ", " << set_offset(t2) << endl;
+				}
+				else if(type1 == "float"){
+					cout<< "movl "<<"$0, "<<"%eax"<<endl;
+					cout<<"cvtsi2ss "<<"%eax, "<<"%xmm0"<<endl;
+					cout<<"movss "<<set_offset(t1)<<", "<<"%xmm1"<<endl;
+					cout<<"subss %xmm1, %xmm0"<<endl;
+					cout<<"movss "<<"%xmm0, "<<set_offset(instr.res)<<endl;
+				}
+				else if(type1 == "double"){
+					cout<< "movl "<<"$0, "<<"%eax"<<endl;
+					cout<<"cvtsi2sd "<<"%eax, "<<"%xmm0"<<endl;
+					cout<<"movsd "<<set_offset(t1)<<", "<<"%xmm1"<<endl;
+					cout<<"subsd %xmm1, %xmm0"<<endl;
+					cout<<"movsd "<<"%xmm0, "<<set_offset(instr.res)<<endl;
 				}
 			}
 
@@ -2470,11 +2568,33 @@ void codegen(){
 					cout << "movzbl %al, %eax" << endl;
 					cout << "movl " << "%eax, " << set_offset(t2) << endl;
 				}
-				else if(type1.back()=='*'){
+				else if(type1.back()=='*' || type1.back() == ']'){
 					cout << "cmpq " << "$0, " << set_offset(t1) << endl;
 					cout << "sete %al" << endl;
 					cout << "movzbl %al, %eax" << endl;
 					cout << "movl " << "%eax, " << set_offset(t2) << endl;
+				}
+				else if(type1 == "float"){
+					cout<< "pxor " << "%xmm0" << ", " << "%xmm0" << endl;
+					cout<< "ucomiss " << set_offset(t1) << ", " << "%xmm0" << endl;
+					cout<< "setnp " << "%al" << endl;
+					cout<< "movl " << "$0" << ", " << "%edx" << endl;
+					cout<< "pxor " << "%xmm0" << ", " << "%xmm0" << endl;
+					cout<< "ucomiss " << set_offset(t1) << ", " << "%xmm0" << endl;
+					cout<< "cmovne " << "%edx" << ", " << "%eax" << endl;
+					cout<< "movzbl " << "%al" << ", " << "%eax" << endl;
+					cout<< "movl " << "%eax" << ", " << set_offset(t2) << endl;
+				}
+				else if(type1 == "double"){
+					cout<< "pxor " << "%xmm0" << ", " << "%xmm0" << endl;
+					cout<< "ucomisd " << set_offset(t1) << ", " << "%xmm0" << endl;
+					cout<< "setnp " << "%al" << endl;
+					cout<< "movl " << "$0" << ", " << "%edx" << endl;
+					cout<< "pxor " << "%xmm0" << ", " << "%xmm0" << endl;
+					cout<< "ucomisd " << set_offset(t1) << ", " << "%xmm0" << endl;
+					cout<< "cmovne " << "%edx" << ", " << "%eax" << endl;
+					cout<< "movzbl " << "%al" << ", " << "%eax" << endl;
+					cout<< "movl " << "%eax" << ", " << set_offset(t2) << endl;
 				}
 			}
 
@@ -2555,7 +2675,8 @@ void codegen(){
 						cout << "movw " << t1.first << ", " << set_offset(t2) << endl;
 					}
 					else if(type1 == "long int" || type1 == "unsigned long int"){
-						cout << "movq " << t1.first << ", " << set_offset(t2) << endl;
+						cout << "movabsq " << t1.first << ", " << "%rax" << endl;
+						cout << "movq " << "%rax" << ", " << set_offset(t2) << endl;
 					}
 					else if(type1 == "char"){
 						cout << "movb " << t1.first << ", " << set_offset(t2) << endl;

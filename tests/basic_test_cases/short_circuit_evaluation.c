@@ -1,3 +1,4 @@
+// Short Circuit Evaluation
 int main(){
 	int x = 0;
 	int flag = 0;
@@ -7,7 +8,7 @@ int main(){
 	if(0 && 1/x){
 		flag = 1;
 	}
-	printf("%d\n", flag);
+	printf("Flag is: %d\n", flag);
 
 	if(1 && (1 || 1/x)){
 		printf("Short circuiting working perfectly\n");

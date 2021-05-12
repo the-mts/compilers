@@ -481,6 +481,9 @@ postfix_expression
 																		}
 																		struct_offset += get_size(it.first.first, it.second);
 																	}
+																	if($1->node_data[0] == 'u'){
+																		struct_offset = 0;
+																	}
 																	if(!flag){
 																		printf("\e[1;31mError [line %d]:\e[0m '%s' has no member named '%s'.\n",line, $1->node_data.c_str(),$3);/*typedef changes*/
 																		exit(-1);
@@ -557,6 +560,9 @@ postfix_expression
 																			break;
 																		}
 																		struct_offset += get_size(it.first.first, it.second);
+																	}
+																	if($1->node_data[0] == 'u'){
+																		struct_offset = 0;
 																	}
 																	if(!flag){
 																		printf("\e[1;31mError [line %d]:\e[0m '%s' has no member named '%s'.\n",line, type1.c_str(),$3);/*typedef changes*/
@@ -966,7 +972,7 @@ unary_expression
 																				$$->val_dt = IS_INT;
 																				break;
 																			}
-																			if(temp_data.back() == '*'){
+																			if(!is_struct_or_union(temp_data)){
 																				$$->value_type = RVALUE;
 																				$$->node_data = "int";
 																				$$->ttentry = NULL;
@@ -975,10 +981,13 @@ unary_expression
 																				$$->place = getNewTemp($$->node_data, $$->ttentry);
 																				int x = emit("UNARY"+string((const char*) $1), $2->place, {"", NULL}, $$->place);
 																				/////////////////////////////////////
-
-																				break;
+																			}
+																			else {
+																				printf("\e[1;31mError [line %d]:\e[0m Incompatible type for %c operator.\n",line,*($1));
+																				exit(-1);
 																			}
 																		}
+																		break;
 																		case '-':
 																		case '+':{
 																			if($2->token==CONSTANT && *($1)=='+'){
@@ -1071,14 +1080,22 @@ unary_expression
 																	}
 																}
 	| SIZEOF unary_expression									{
-																	long sz = get_size($2->node_data, $2->ttentry);
+																	string tmp = $2->node_data;
+																	if(tmp.back() == '#'){
+																		tmp.pop_back(); tmp.pop_back();
+																	}
+																	long sz = get_size(tmp, $2->ttentry);
 																	$$ = node_(0,(char*)to_string(sz).c_str(),CONSTANT);
 																	$$->node_data = "long int";
 																	$$->val_dt = IS_LONG;
 																	$$->val.long_const = sz;
 																}
 	| SIZEOF '(' type_name ')'									{
-																	long sz = get_size($3->node_data, $3->ttentry);
+																	string tmp = $3->node_data;
+																	if(tmp.back() == '#'){
+																		tmp.pop_back(); tmp.pop_back();
+																	}
+																	long sz = get_size(tmp, $3->ttentry);
 																	$$ = node_(0,(char*)to_string(sz).c_str(),CONSTANT);
 																	$$->node_data = "long int";
 																	$$->val_dt = IS_LONG;
@@ -3448,7 +3465,7 @@ struct_or_union_specifier
 																		$$->node_data = string((const char*)$1) + " " + string((const char*)$2);
 																		string temp1((const char*)$1);
 																		string temp2((const char*)$2);
-																		tt_entry* tmp2 = current_type_lookup(temp2+" "+temp1); 
+																		tt_entry* tmp2 = current_type_lookup(temp1+" "+temp2); 
 																		$$->ttentry = tmp2;
 																	}	
 
@@ -3457,7 +3474,7 @@ struct_or_union_specifier
 																		$$->node_data = string((const char*)$1) + " " + string((const char*)$2);
 																		string temp1((const char*)$1);
 																		string temp2((const char*)$2);
-																		tt_entry* tmp2 = current_type_lookup(temp2+" "+temp1); 
+																		tt_entry* tmp2 = current_type_lookup(temp1+" "+temp2); 
 																		$$->ttentry = tmp2;
 																	}
 
@@ -4007,7 +4024,7 @@ M1
 																			curr_offset -= (8-(-curr_offset)%8)%8;
 																			st->offset = curr_offset;
 																			curr_offset -= 8;
-																			st->top_of_stack = min(st->top_of_stack, curr_offset);
+																			curr_func->top_of_stack = min(curr_func->top_of_stack, curr_offset);
 																		}
 																		else if(flag == 2 && double_float == 8){
 																			st_entry* st = add_entry(p.first.second, p.first.first, 0, accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
@@ -4022,7 +4039,7 @@ M1
 																				st->offset = curr_offset;
 																				curr_offset -= 8;
 																			}
-																			st->top_of_stack = min(st->top_of_stack, curr_offset);
+																			curr_func->top_of_stack = min(curr_func->top_of_stack, curr_offset);
 																		}
 																		else if(flag == 3){
 																			st_entry* st = add_entry(p.first.second, p.first.first, 0, accumulate(offset.begin()+1, offset.end(), 0), IS_VAR);    //IS_VAR to be changed
@@ -4031,7 +4048,7 @@ M1
 																			curr_offset -= (8-(-curr_offset)%8)%8;
 																			st->offset = curr_offset;
 																			curr_offset-=get_size(p.first.first, p.second);
-																			st->top_of_stack = min(st->top_of_stack, curr_offset);
+																			curr_func->top_of_stack = min(curr_func->top_of_stack, curr_offset);
 																		}
 																	}
 																	func_params.clear();
@@ -4202,6 +4219,12 @@ M8
 								tmp->place = emitConstant(tmp);
 								// printf("Ternary condition constant. %s %d\n", tmp->place.first.c_str(), tmp->val.int_const);
 							}
+
+							if(is_struct_or_union(tmp->node_data)){
+								printf("\e[1;31mError [line %d]:\e[0m Used struct type value where scalar is required.\n", line);
+								exit(-1);
+							}
+							
 							int x = emit("IF_TRUE_GOTO", tmp->place, {"", NULL}, {"", NULL});
 							int y = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
 							tmp->truelist.push_back(x);
@@ -4217,6 +4240,11 @@ iteration_statement
 												//////////////// 3AC ////////////////
 												if($4->token == CONSTANT){
 													$4->place = emitConstant($4);
+												}
+
+												if(is_struct_or_union($4->node_data)){
+													printf("\e[1;31mError [line %d]:\e[0m Used struct type value where scalar is required.\n", line);
+													exit(-1);
 												}
 
 												int x = emit("IF_TRUE_GOTO", $4->place, {"", NULL}, {"", NULL});
@@ -4256,6 +4284,11 @@ iteration_statement
 											$4->place = emitConstant($4);
 										}
 
+										if(is_struct_or_union($8->node_data)){
+											printf("\e[1;31mError [line %d]:\e[0m Used struct type value where scalar is required.\n", line);
+											exit(-1);
+										}
+
 										int x = emit("IF_TRUE_GOTO", $8->place, {"", NULL}, {"", NULL});
 										// int y = emit("GOTO", {"", NULL}, {"", NULL}, {"", NULL});
 										// $4->falselist.push_back(y);
@@ -4273,6 +4306,11 @@ iteration_statement
 										//////////////// 3AC ////////////////
 										if($6->token == CONSTANT){
 											$6->place = emitConstant($6);
+										}
+
+										if(is_struct_or_union($6->node_data)){
+											printf("\e[1;31mError [line %d]:\e[0m Used struct type value where scalar is required.\n", line);
+											exit(-1);
 										}
 
 										int x = emit("IF_TRUE_GOTO", $6->place, {"", NULL}, {"", NULL});
@@ -4300,6 +4338,11 @@ iteration_statement
 										//////////////// 3AC ////////////////
 										if($6->token == CONSTANT){
 											$6->place = emitConstant($6);
+										}
+
+										if(is_struct_or_union($6->node_data)){
+											printf("\e[1;31mError [line %d]:\e[0m Used struct type value where scalar is required.\n", line);
+											exit(-1);
 										}
 
 										int x = emit("IF_TRUE_GOTO", $6->place, {"", NULL}, {"", NULL});
