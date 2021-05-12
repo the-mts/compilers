@@ -2,6 +2,7 @@
 #include <iostream>
 using namespace std;
 extern string next_name;
+extern int file_ptrs;
 vector<symtab*> table_scope;
 vector<typtab*> type_scope;
 symtab global;
@@ -114,6 +115,11 @@ unsigned long get_size(string s, tt_entry* entry){
 				tmp+=x;
 		}
 		v.push_back(tmp);
+		if(file_ptrs){
+			if(find(v.begin(), v.end(),"FILEP") != v.end()){
+				return elements*8ul;
+			}
+		}
 		if(v.back() == "int"){
 			if(v.size() > 1){
 				if(v[v.size()-2] == "short")
@@ -200,7 +206,15 @@ string get_eqtype(string type, int is_only_type){
 		a.push_back({(m.find(tmp)!=m.end() ? m[tmp] : 10)  , tmp});
 
 	sort(a.begin(), a.end());
-	
+	if(file_ptrs){
+		if(find(a.begin(), a.end(),make_pair(10,string("FILEP"))) != a.end()){
+			if(a.size() > 1){
+				printf("\e[1;31mError [line %d]:\e[0m Invalid data type.\n", line);
+				exit(-1);
+			}
+			return "FILEP";
+		}
+	}
 	if(a[0].first==0){
 		if(a.size()!=2){
 			printf("\e[1;31mError [line %d]:\e[0m Invalid data type.\n", line);

@@ -14,6 +14,7 @@ FILE* out_file;
 int typ_file = 0;
 int scope_num = 0;
 string curr_fun = "";
+int file_ptrs = 0;
 
 // For debugging purposes
 // Have to rewrite
@@ -284,9 +285,13 @@ int main(int argc, char const* argv[]){
 			if(argv[i][j] == 't'){
 				typ_file = 1;
 			}
+			if(argv[i][j] == 'f'){
+				file_ptrs = 1;
+			}
 			j++;
 		}
 	}
+	file_ptrs = 1;
 	init_symtab();
 	init_equiv_types();
 	init_escape_chars();
