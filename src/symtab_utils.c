@@ -361,6 +361,7 @@ void init_symtab(){
 	tmp = add_entry("pow", "double", 0, 0, IS_FUNC);
 	tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
 	tmp->arg_list->push_back({{"double",""},NULL});
+	tmp->arg_list->push_back({{"double",""},NULL});
 
 	tmp = add_entry("strlen", "int", 0, 0, IS_FUNC);
 	tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
