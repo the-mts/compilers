@@ -292,10 +292,20 @@ void make_blocks(){
 				}
 			}
 			else if(code_array[i].op == "CALL"){
-				if (code_array[i+1].op == "RETURN" && code_array[i].res.first == code_array[i+1].op1.first && tailposs(func, code_array[i].op1)){
-					code_array[i+1].op = "TAIL";
-					code_array[i+1].op1 = code_array[i].op1;
-					code_array[i].op = "DUMMY";
+				if(tailposs(func, code_array[i].op1)){
+					if(code_array[i+1].op == "RETURN" && (code_array[i].res.first == code_array[i+1].op1.first)){
+						code_array[i+1].op = "TAIL";
+						code_array[i+1].op1 = code_array[i].op1;
+						code_array[i].op = "DUMMY";
+					}
+					else if(code_array[i+1].op == "RETURN_VOID"){
+						code_array[i+1].op = "TAIL";
+						code_array[i+1].op1 = code_array[i].op1;
+						code_array[i].op = "DUMMY";
+					}
+					else if(code_array[i+1].op == "FUNC_END"){
+						code_array[i].op = "TAIL";
+					}
 				}
 			}
 			else if (code_array[i].op == "FUNC_START"){
@@ -377,7 +387,7 @@ void make_blocks(){
 			if (code_array[i].op == "FUNC_START") {
 				f = 1;
 				//vstart = code_array[i].goto_addr;
-				prev = curr+1;
+				prev = i+1;
 			}
 		}
 		blocks[curr].code.push_back(code_array[i]);
