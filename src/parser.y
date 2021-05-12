@@ -1040,14 +1040,22 @@ unary_expression
 																	}
 																}
 	| SIZEOF unary_expression									{
-																	long sz = get_size($2->node_data, $2->ttentry);
+																	string tmp = $2->node_data;
+																	if(tmp.back() == '#'){
+																		tmp.pop_back(); tmp.pop_back();
+																	}
+																	long sz = get_size(tmp, $2->ttentry);
 																	$$ = node_(0,(char*)to_string(sz).c_str(),CONSTANT);
 																	$$->node_data = "long int";
 																	$$->val_dt = IS_LONG;
 																	$$->val.long_const = sz;
 																}
 	| SIZEOF '(' type_name ')'									{
-																	long sz = get_size($3->node_data, $3->ttentry);
+																	string tmp = $3->node_data;
+																	if(tmp.back() == '#'){
+																		tmp.pop_back(); tmp.pop_back();
+																	}
+																	long sz = get_size(tmp, $3->ttentry);
 																	$$ = node_(0,(char*)to_string(sz).c_str(),CONSTANT);
 																	$$->node_data = "long int";
 																	$$->val_dt = IS_LONG;

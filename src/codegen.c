@@ -296,7 +296,7 @@ void codegen(){
 								continue;
 							}
 							else{
-								// Should do something here
+								// stk_params.push_back(x); // this???
 							}
 						}
 					}
@@ -2470,11 +2470,33 @@ void codegen(){
 					cout << "movzbl %al, %eax" << endl;
 					cout << "movl " << "%eax, " << set_offset(t2) << endl;
 				}
-				else if(type1.back()=='*'){
+				else if(type1.back()=='*' || type1.back() == ']'){
 					cout << "cmpq " << "$0, " << set_offset(t1) << endl;
 					cout << "sete %al" << endl;
 					cout << "movzbl %al, %eax" << endl;
 					cout << "movl " << "%eax, " << set_offset(t2) << endl;
+				}
+				else if(type1 == "float"){
+					cout<< "pxor " << "%xmm0" << ", " << "%xmm0" << endl;
+					cout<< "ucomiss " << set_offset(t1) << ", " << "%xmm0" << endl;
+					cout<< "setnp " << "%al" << endl;
+					cout<< "movl " << "$0" << ", " << "%edx" << endl;
+					cout<< "pxor " << "%xmm0" << ", " << "%xmm0" << endl;
+					cout<< "ucomiss " << set_offset(t1) << ", " << "%xmm0" << endl;
+					cout<< "cmovne " << "%edx" << ", " << "%eax" << endl;
+					cout<< "movzbl " << "%al" << ", " << "%eax" << endl;
+					cout<< "movl " << "%eax" << ", " << set_offset(t2) << endl;
+				}
+				else if(type1 == "double"){
+					cout<< "pxor " << "%xmm0" << ", " << "%xmm0" << endl;
+					cout<< "ucomisd " << set_offset(t1) << ", " << "%xmm0" << endl;
+					cout<< "setnp " << "%al" << endl;
+					cout<< "movl " << "$0" << ", " << "%edx" << endl;
+					cout<< "pxor " << "%xmm0" << ", " << "%xmm0" << endl;
+					cout<< "ucomisd " << set_offset(t1) << ", " << "%xmm0" << endl;
+					cout<< "cmovne " << "%edx" << ", " << "%eax" << endl;
+					cout<< "movzbl " << "%al" << ", " << "%eax" << endl;
+					cout<< "movl " << "%eax" << ", " << set_offset(t2) << endl;
 				}
 			}
 
