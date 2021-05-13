@@ -4291,7 +4291,7 @@ statement_list
 	;
 
 expression_statement
-	: ';'														{$$ = node_(0,$1,';');}
+	: ';'														{$$ = node_(0,$1,';'); $$->val.int_const = 1, $$->val_dt = IS_INT; $$->node_data = "int"; $$->token = CONSTANT; $$->place = emitConstant($$);}
 	| expression ';'											{$$ = $1;}
 	;
 
