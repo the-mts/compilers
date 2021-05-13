@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <iostream>
 #include "y.tab.h"
 #include "parse_utils.h"
@@ -15,6 +16,7 @@ int typ_file = 0;
 int scope_num = 0;
 string curr_fun = "";
 string out_file;
+string bin_file;
 int file_ptrs = 1;
 int enable_opt = 1;
 int enable_tail = 1;
@@ -234,7 +236,7 @@ int dfs(node* u, int num){
 		i++;
 	}
 
-	printf("\"]\n");
+	fprintf(dot_file, "\"]\n");
 	return num;
 }
 
@@ -256,6 +258,7 @@ int main(int argc, char const* argv[]){
 	}
 	dot_file = fopen("bin/AST.dot","w+");
 	out_file = "./bin/assembly.s";
+	bin_file = "./a.out";
 	int skipnext = 0;
 	for(int i = 2; i < argc; i++){
 		if(skipnext){
@@ -282,7 +285,7 @@ int main(int argc, char const* argv[]){
 					return 1;
 				}
 				skipnext = 1;
-				out_file = string(argv[i+1]);
+				bin_file = string(argv[i+1]);
 			}
 			if(argv[i][j] == 't'){
 				typ_file = 1;
@@ -340,5 +343,7 @@ int main(int argc, char const* argv[]){
  	print_blocks(0);
  	freopen(out_file.c_str(), "w", stdout);
  	codegen();
+	string bin_command = "gcc -no-pie ./bin/assembly.s -o "+bin_file+ " -lm";
+	system(bin_command.c_str());
 	return 0;
 }
