@@ -163,7 +163,7 @@ void codegen(){
 			continue;
 		}
 
-		if(blocks[bno].pred.size()!=0 && !(blocks[bno].pred.size()==1 && blocks[bno].pred[0] == bno-1)){
+		if(blocks[bno].pred.size()!=0 && !(blocks[bno].pred.size()==1 && blocks[blocks[bno].pred[0]].next == bno)){
 			cout << ".L" << bno << ":" << endl;
 		}
 
