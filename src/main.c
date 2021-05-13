@@ -33,6 +33,7 @@ void print_quad(quad q){
 void print_code(){
 	int j=0;
     for(auto i: code_array){
+		if(i.op == "UNINIT_GLOBAL") continue;
 		cout<<j<<"\t\t";
 		if(i.op == "ADDR=")	cout<<i.res.first<< ' '<<i.op << ' '<<i.op1.first;
         else if(i.op.find("UNARY")!= string::npos) cout<<i.res.first<< " = " << i.op<< ' '<<i.op1.first;
@@ -65,11 +66,13 @@ void print_blocks(int only_alive = 1){
 			cout << p << ", ";
 			cout<<endl;
 			for(auto i: blocks[b].code){
+				if(i.op == "UNINIT_GLOBAL") continue;
 				cout<<j<<"\t\t";
 		        if(i.op == "ADDR=")	cout<<i.res.first<< ' '<<i.op << ' '<<i.op1.first;
         		else if(i.op.find("UNARY")!= string::npos) cout<<i.res.first<< " = " << i.op<< ' '<<i.op1.first;
 				else if(i.op == "IF_TRUE_GOTO") cout<<"IF "<< i.op1.first << " IS TRUE GOTO " << i.goto_addr;
 				else if(i.op == "GOTO") cout<<"GOTO " << i.goto_addr;
+				else if(i.op == "TAIL") cout<<"TAIL " << i.op1.first<<' '<<i.res.first;
 				else if(i.op == "PARAM") cout<<"PARAM " << i.op1.first;
 				else if(i.op == "CALL") cout<<"CALL " << i.op1.first<<' '<<i.res.first;
 				else if(i.op == "RETURN_VOID") cout<<"RETURN_VOID";
@@ -101,11 +104,13 @@ void print_blocks(int only_alive = 1){
 			cout << p << ", ";
 			cout<<endl;
 			for(auto i: b.code){
+				if(i.op == "UNINIT_GLOBAL") continue;
 				cout<<j<<"\t\t";
 		        if(i.op == "ADDR=")	cout<<i.res.first<< ' '<<i.op << ' '<<i.op1.first;
         		else if(i.op.find("UNARY")!= string::npos) cout<<i.res.first<< " = " << i.op<< ' '<<i.op1.first;
 				else if(i.op == "IF_TRUE_GOTO") cout<<"IF "<< i.op1.first << " IS TRUE GOTO " << i.goto_addr;
 				else if(i.op == "GOTO") cout<<"GOTO " << i.goto_addr;
+				else if(i.op == "TAIL") cout<<"TAIL " << i.op1.first<<' '<<i.res.first;
 				else if(i.op == "PARAM") cout<<"PARAM " << i.op1.first;
 				else if(i.op == "CALL") cout<<"CALL " << i.op1.first<<' '<<i.res.first;
 				else if(i.op == "RETURN_VOID") cout<<"RETURN_VOID";

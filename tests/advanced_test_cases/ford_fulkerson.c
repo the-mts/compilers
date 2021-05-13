@@ -1,16 +1,17 @@
+// Large global multi-dim array
 int n;
 int e;
-int capacity[100][100];
-int flow[100][100];
-int color[100];
-int pred[100];
+int capacity[10000][10000];
+int flow[10000][10000];
+int color[10000];
+int pred[10000];
 
 int min(int x, int y) {
   return x < y ? x : y;
 }
 
 int head, tail;
-int q[100 + 2];
+int q[10000 + 2];
 
 void enqueue(int x) {
   q[tail] = x;

@@ -14,10 +14,6 @@ struct edge{
     int weight;
 };
 
-    
-    
-    
-
 void edge_includer(int v1, int v2,struct vertex**adj,int w){
      struct vertex* temp = (struct vertex*)malloc(sizeof(struct vertex));
      temp->value = v2;
@@ -163,8 +159,8 @@ int main() {
          struct node* set;
          int i;
          int MST;
-         FILEP xd = fopen("output1.txt", "r");
-         FILEP yd = fopen("output11.txt", "w+");
+         FILEP xd = fopen("../output1.txt", "r");
+         FILEP yd = fopen("../output11.txt", "w+");
          fscanf(xd,"%d",&n);
          fscanf(xd,"%d",&e);
          fscanf(xd,"%d",&q);
