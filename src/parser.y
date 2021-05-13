@@ -12,6 +12,7 @@
 	extern int yylex();
 	extern int yyparse();
 	extern int line;
+	extern int file_ptrs;
 	int unnamed_var = 0;
 	string data_type = "";
 	string params = "";
@@ -29,7 +30,7 @@
 	int instr;
 }
 
-%token <id> IDENTIFIER CONSTANT STRING_LITERAL SIZEOF
+%token <id> IDENTIFIER CONSTANT STRING_LITERAL SIZEOF FILEP
 %token <id> PTR_OP INC_OP DEC_OP LEFT_OP RIGHT_OP LE_OP GE_OP EQ_OP NE_OP
 %token <id> AND_OP OR_OP MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN ADD_ASSIGN
 %token <id> SUB_ASSIGN LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN
@@ -156,6 +157,12 @@ postfix_expression
 																	$$ = $1;
 																}
 	| postfix_expression '[' expression ']'						{
+																	if(file_ptrs){
+																		if($1->node_data == "FILEP"){
+																			printf("\e[1;31mError [line %d]:\e[0m File pointer dereference not supported.\n",line);
+																			exit(-1);
+																		}
+																	}
 																	if($3->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m Array subscript is not an integer.\n",line);
 																		exit(-1);
@@ -268,6 +275,10 @@ postfix_expression
 																		printf("\e[1;31mError [line %d]:\e[0m Invalid function name '%s'.\n",line,$1->name);
 																		exit(-1);
 																	}
+																	if(entry->type_name == REQUIRES_TYPECHECK){
+																		printf("\e[1;31mError [line %d]:\e[0m Invalid number of arguments for '%s'.\n",line,$1->name);
+																		exit(-1);
+																	}
 																	if(entry->type_name != IS_FUNC){
 																		printf("\e[1;31mError [line %d]:\e[0m Called object '%s' is not a function.\n",line,$1->name);
 																		exit(-1);
@@ -316,6 +327,14 @@ postfix_expression
 																	if(entry->type_name == REQUIRES_TYPECHECK){
 																		// arg_names = $3->v;
 																		for(auto i : $3->v) arg_names.push_back(i->place);
+																		if(file_ptrs){
+																			if(string((const char*)$1->name) == "fprintf" || string((const char*)$1->name) == "fscanf"){
+																				if(arg_names[0].second->type != "FILEP"){
+																					printf("\e[1;31mError [line %d]:\e[0m first argument for '%s' is not a File pointer.\n",line,$1->name);
+																					exit(-1);
+																				}
+																			}
+																		}
 																		goto skip_arg_check;
 																	}
 
@@ -334,8 +353,12 @@ postfix_expression
 																	arg_list = *(entry->arg_list);
 																	for(int i = 0; i < $3->sz; i++){
 																		string type = $3->v[i]->node_data;
-
-																		if(arg_list[i].first.first.back() == ']'){
+																		string type_arr_chk = arg_list[i].first.first;
+																		if(((type.back() == '*' && type_arr_chk.back() == ']') || (type.back() == ']' && type_arr_chk.back() == '*')) && (reduce_pointer_level(type) == reduce_pointer_level(type_arr_chk))){
+																			printf("\e[1;35mWarning [line %d]:\e[0m For function '%s', argument %d should be of type '%s', '%s' provided.\n",line, $1->name, i+1, type_arr_chk.c_str(), type.c_str());
+																			arg_names.push_back($3->v[i]->place);
+																		}
+																		else if(arg_list[i].first.first.back() == ']'){
 																			if($3->v[i]->node_data.back() != ']'){
 																				printf("\e[1;31mError [line %d]:\e[0m For function '%s', argument %d should be of type '%s', '%s' provided.\n",line,$1->name,i+1,arg_list[i].first.first.c_str(),type.c_str());
 																				exit(-1);
@@ -610,6 +633,12 @@ postfix_expression
 																	/////////////////////////////////////
 																}
 	| postfix_expression INC_OP									{
+																	if(file_ptrs){
+																		if($1->node_data == "FILEP"){
+																			printf("\e[1;31mError [line %d]:\e[0m File pointer increment not supported.\n",line);
+																			exit(-1);
+																		}
+																	}
 																	if($1->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
@@ -661,6 +690,12 @@ postfix_expression
 																	/////////////////////////////////////
 																}
 	| postfix_expression DEC_OP									{
+																	if(file_ptrs){
+																		if($1->node_data == "FILEP"){
+																			printf("\e[1;31mError [line %d]:\e[0m File pointer decrement not supported.\n",line);
+																			exit(-1);
+																		}
+																	}
 																	if($1->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
@@ -736,6 +771,12 @@ argument_expression_list
 unary_expression
 	: postfix_expression										{$$ = $1;}
 	| INC_OP unary_expression									{
+																	if(file_ptrs){
+																		if($2->node_data == "FILEP"){
+																			printf("\e[1;31mError [line %d]:\e[0m File pointer increment not supported.\n",line);
+																			exit(-1);
+																		}
+																	}
 																	if($2->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
@@ -787,6 +828,12 @@ unary_expression
 																	/////////////////////////////////////
 																}
 	| DEC_OP unary_expression									{
+																	if(file_ptrs){
+																		if($2->node_data == "FILEP"){
+																			printf("\e[1;31mError [line %d]:\e[0m File pointer decrement not supported.\n",line);
+																			exit(-1);
+																		}
+																	}
 																	if($2->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
@@ -899,6 +946,12 @@ unary_expression
 																		}
 																		break;
 																		case '*':{
+																			if(file_ptrs){
+																				if($2->node_data == "FILEP"){
+																					printf("\e[1;31mError [line %d]:\e[0m File pointer dereference not supported.\n",line);
+																					exit(-1);
+																				}
+																			}
 																			if(is_struct_or_union(reduce_pointer_level($2->node_data))){
 																				$$->node_data = reduce_pointer_level($2->node_data)+ " #";
 																				$$->ttentry = $2->ttentry;
@@ -966,6 +1019,12 @@ unary_expression
 																		break;
 																		case '-':
 																		case '+':{
+																			if(file_ptrs){
+																				if($2->node_data == "FILEP"){
+																					printf("\e[1;31mError [line %d]:\e[0m File pointer unary +/- not supported.\n",line);
+																					exit(-1);
+																				}
+																			}
 																			if($2->token==CONSTANT && *($1)=='+'){
 																				switch($2->val_dt){
 																					case IS_INT:$2->val.int_const = $2->val.int_const; break;
@@ -1020,6 +1079,12 @@ unary_expression
 																		}
 																		break;
 																		case '~':{
+																			if(file_ptrs){
+																				if($2->node_data == "FILEP"){
+																					printf("\e[1;31mError [line %d]:\e[0m File pointer ~ not supported.\n",line);
+																					exit(-1);
+																				}
+																			}
 																			if($2->token==CONSTANT){
 																				switch($2->val_dt){
 																					case IS_INT: $2->val.int_const = ~$2->val.int_const; break;
@@ -1098,6 +1163,13 @@ cast_expression
 																	$$ = node_(2,"()_typecast",-1);
 																	$$->v[0] = $2;
 																	$$->v[1] = $4;
+																	if(file_ptrs){
+																		if($2->node_data == "FILEP" || $4->node_data == "FILEP"){
+																			printf("\e[1;31mError [line %d]:\e[0m File pointer typecasting not supported.\n",line);
+																			exit(-1);
+																		}
+																	}
+
 																	pair<string,int> p1 = get_equivalent_pointer($2->node_data);
 																	pair<string,int> p2 = get_equivalent_pointer($4->node_data);
 																	//tt_entry * entry1 = type_lookup(p1.first);
@@ -1148,6 +1220,12 @@ cast_expression
 multiplicative_expression
 	: cast_expression											{$$ = $1;}
 	| multiplicative_expression '*' cast_expression				{
+																	if(file_ptrs){
+																		if($1->node_data == "FILEP" || $3->node_data == "FILEP"){
+																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
+																			exit(-1);
+																		}
+																	}
 																	if($1->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
@@ -1207,6 +1285,12 @@ multiplicative_expression
 																	$$->value_type = RVALUE;
 																}
 	| multiplicative_expression '/' cast_expression				{
+																	if(file_ptrs){
+																		if($1->node_data == "FILEP" || $3->node_data == "FILEP"){
+																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
+																			exit(-1);
+																		}
+																	}
 																	if($1->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
@@ -1266,6 +1350,12 @@ multiplicative_expression
 																	$$->value_type = RVALUE;
 																}
 	| multiplicative_expression '%' cast_expression				{
+																	if(file_ptrs){
+																		if($1->node_data == "FILEP" || $3->node_data == "FILEP"){
+																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
+																			exit(-1);
+																		}
+																	}
 																	if($1->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
@@ -1317,6 +1407,12 @@ multiplicative_expression
 additive_expression
 	: multiplicative_expression									{$$ = $1;}
 	| additive_expression '+' multiplicative_expression			{
+																	if(file_ptrs){
+																		if($1->node_data == "FILEP" || $3->node_data == "FILEP"){
+																			printf("\e[1;31mError [line %d]:\e[0m File pointer arithmetic not supported.\n",line);
+																			exit(-1);
+																		}
+																	}
 																	if($1->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
@@ -1383,6 +1479,12 @@ additive_expression
 																	$$->value_type = RVALUE;
 																}
 	| additive_expression '-' multiplicative_expression			{
+																	if(file_ptrs){
+																		if($1->node_data == "FILEP" || $3->node_data == "FILEP"){
+																			printf("\e[1;31mError [line %d]:\e[0m File pointer arithmetic not supported.\n",line);
+																			exit(-1);
+																		}
+																	}
 																	if($1->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
@@ -1456,6 +1558,12 @@ additive_expression
 shift_expression
 	: additive_expression										{$$ = $1;}
 	| shift_expression LEFT_OP additive_expression				{
+																	if(file_ptrs){
+																		if($1->node_data == "FILEP" || $3->node_data == "FILEP"){
+																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
+																			exit(-1);
+																		}
+																	}
 																	if($1->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
@@ -1503,6 +1611,12 @@ shift_expression
 																	$$->value_type = RVALUE;
 																}
 	| shift_expression RIGHT_OP additive_expression				{
+																	if(file_ptrs){
+																		if($1->node_data == "FILEP" || $3->node_data == "FILEP"){
+																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, $2);
+																			exit(-1);
+																		}
+																	}
 																	if($1->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
@@ -1553,6 +1667,12 @@ shift_expression
 relational_expression
 	: shift_expression											{$$ = $1;}
 	| relational_expression '<' shift_expression				{
+																	if(file_ptrs){
+																		if($1->node_data == "FILEP" || $3->node_data == "FILEP"){
+																			printf("\e[1;31mError [line %d]:\e[0m File pointer comaprisons not supported.\n",line);
+																			exit(-1);
+																		}
+																	}
 																	if($1->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
@@ -1651,6 +1771,12 @@ relational_expression
 																	$$->value_type = RVALUE;
 																}
 	| relational_expression '>' shift_expression				{
+																	if(file_ptrs){
+																		if($1->node_data == "FILEP" || $3->node_data == "FILEP"){
+																			printf("\e[1;31mError [line %d]:\e[0m File pointer comaprisons not supported.\n",line);
+																			exit(-1);
+																		}
+																	}
 																	if($1->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
@@ -1750,6 +1876,12 @@ relational_expression
 																	$$->value_type = RVALUE;
 																}
 	| relational_expression LE_OP shift_expression				{
+																	if(file_ptrs){
+																		if($1->node_data == "FILEP" || $3->node_data == "FILEP"){
+																			printf("\e[1;31mError [line %d]:\e[0m File pointer comaprisons not supported.\n",line);
+																			exit(-1);
+																		}
+																	}
 																	if($1->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
@@ -1838,6 +1970,12 @@ relational_expression
 																	$$->value_type = RVALUE;
 																}
 	| relational_expression GE_OP shift_expression				{
+																	if(file_ptrs){
+																		if($1->node_data == "FILEP" || $3->node_data == "FILEP"){
+																			printf("\e[1;31mError [line %d]:\e[0m File pointer comaprisons not supported.\n",line);
+																			exit(-1);
+																		}
+																	}
 																	if($1->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
@@ -1946,6 +2084,14 @@ equality_expression
 																	pair<string,int> p2 = get_equivalent_pointer($3->node_data);
 																	
 																	string type;
+																	if(file_ptrs){
+																		if(p1.first == "FILEP"){
+																			p1.second = 1;
+																		}
+																		if(p2.first == "FILEP"){
+																			p2.second = 1;
+																		}
+																	}
 																	if(!p1.second && !p2.second){
 																		type = arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2),$1->ttentry,$3->ttentry);
 																	}
@@ -2034,6 +2180,14 @@ equality_expression
 																	pair<string,int> p2 = get_equivalent_pointer($3->node_data);
 																	
 																	string type;
+																	if(file_ptrs){
+																		if(p1.first == "FILEP"){
+																			p1.second = 1;
+																		}
+																		if(p2.first == "FILEP"){
+																			p2.second = 1;
+																		}
+																	}
 																	if(!p1.second && !p2.second){
 																		type = arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2),$1->ttentry,$3->ttentry);
 																	}
@@ -2110,6 +2264,12 @@ equality_expression
 and_expression
 	: equality_expression										{$$ = $1;}
 	| and_expression '&' equality_expression					{
+																	if(file_ptrs){
+																		if($1->node_data == "FILEP" || $3->node_data == "FILEP"){
+																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for binary operator '%s'.\n",line,$2);
+																			exit(-1);
+																		}
+																	}
 																	if($1->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
@@ -2160,6 +2320,12 @@ and_expression
 exclusive_or_expression
 	: and_expression											{$$ = $1;}
 	| exclusive_or_expression '^' and_expression				{
+																	if(file_ptrs){
+																		if($1->node_data == "FILEP" || $3->node_data == "FILEP"){
+																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for binary operator '%s'.\n",line,$2);
+																			exit(-1);
+																		}
+																	}
 																	if($1->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
@@ -2209,6 +2375,12 @@ exclusive_or_expression
 inclusive_or_expression
 	: exclusive_or_expression									{$$ = $1;}
 	| inclusive_or_expression '|' exclusive_or_expression		{
+																	if(file_ptrs){
+																		if($1->node_data == "FILEP" || $3->node_data == "FILEP"){
+																			printf("\e[1;31mError [line %d]:\e[0m Incompatible types for binary operator '%s'.\n",line,$2);
+																			exit(-1);
+																		}
+																	}
 																	if($1->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
@@ -2284,8 +2456,13 @@ logical_and_expression
 																	}
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
 																	pair<string,int> p2 = get_equivalent_pointer($4->node_data);
-																	arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2),$1->ttentry,$4->ttentry);
-																	
+
+																	//arithmetic_type_upgrade(p1.first,p2.first, string((const char*)$2),$1->ttentry,$4->ttentry);
+																	if(is_struct_or_union(p1.first) || is_struct_or_union(p2.first)){
+																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for &&.\n",line);
+																		exit(-1);
+																	}
+
 																	$$ = node_(2,$2,-1);
 																	$$->v[0] = $1;
 																	$$->v[1] = $4;
@@ -2338,8 +2515,12 @@ logical_or_expression
 																	}
 																	pair<string,int> p1 = get_equivalent_pointer($1->node_data);
 																	pair<string,int> p2 = get_equivalent_pointer($4->node_data);
-																	arithmetic_type_upgrade(p1.first,p2.first,string((const char*)$2),$1->ttentry,$4->ttentry);
-																	
+																	//arithmetic_type_upgrade(p1.first,p2.first,string((const char*)$2),$1->ttentry,$4->ttentry);
+																	if(is_struct_or_union(p1.first) || is_struct_or_union(p2.first)){
+																		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for ||.\n",line);
+																		exit(-1);
+																	}
+
 																	$$ = node_(2,$2,-1);
 																	$$->v[0] = $1;
 																	$$->v[1] = $4;
@@ -2428,6 +2609,10 @@ conditional_expression
 															/////////////////////////////////////
 														}
 	expression ':' M7 conditional_expression					{
+																	if($4->node_data == "FILEP" || $7->node_data == "FILEP"){
+																		printf("\e[1;31mError [line %d]:\e[0m Ternary not supported for file pointers.\n",line);
+																		exit(-1);
+																	}
 																	if($1->node_data == "void"){
 																		printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																		exit(-1);
@@ -2539,6 +2724,12 @@ conditional_expression
 assignment_expression
 	: conditional_expression										{$$ = $1;}
 	| unary_expression assignment_operator assignment_expression	{
+																			if(file_ptrs){
+																				if(($1->node_data == "FILEP" || $3->node_data == "FILEP") && $2->token != '='){
+																					printf("\e[1;31mError [line %d]:\e[0m Incompatible types for binary operator '%s'.\n",line,$2->name);
+																					exit(-1);
+																				}
+																			}
 																			if($1->node_data == "void"){
 																				printf("\e[1;31mError [line %d]:\e[0m void value not ignored as it ought to be.\n",line);
 																				exit(-1);
@@ -2586,6 +2777,42 @@ assignment_expression
 																			string op;
 																			switch($2->token){
 																			case '=':
+																				if(file_ptrs){
+																					if(p1.first == "FILEP"){
+																						p1.second = 1;
+																					}
+																					if(p2.first == "FILEP"){
+																						p2.second = 1;
+																					}
+																					if(p1.first == "FILEP"){
+																						if(p2.second && p2.first != "FILEP"){
+																							printf("\e[1;35mWarning [line %d]:\e[0m Implicit assignment typecast to '%s' from pointer type '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
+																							goto tac_skip_ass;
+																						}
+																						else if(p2.second == 0 && (p2.first.find("int") != string::npos || p2.first.find("char") != string::npos)){
+																							printf("\e[1;35mWarning [line %d]:\e[0m Implicit assignment typecast to '%s' from pointer type '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
+																							goto tac_skip_ass;
+																						}
+																						else if(p2.second == 0 && (p2.first.find("int") == string::npos && p2.first.find("char") == string::npos)){
+																							printf("\e[1;31mError [line %d]:\e[0m Cannot assign floating point values to pointers.\n",line);
+																							exit(-1);
+																						}
+																					}
+																					if(p2.first == "FILEP"){
+																						if(p1.second && p1.first != "FILEP"){
+																							printf("\e[1;35mWarning [line %d]:\e[0m Implicit assignment typecast to '%s' from pointer type '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
+																							goto tac_skip_ass;
+																						}
+																						else if(p1.second == 0 && (p1.first.find("int") != string::npos || p1.first.find("char") != string::npos)){
+																							printf("\e[1;35mWarning [line %d]:\e[0m Implicit assignment typecast to '%s' from pointer type '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
+																							goto tac_skip_ass;
+																						}
+																						else if(p1.second == 0 && (p1.first.find("int") == string::npos && p1.first.find("char") == string::npos)){
+																							printf("\e[1;31mError [line %d]:\e[0m Cannot assign pointers to floating point values.\n",line);
+																							exit(-1);
+																						}
+																					}
+																				}
 																				if(p1.second && p2.second){
 																					if(p1.first != p2.first){
 																						printf("\e[1;35mWarning [line %d]:\e[0m Assignment to '%s' from incompatible pointer type '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
@@ -2608,6 +2835,7 @@ assignment_expression
 
 
 
+																				tac_skip_ass: ;
 																				//////////////// 3AC ////////////////
 																				backpatch($3->nextlist, nextquad); // CHECK THIS!!!!!
 
@@ -3087,6 +3315,12 @@ init_declarator
 																		tmp->ttentry = type_lookup(data_type);
 																	}
 																	else{
+																		if(file_ptrs){
+																			if(table_scope.back()==&global && data_type_ == "FILEP"){
+																				printf("\e[1;31mError [line %d]:\e[0m File pointers not supported as global variables.\n", line);
+																				exit(-1);
+																			}
+																		}
 																		tt_entry* entry = type_lookup(data_type);
 																		st_entry* tmp = add_entry($1->node_name, data_type_, get_size(data_type_, entry),accumulate(offset.begin()+1, offset.end(), 0),IS_VAR);
 																		tmp->type_name = IS_VAR;
@@ -3115,6 +3349,12 @@ init_declarator
 																		if($1->node_data!=""){
 																			data_type_ += " ";
 																			data_type_ += $1->node_data;
+																		}
+																		if(file_ptrs){
+																			if(table_scope.back()==&global && data_type_ == "FILEP"){
+																				printf("\e[1;31mError [line %d]:\e[0m File pointers not supported as global variables.\n", line);
+																				exit(-1);
+																			}
 																		}
 																		
 																		if(current_lookup($1->node_name)!=NULL){
@@ -3166,6 +3406,42 @@ init_declarator
 																			printf("\e[1;31mError [line %d]:\e[0m Array variables cannot be reassigned.\n",line);
 																			exit(-1);
 																		}
+																		if(file_ptrs){
+																			if(p1.first == "FILEP"){
+																				p1.second = 1;
+																			}
+																			if(p2.first == "FILEP"){
+																				p2.second = 1;
+																			}
+																			if(p1.first == "FILEP"){
+																				if(p2.second && p2.first != "FILEP"){
+																					printf("\e[1;35mWarning [line %d]:\e[0m Implicit assignment typecast to '%s' from pointer type '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
+																					goto tic_skip_ass;
+																				}
+																				else if(p2.second == 0 && (p2.first.find("int") != string::npos || p2.first.find("char") != string::npos)){
+																					printf("\e[1;35mWarning [line %d]:\e[0m Implicit assignment typecast to '%s' from pointer type '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
+																					goto tic_skip_ass;
+																				}
+																				else if(p2.second == 0 && (p2.first.find("int") == string::npos && p2.first.find("char") == string::npos)){
+																					printf("\e[1;31mError [line %d]:\e[0m Cannot assign floating point values to pointers.\n",line);
+																					exit(-1);
+																				}
+																			}
+																			if(p2.first == "FILEP"){
+																				if(p1.second && p1.first != "FILEP"){
+																					printf("\e[1;35mWarning [line %d]:\e[0m Implicit assignment typecast to '%s' from pointer type '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
+																					goto tic_skip_ass;
+																				}
+																				else if(p1.second == 0 && (p1.first.find("int") != string::npos || p1.first.find("char") != string::npos)){
+																					printf("\e[1;35mWarning [line %d]:\e[0m Implicit assignment typecast to '%s' from pointer type '%s'.\n",line, $1->node_data.c_str(), $3->node_data.c_str());
+																					goto tic_skip_ass;
+																				}
+																				else if(p1.second == 0 && (p1.first.find("int") == string::npos && p1.first.find("char") == string::npos)){
+																					printf("\e[1;31mError [line %d]:\e[0m Cannot assign pointers to floating point values.\n",line);
+																					exit(-1);
+																				}
+																			}
+																		}
 																		if(p1.second && p2.second){
 																			if(p1.first != p2.first){
 																				printf("\e[1;35mWarning [line %d]:\e[0m Assignment to '%s' from incompatible pointer type '%s'.\n",line, data_type_.c_str(), $3->node_data.c_str());
@@ -3185,6 +3461,7 @@ init_declarator
 																			}
 																			printf("\e[1;35mWarning [line %d]:\e[0m Assignment to '%s' from incompatible type '%s'.\n",line, data_type_.c_str(), $3->node_data.c_str());
 																		}
+																		tic_skip_ass: ;
 																		$$->node_data = data_type_;
 																		$$->value_type = RVALUE;
 
@@ -3347,6 +3624,7 @@ type_specifier
 	| DOUBLE													{$$ = node_(0,$1,-1); $$->node_data = $1;}
 	| SIGNED													{$$ = node_(0,$1,-1); $$->node_data = $1;}
 	| UNSIGNED													{$$ = node_(0,$1,-1); $$->node_data = $1;}
+	| FILEP														{$$ = node_(0,$1,-1); $$->node_data = $1;}
 	| struct_or_union_specifier									{$$ = $1;}
 	| enum_specifier											{$$ = $1;}
 	| TYPE_NAME													{printf("\e[1;31mError [line %d]:\e[0m Typedef not handled\n", line);exit(-1);}
@@ -3896,7 +4174,7 @@ M1
 																	int curr_offset = -16;
 																	for(auto p: func_params){
 																		int flag = 0;
-																		if(!is_struct_or_union(p.first.first) && (p.first.first.find("int") != string::npos || p.first.first.find("char") != string::npos || p.first.first.back() == ']' || p.first.first.back() == '*')){
+																		if(!is_struct_or_union(p.first.first) && (p.first.first.find("int") != string::npos || p.first.first.find("char") != string::npos || p.first.first.back() == ']' || p.first.first.back() == '*' || (file_ptrs && p.first.first == "FILEP"))){
 																			flag = 1;
 																		}
 																		else if(!is_struct_or_union(p.first.first) && (p.first.first.find("double") != string::npos || p.first.first.find("float") != string::npos)){

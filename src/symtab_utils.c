@@ -2,6 +2,8 @@
 #include <iostream>
 using namespace std;
 extern string next_name;
+extern int file_ptrs;
+extern int enable_warn;
 vector<symtab*> table_scope;
 vector<typtab*> type_scope;
 symtab global;
@@ -114,6 +116,11 @@ unsigned long get_size(string s, tt_entry* entry){
 				tmp+=x;
 		}
 		v.push_back(tmp);
+		if(file_ptrs){
+			if(find(v.begin(), v.end(),"FILEP") != v.end()){
+				return elements*8ul;
+			}
+		}
 		if(v.back() == "int"){
 			if(v.size() > 1){
 				if(v[v.size()-2] == "short")
@@ -205,7 +212,15 @@ string get_eqtype(string type, int is_only_type){
 		a.push_back({(m.find(tmp)!=m.end() ? m[tmp] : 10)  , tmp});
 
 	sort(a.begin(), a.end());
-	
+	if(file_ptrs){
+		if(find(a.begin(), a.end(),make_pair(10,string("FILEP"))) != a.end()){
+			if(a.size() > 1){
+				printf("\e[1;31mError [line %d]:\e[0m Invalid data type.\n", line);
+				exit(-1);
+			}
+			return "FILEP";
+		}
+	}
 	if(a[0].first==0){
 		if(a.size()!=2){
 			printf("\e[1;31mError [line %d]:\e[0m Invalid data type.\n", line);
@@ -406,6 +421,28 @@ void init_symtab(){
 	tmp = add_entry("strdup", "char *", 0, 0, IS_FUNC);
 	tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
 	tmp->arg_list->push_back({{"char *",""},NULL});
+
+	if(file_ptrs){
+		tmp = add_entry("fopen", "FILEP", 0, 0, IS_FUNC);
+		tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
+		tmp->arg_list->push_back({{"char *",""},NULL});
+		tmp->arg_list->push_back({{"char *",""},NULL});
+
+		tmp = add_entry("fclose", "int", 0, 0, IS_FUNC);
+		tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
+		tmp->arg_list->push_back({{"FILEP",""},NULL});
+
+		tmp = add_entry("fprintf", "int", 0, 0, REQUIRES_TYPECHECK);
+		tmp = add_entry("fscanf", "int", 0, 0, REQUIRES_TYPECHECK);
+
+		tmp = add_entry("fseek", "int", 0, 0, IS_FUNC);
+		
+		tmp->arg_list = new vector<pair<pair<string, string>,tt_entry*>>(0);
+		tmp->arg_list->push_back({{"FILEP",""},NULL});
+		tmp->arg_list->push_back({{"int",""},NULL});
+		tmp->arg_list->push_back({{"int",""},NULL});
+
+	}
 }
 
 st_entry* add_entry(string key, string type, unsigned long size, long offset, enum sym_type type_name){
@@ -659,7 +696,30 @@ string increase_array_level(string s){
 string arithmetic_type_upgrade(string type1, string type2, string op, tt_entry* ttentry1, tt_entry* ttentry2){
 	// float double long double int long unsigned int unsigned long int char pointer
 	// printf("Entered upgrade with '%s'.\n", op.c_str());
-	
+	if(file_ptrs){
+		if(type1 == "FILEP"){
+			if(is_struct_or_union(type2)){
+				printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, op.c_str());
+				exit(-1);
+			}
+			else if((type2.find("int") == string::npos && type2.find("char") == string::npos) || type2.back() == '*' || type2.back() == ']'){
+				printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, op.c_str());
+				exit(-1);
+			}
+			return "FILEP";
+		}
+		if(type2 == "FILEP"){
+			if(is_struct_or_union(type1)){
+				printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, op.c_str());
+				exit(-1);
+			}
+			else if((type1.find("int") == string::npos && type1.find("char") == string::npos) || type1.back() == '*' || type1.back() == ']'){
+				printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, op.c_str());
+				exit(-1);
+			}
+			return "FILEP";
+		}
+	}
 	if((ttentry1!=NULL && type1.back()!='*' && type1.back()!=']') || (ttentry2!=NULL && type2.back()!='*' && type2.back()!=']')){
 		printf("\e[1;31mError [line %d]:\e[0m Incompatible types for operator '%s'.\n",line, op.c_str());
 		exit(-1);
@@ -866,8 +926,10 @@ string arithmetic_type_upgrade(string type1, string type2, string op, tt_entry* 
 	exit(-1);
 
 	implicit_warn:
-	if(type1!=ans && op!="evaluate_const") printf("\e[1;35mWarning [line %d]:\e[0m Implicit conversion from '%s' to '%s'.\n", line, type1.c_str(), ans.c_str());
-	if(type2!=ans && op!="evaluate_const") printf("\e[1;35mWarning [line %d]:\e[0m Implicit conversion from '%s' to '%s'.\n", line, type2.c_str(), ans.c_str());
+	if(enable_warn){
+		if(type1!=ans && op!="evaluate_const") printf("\e[1;35mWarning [line %d]:\e[0m Implicit conversion from '%s' to '%s'.\n", line, type1.c_str(), ans.c_str());
+		if(type2!=ans && op!="evaluate_const") printf("\e[1;35mWarning [line %d]:\e[0m Implicit conversion from '%s' to '%s'.\n", line, type2.c_str(), ans.c_str());
+	}
 	return ans;
 }
 

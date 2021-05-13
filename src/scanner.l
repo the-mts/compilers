@@ -12,6 +12,7 @@ void count();
 void comment();
 void comment_();
 void yyerror(const char*s);
+extern int file_ptrs;
 %}
 
 %%
@@ -49,6 +50,7 @@ void yyerror(const char*s);
 "void"			{ yylval.id = strdup(yytext);return(VOID); }
 "volatile"		{ yylval.id = strdup(yytext);return(VOLATILE); }
 "while"			{ yylval.id = strdup(yytext);return(WHILE); }
+"FILEP"			{ yylval.id = strdup(yytext);return(file_ptrs ? FILEP : IDENTIFIER); }
 
 {L}({L}|{D})*		{ yylval.id = strdup(yytext);return(IDENTIFIER); }
 

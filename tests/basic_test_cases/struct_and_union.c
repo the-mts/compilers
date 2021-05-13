@@ -29,8 +29,8 @@ int main(){
 	printf(" l = {%d, %ld}\n", l.a, l.b);
 	kk.bb = 10000000000l;
 	ll = ff(kk);
-	printf(" kk = %ld\n", kk.bb);
-	printf(" ll = %ld\n", ll.bb);
+	printf(" kk.bb = %ld\n", kk.bb);
+	printf(" ll.bb = %ld\n", ll.bb);
 	
 	return 0; 
 }

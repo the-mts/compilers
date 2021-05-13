@@ -10,10 +10,15 @@ extern char yytext[];
 extern node* root;
 extern int column;
 extern int yydebug;
-FILE* out_file;
+FILE* dot_file;
 int typ_file = 0;
 int scope_num = 0;
 string curr_fun = "";
+string out_file;
+int file_ptrs = 1;
+int enable_opt = 1;
+int enable_tail = 1;
+int enable_warn = 1;
 
 // For debugging purposes
 // Have to rewrite
@@ -200,11 +205,11 @@ void dfs2(table_tree* u){
 int dfs(node* u, int num){
 	int x = num;
 	for(int i = 0; i < u->sz; i++){
-		fprintf(out_file,"\t%d -> %d\n",x,num+1);
+		fprintf(dot_file,"\t%d -> %d\n",x,num+1);
 		num = dfs(u->v[i],num+1);
 	}
 	// if (u->name[0]!='\"')
-	fprintf(out_file,"\t%d [label=\"",x);
+	fprintf(dot_file,"\t%d [label=\"",x);
 	if(u->token == CONSTANT){
 		string ch = *new string;
 		switch(u->val_dt){
@@ -224,12 +229,12 @@ int dfs(node* u, int num){
 	}
 	int i = 0;
 	while(u->name[i] != '\0'){
-		if(u->name[i]=='\"' || u->name[i]=='\\') fprintf(out_file,"\\");
-		fprintf(out_file, "%c",u->name[i]);
+		if(u->name[i]=='\"' || u->name[i]=='\\') fprintf(dot_file,"\\");
+		fprintf(dot_file,"%c",u->name[i]);
 		i++;
 	}
 
-	fprintf(out_file,"\"]\n");
+	printf("\"]\n");
 	return num;
 }
 
@@ -237,19 +242,20 @@ int dfs(node* u, int num){
 //yylval.id = yytext; in all token specs
 int main(int argc, char const* argv[]){
 	if(argc<2){
-		fprintf(stderr,"USAGE: <bin>/parser <file_name> [options]\n");
+		printf("USAGE: <bin>/parser <file_name> [options]\n");
 		return 1;
 	}
 	if(argv[1][0] == '-'){
-		fprintf(stderr,"USAGE: <bin>/parser <file_name> [options]\n");
+		printf("USAGE: <bin>/parser <file_name> [options]\n");
 		return 1;
 	}
 	yyin = fopen(argv[1], "r");
 	if(yyin == NULL){
-		fprintf(stderr,"Can't Open File\n");
+		printf("Can't Open File\n");
 		return 1;
 	}
-	out_file = stdout;
+	dot_file = fopen("bin/AST.dot","w+");
+	out_file = "./bin/assembly.s";
 	int skipnext = 0;
 	for(int i = 2; i < argc; i++){
 		if(skipnext){
@@ -263,8 +269,8 @@ int main(int argc, char const* argv[]){
 		}
 		int j = 1;
 		while(argv[i][j]!='\0'){
-			if(argv[i][j] != 'g' && argv[i][j] != 'o' && argv[i][j] != 't'){
-				fprintf(stderr,"Invalid Option\n");
+			if(argv[i][j] != 'g' && argv[i][j] != 'o' && argv[i][j] != 't' && argv[i][j] != 'f' && argv[i][j]!='O' && argv[i][j]!='W' && argv[i][j]!='T'){
+				printf("Invalid Option\n");
 				return 1;
 			}
 			if(argv[i][j] == 'g'){
@@ -272,22 +278,31 @@ int main(int argc, char const* argv[]){
 			}
 			if(argv[i][j] == 'o'){
 				if(argc == i+1){
-					fprintf(stderr, "Output file not specified\n");
+					printf( "Output file not specified\n");
 					return 1;
 				}
 				skipnext = 1;
-				out_file = fopen(argv[i+1],"w+");
-				if(out_file == NULL){
-					fprintf(stderr,"Can't Open Output File\n");
-					return 1;
-				}
+				out_file = string(argv[i+1]);
 			}
 			if(argv[i][j] == 't'){
 				typ_file = 1;
 			}
+			if(argv[i][j] == 'f'){
+				file_ptrs = 0;
+			}
+			if(argv[i][j] == 'O'){
+				enable_opt = 0;
+			}
+			if(argv[i][j] == 'W'){
+				enable_warn = 0;
+			}
+			if(argv[i][j] == 'T'){
+				enable_tail = 0;
+			}
 			j++;
 		}
 	}
+	// file_ptrs = 1;
 	init_symtab();
 	init_equiv_types();
 	init_escape_chars();
@@ -295,12 +310,11 @@ int main(int argc, char const* argv[]){
 	if(x != 0){
 		return -1;
 	}
-	fprintf(out_file,"digraph G {\n");
+	fprintf(dot_file,"digraph G {\n");
 	dfs(root,0);
-	fprintf(out_file,"}");
+	fprintf(dot_file,"}");
 
-	string name = "bin/symtab.csv";
-	FILE* fp=	freopen((const char*)name.c_str(), "w", stdout);
+	freopen("bin/symtab.csv", "w", stdout);
 
 	st_root->name = "global";
 	curr_fun = "global";
@@ -313,16 +327,18 @@ int main(int argc, char const* argv[]){
 		dfs3(st_root);
 	}
 	//fclose(fp);
-	freopen("bin/tac.txt", "w", stdout);
+	freopen("bin/3AC.txt", "w", stdout);
 	print_code();
 
 //	cout<<"Check me\n";
 	make_blocks();
-	optimize();
+	if(enable_opt){
+		optimize();
+	}
 
  	freopen("bin/basic_blocks.txt", "w", stdout);
  	print_blocks(0);
- 	freopen("bin/assembly.s", "w", stdout);
+ 	freopen(out_file.c_str(), "w", stdout);
  	codegen();
 	return 0;
 }

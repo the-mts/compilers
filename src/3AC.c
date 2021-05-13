@@ -6,6 +6,7 @@
 #include "3AC.h"
 #include "parse_utils.h"
 
+extern int enable_tail;
 vector<quad> code_array;
 int nextquad = 0;
 vector<block> blocks;
@@ -286,7 +287,7 @@ void make_blocks(){
  	int vstart, vend, prev;	
 	// Replace some obviously redundant GOTOs with DUMMY statements
 	qi func;	
-	int tail = 1;
+	int tail = enable_tail;
 	if (tail) {
 		for (int i = 0; i < n-1; i++){
 			if (code_array[i].op == "GOTO" || code_array[i].op == "IF_TRUE_GOTO"){

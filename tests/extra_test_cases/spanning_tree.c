@@ -163,9 +163,11 @@ int main() {
          struct node* set;
          int i;
          int MST;
-         scanf("%d",&n);
-         scanf("%d",&e);
-         scanf("%d",&q);
+         FILEP xd = fopen("output1.txt", "r");
+         FILEP yd = fopen("output11.txt", "w+");
+         fscanf(xd,"%d",&n);
+         fscanf(xd,"%d",&e);
+         fscanf(xd,"%d",&q);
          parent = (int*)malloc(n*sizeof(int));
          status = (int*)malloc(n*sizeof(int));
          wgt = (int*)malloc(n*sizeof(int));
@@ -176,7 +178,7 @@ int main() {
              for(i = 0;i<e;i++){
                  int v1, v2;
                  int w;
-                 scanf("%d %d %d",&v1,&v2,&w); 
+                 fscanf(xd,"%d %d %d",&v1,&v2,&w); 
                  array[i].u = v1;
                  array[i].v = v2;
                  array[i].weight = w;
@@ -207,7 +209,7 @@ int main() {
            
         }
     }
-    printf("%d\n",MST);
+    fprintf(yd,"%d\n",MST);
     
     for(i=0;i<q;i++){
         
@@ -224,9 +226,9 @@ int main() {
             wgt[j]=0;
             status[j]=0;
         }
-        scanf("%d",&v1);
-        scanf("%d",&v2);
-        scanf("%d",&w);
+        fscanf(xd,"%d",&v1);
+        fscanf(xd,"%d",&v2);
+        fscanf(xd,"%d",&w);
         array[e+i].u = v1;
         array[e+i].v = v2;
         array[e+i].weight = w;
@@ -242,7 +244,7 @@ int main() {
             current = parent[current];
         }
         if(maximum<=w){
-            printf("%d\n",MST);
+            fprintf(yd,"%d\n",MST);
         }
         if(maximum>w){
             edge_remover(max_u,max_v,adjacency);
@@ -250,7 +252,7 @@ int main() {
             edge_includer(v1,v2,adjacency,w);
             edge_includer(v2,v1,adjacency,w);
             MST = MST+w-maximum;
-            printf("%d\n",MST);
+            fprintf(yd,"%d\n",MST);
         }
     }
 
