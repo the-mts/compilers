@@ -253,7 +253,7 @@ int main(int argc, char const* argv[]){
 		return 1;
 	}
 	if(argv[1][0] == '-'){
-		printf("USAGE: <bin>/parser <file_name> [options]\n");
+		printf("USAGE: <bin>/faast <file_name> [-options...]\n");
 		return 1;
 	}
 	yyin = fopen(argv[1], "r");

@@ -4,9 +4,9 @@ YACC=bison -y
 BIN=bin
 SRC=src
 .PHONY: all clean realclean fileclean
-all: $(BIN)/FAAST
+all: $(BIN)/faast
 
-$(BIN)/FAAST: $(SRC)/lex.yy.c $(SRC)/y.tab.c $(BIN)/main.o $(BIN)/parse_utils.o $(BIN)/symtab_utils.o $(BIN)/3AC.o $(BIN)/codegen.o
+$(BIN)/faast: $(SRC)/lex.yy.c $(SRC)/y.tab.c $(BIN)/main.o $(BIN)/parse_utils.o $(BIN)/symtab_utils.o $(BIN)/3AC.o $(BIN)/codegen.o
 	$(CC) -Wno-write-strings -Wno-abi $^ -o $@
 
 $(SRC)/lex.yy.c: $(SRC)/scanner.l $(SRC)/y.tab.h $(SRC)/y.tab.c
@@ -37,4 +37,4 @@ fileclean:
 	$(RM) $(BIN)/*.csv $(BIN)/*.out $(BIN)/*.dot $(BIN)/*.ps $(BIN)/*.txt $(BIN)/*.s *.csv *.out *.dot *.ps *.txt *.s
 
 realclean: clean fileclean
-	$(RM) $(BIN)/FAAST
+	$(RM) $(BIN)/faast

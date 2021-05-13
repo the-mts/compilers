@@ -1188,5 +1188,8 @@ pair<constant, enum const_type> parse_constant(string s){
 		}
 
 	}
+	if(ans.second == IS_U_INT || ans.second == IS_U_LONG || ans.second == IS_U_SHORT){
+		printf("\e[1;31mError [line %d]:\e[0m unsigned constants not supported.\n", line);exit(-1);
+	}
 	return ans;
 }

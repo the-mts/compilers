@@ -3623,7 +3623,7 @@ type_specifier
 	| FLOAT														{$$ = node_(0,$1,-1); $$->node_data = $1;}
 	| DOUBLE													{$$ = node_(0,$1,-1); $$->node_data = $1;}
 	| SIGNED													{$$ = node_(0,$1,-1); $$->node_data = $1;}
-	| UNSIGNED													{$$ = node_(0,$1,-1); $$->node_data = $1;}
+	| UNSIGNED													{$$ = node_(0,$1,-1); $$->node_data = $1;printf("\e[1;31mError [line %d]:\e[0m unsigned variables not supported.\n", line);exit(-1);}
 	| FILEP														{$$ = node_(0,$1,-1); $$->node_data = $1;}
 	| struct_or_union_specifier									{$$ = $1;}
 	| enum_specifier											{$$ = $1;}
@@ -4570,7 +4570,7 @@ M10
 							}
 
 jump_statement
-	: GOTO IDENTIFIER ';'										{$$ = node_(1,$1,-1); $$->v[0] = node_(0,$2,IDENTIFIER);}
+	: GOTO IDENTIFIER ';'										{$$ = node_(1,$1,-1); $$->v[0] = node_(0,$2,IDENTIFIER); printf("\e[1;31mError [line %d]:\e[0m GOTO not supported.\n", line);exit(-1);}
 	| CONTINUE ';'												{
 																	$$ = node_(0,$1,-1);
 																	if(continue_level<=0){
