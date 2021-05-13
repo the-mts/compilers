@@ -484,10 +484,10 @@ void opt_ret_dead(){
 	}
 }
 
-void print_map(const map<pair<string, pair<string, string>>, qi>& m)
+void print_map(const map<pair<string, pair<qi, qi>>, qi>& m)
 {
 	   for (const auto& [key, value] : m) {
-	        cout <<"(" << key.first<< ", "<<key.second.first<<", "<< key.second.second<< ") = " << value.first << "; ";
+	        cout <<"(" << key.first<< ", "<<key.second.first.first<<", "<< key.second.second.first<< ") = " << value.first << "; ";
 	   }
 	   cout<<"\n";
 }
@@ -522,30 +522,71 @@ int opt_cse(){
 				blocks[b].code[i].op1 = expr[{op, {op1, op2}}];
 				blocks[b].code[i].op2 = {"", NULL};
 				c = 1;
+				auto pred = [&](const auto& item) {
+        			auto const& [key, value] = item;
+			        return (key.second.first == res || key.second.second == res || value == res);
+				};
+	
+				for (auto i = expr.begin(), last = expr.end(); i != last; ) {
+				  if (pred(*i)) {
+				      i = expr.erase(i);
+				  } else {
+				      ++i;
+				  }
+				}
 			}
 			else if (op == "ADDR=" || op == "=struct"){
 				expr.clear();
 			}
-			else if (op != "UNARY&" && op != "UNARY*" && op != "=" &&(blocks[b].code[i].op != "x++" && blocks[b].code[i].op != "++x" && blocks[b].code[i].op != "x--" && blocks[b].code[i].op != "--x")){
+			else if (op == "x++" || op == "++x" || op == "x--" || op == "--x"){
+				auto pred = [&](const auto& item) {
+        			auto const& [key, value] = item;
+			        return (key.second.first == res || key.second.second == res || value == res || key.second.first == op1 || key.second.second == op1 || value == op1);
+				};
+	
+				for (auto i = expr.begin(), last = expr.end(); i != last; ) {
+				  if (pred(*i)) {
+				      i = expr.erase(i);
+				  } else {
+				      ++i;
+				  }
+				}
+			}
+			else if (op != "UNARY&" && op != "UNARY*" && op != "="){
 				//cout<<"Adding expr\n";
+				auto pred = [&](const auto& item) {
+        			auto const& [key, value] = item;
+			        return (key.second.first == res || key.second.second == res || value == res);
+				};
+	
+				for (auto i = expr.begin(), last = expr.end(); i != last; ) {
+				  if (pred(*i)) {
+				      i = expr.erase(i);
+				  } else {
+				      ++i;
+				  }
+				}
 				expr[{op, {op1, op2}}] = blocks[b].code[i].res;	
+			}
+			else {
+				auto pred = [&](const auto& item) {
+        			auto const& [key, value] = item;
+			        return (key.second.first == res || key.second.second == res || value == res);
+				};
+	
+				for (auto i = expr.begin(), last = expr.end(); i != last; ) {
+				  if (pred(*i)) {
+				      i = expr.erase(i);
+				  } else {
+				      ++i;
+				  }
+				}
 			}
 			//Remove all entries in expr which have 
 			//for (auto v: used[res])
 			//	expr.erase(v);
 
-			auto pred = [&](const auto& item) {
-        		auto const& [key, value] = item;
-		        return (key.second.first == res || key.second.second == res);
-			};
-
-			for (auto i = expr.begin(), last = expr.end(); i != last; ) {
-			  if (pred(*i)) {
-			      i = expr.erase(i);
-			  } else {
-			      ++i;
-			  }
-			}
+			
 		}
 		if (blocks[b].code.back().op == "CALL" || blocks[b].code.back().op == "TAIL") expr.clear();
 		gexpr[b] = expr;
