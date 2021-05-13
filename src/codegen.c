@@ -189,7 +189,7 @@ void codegen(){
 				auto args = *(instr.op1.second->arg_list);
 				for(auto p: args){
 					int flag = 0;
-					if(!is_struct_or_union(p.first.first) && (p.first.first.find("int") != string::npos || p.first.first.find("char") != string::npos || p.first.first.back() == ']' || p.first.first.back() == '*')){
+					if(!is_struct_or_union(p.first.first) && (p.first.first.find("int") != string::npos || p.first.first.find("char") != string::npos || p.first.first.back() == ']' || p.first.first.back() == '*' || (file_ptrs && p.first.first == "FILEP"))){
 						flag = 1;
 					}
 					else if(!is_struct_or_union(p.first.first) && (p.first.first.find("double") != string::npos || p.first.first.find("float") != string::npos)){
