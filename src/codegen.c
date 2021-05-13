@@ -163,7 +163,8 @@ void codegen(){
 			continue;
 		}
 
-		if(blocks[bno].pred.size()!=0 && !(blocks[bno].pred.size()==1 && blocks[blocks[bno].pred[0]].next == bno)){
+		//cout << "bno: " << bno << ", pred's goto_addr:, " << (blocks[blocks[bno].pred[0]].code.back().goto_addr == bno) << endl;
+		if(blocks[bno].pred.size()!=0 && (blocks[bno].pred.size()!=1 || blocks[blocks[bno].pred[0]].code.back().goto_addr == bno)){
 			cout << ".L" << bno << ":" << endl;
 		}
 
