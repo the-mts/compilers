@@ -2828,7 +2828,7 @@ void codegen(){
 					type1 = instr.op1.second->type;
 					type2 = instr.res.second->type;
 				}
-				if(type1 == type2 && (type1.back()!='*' || (file_ptrs && type1 != "FILEP"))){
+				if(type1 == type2 && (type1.back()!='*' && type1 != "FILEP")){
 					if(type1 == "char"){
 						cout << "movb " << set_offset(t1) << ", " << "%al" << endl;
 						cout << "movb " << "%al, " << set_offset(t2) << endl;
