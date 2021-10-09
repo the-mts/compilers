@@ -238,6 +238,12 @@ void codegen(){
 				else if(type1 == "char"){
 					cout << "movb " << set_offset(t1) << ", " << "%al" << endl;
 				}
+				else if(type1 == "float"){
+					cout << "movss " << set_offset(t1) << ", " << "%xmm0" << endl;
+				}
+				else if(type1 == "double"){
+					cout << "movsd " << set_offset(t1) << ", " << "%xmm0" << endl;
+				}
 				else if(type1.back()=='*' || (file_ptrs && type1 == "FILEP")){
 					cout << "movq " << set_offset(t1) << ", " << "%rax" << endl;
 				}
